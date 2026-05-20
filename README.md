@@ -19,4 +19,4 @@ Spring Cloud 生态研究
 | 负载均衡      | Ribbon<br>(已不维护)                    | Spring Cloud LoaderBalancer<br/> (编程模型统一)              | Dubbo LB             | -                   | -                       | -                      |
 | 分布式事务    | -                                       | -                                                            | Seata                | -                   | -                       | -                      |
 
-&copy; [hongxi.org](http://hongxi.org) | [cloud.hongxi.org](http://cloud.hongxi.org)
+&copy; [hongxi.org](http://hongxi.org)
