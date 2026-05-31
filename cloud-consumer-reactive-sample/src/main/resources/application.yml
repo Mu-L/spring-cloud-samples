@@ -1,9 +1,12 @@
+server:
+  port: 8763
 spring:
   application:
     name: demo-consumer-reactive
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-server:
-  port: 8763
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true

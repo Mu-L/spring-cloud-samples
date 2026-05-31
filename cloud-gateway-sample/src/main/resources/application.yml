@@ -1,17 +1,32 @@
+server:
+  port: 8764
 spring:
   application:
     name: demo-gateway
   cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
     gateway:
       server:
         webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-server:
-  port: 8764
+          routes:
+            - id: demo-consumer-reactive
+              uri: lb://demo-consumer-reactive
+              predicates:
+                - name: Path
+                  args:
+                    pattern: /demo-consumer-reactive/**
+              filters:
+                - StripPrefix=1
+            - id: demo-consumer
+              uri: lb://demo-consumer
+              predicates:
+                - name: Path
+                  args:
+                    pattern: /demo-consumer/**
+              filters:
+                - StripPrefix=1

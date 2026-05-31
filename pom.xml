@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.13</version>
+        <version>3.5.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -17,16 +17,14 @@
     <modules>
         <module>cloud-provider-reactive-sample</module>
         <module>cloud-consumer-reactive-sample</module>
-        <module>cloud-eureka-sample</module>
         <module>cloud-gateway-sample</module>
-        <module>cloud-config-server-sample</module>
-        <module>cloud-config-client-sample</module>
         <module>cloud-provider-sample</module>
         <module>cloud-consumer-sample</module>
     </modules>
 
     <properties>
-        <spring-cloud.version>2025.0.2</spring-cloud.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+        <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
     </properties>
 
     <dependencyManagement>
@@ -35,6 +33,13 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
