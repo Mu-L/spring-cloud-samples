@@ -13,6 +13,7 @@
     <groupId>org.hongxi</groupId>
     <artifactId>spring-cloud-samples</artifactId>
     <packaging>pom</packaging>
+    <url>https://github.com/javahongxi/spring-cloud-samples</url>
 
     <modules>
         <module>cloud-provider-reactive-sample</module>
