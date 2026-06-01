@@ -91,7 +91,8 @@ stop_all() {
     fi
     rm -f "$pid_file"
   done
-  echo "所有服务已停止"
+  rm -rf "$LOG_DIR" "$PID_DIR"
+  echo "所有服务已停止，logs 和 .pids 目录已清理"
 }
 
 # README 中的演示 URL 列表
