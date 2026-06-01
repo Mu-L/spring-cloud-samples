@@ -1,6 +1,17 @@
 # Spring Cloud Alibaba Samples
 Spring Cloud 本身并不是一个开箱即用的框架，而是一套微服务开发的规范标准，Alibaba的实现很好。
 
+### 模块介绍
+模块 | 简称                | 说明
+------ |-------------------| ------
+cloud-gateway-sample | gateway           | spring cloud gateway
+cloud-consumer-sample | consumer          | web consumer
+cloud-provider-sample | provider          | web provider
+cloud-consumer-reactive-sample | consumer-reactive | webflux consumer
+cloud-provider-reactive-sample | provider-reactive | webflux provider    
+cloud-provider-dubbo-sample | provider-dubbo    | dubbo provider
+cloud-sample-api | api               | interface api
+
 ### 演示
 首先安装部署nacos，请参考 nacos.io
 
