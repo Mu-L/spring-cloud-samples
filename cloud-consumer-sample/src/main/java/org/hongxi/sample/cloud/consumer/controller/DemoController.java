@@ -1,5 +1,7 @@
 package org.hongxi.sample.cloud.consumer.controller;
 
+import org.apache.dubbo.config.annotation.DubboReference;
+import org.hongxi.sample.cloud.api.DemoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,9 @@ public class DemoController {
     @Autowired
     private DiscoveryClient discoveryClient;
 
+    @DubboReference(check = false)
+    private DemoService demoService;
+
     @RequestMapping("/hi")
     public String hi(String name) {
         return restTemplate.getForObject(
@@ -34,5 +39,10 @@ public class DemoController {
     @GetMapping("/services")
     public Object services() {
         return discoveryClient.getServices();
+    }
+
+    @RequestMapping("/dubbo")
+    public String sayHello(String name) {
+        return demoService.sayHello(name);
     }
 }

@@ -21,11 +21,14 @@
         <module>cloud-gateway-sample</module>
         <module>cloud-provider-sample</module>
         <module>cloud-consumer-sample</module>
+        <module>cloud-provider-dubbo-sample</module>
+        <module>cloud-sample-api</module>
     </modules>
 
     <properties>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
+        <dubbo.version>3.3.6</dubbo.version>
     </properties>
 
     <dependencyManagement>

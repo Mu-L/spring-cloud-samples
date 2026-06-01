@@ -10,3 +10,18 @@ spring:
       discovery:
         server-addr: 127.0.0.1:8848
         enabled: true
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-port: 44444
+  protocol:
+    name: tri
+    port: -1
+  registry:
+    id: nacos-registry
+    address: nacos://127.0.0.1:8848
+    parameters:
+      group: dubbo-demo-group
+      username: nacos
+      password: 7fDJZBbiLzO2

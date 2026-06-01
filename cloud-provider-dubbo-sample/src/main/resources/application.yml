@@ -1,20 +1,11 @@
-server:
-  port: 8766
 spring:
   application:
-    name: demo-consumer
-  cloud:
-    nacos:
-      username: nacos
-      password: 7fDJZBbiLzO2
-      discovery:
-        server-addr: 127.0.0.1:8848
-        enabled: true
+    name: cloud-provider-dubbo-sample
 
 dubbo:
   application:
     name: ${spring.application.name}
-    qos-port: 33333
+    qos-port: 22222
   protocol:
     name: tri
     port: -1
@@ -25,3 +16,4 @@ dubbo:
       group: dubbo-demo-group
       username: nacos
       password: 7fDJZBbiLzO2
+

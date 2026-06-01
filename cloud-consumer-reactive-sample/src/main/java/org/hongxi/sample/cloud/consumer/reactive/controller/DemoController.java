@@ -1,9 +1,10 @@
 package org.hongxi.sample.cloud.consumer.reactive.controller;
 
+import org.apache.dubbo.config.annotation.DubboReference;
+import org.hongxi.sample.cloud.api.DemoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -22,6 +23,9 @@ public class DemoController {
     @Autowired
     private ReactiveDiscoveryClient reactiveDiscoveryClient;
 
+    @DubboReference(check = false)
+    private DemoService demoService;
+
     @RequestMapping("/hi")
     public Mono<String> hi(String name) {
         return webClient
@@ -36,5 +40,10 @@ public class DemoController {
         return reactiveDiscoveryClient.getInstances("demo-provider-reactive")
                 .map(serviceInstance -> serviceInstance.getHost() + ":"
                         + serviceInstance.getPort());
+    }
+
+    @RequestMapping("/dubbo")
+    public Mono<String> sayHello(String name) {
+        return Mono.fromFuture(demoService.sayHelloAsync(name));
     }
 }
