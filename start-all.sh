@@ -141,6 +141,24 @@ status_all() {
   echo "=============================="
 }
 
+# Nacos 注册中心地址
+NACOS_HOST="127.0.0.1"
+NACOS_PORT="8848"
+
+check_nacos() {
+  echo -n "[Nacos] 检查注册中心 ($NACOS_HOST:$NACOS_PORT) ..."
+  for i in $(seq 1 15); do
+    if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+      echo " 就绪"
+      return 0
+    fi
+    sleep 2
+  done
+  echo " 未就绪!"
+  echo "请先启动 Nacos (http://$NACOS_HOST:$NACOS_PORT/nacos)，再运行本脚本。"
+  exit 1
+}
+
 install_api() {
   echo "正在安装 cloud-sample-api 到本地仓库 ..."
   cd "$BASE_DIR"
@@ -157,6 +175,8 @@ install_api() {
 case "${1:-start}" in
   start)
     echo "========== 启动所有服务 =========="
+    check_nacos
+    echo ""
     install_api
     echo ""
     for entry in "${MODULES[@]}"; do
@@ -175,6 +195,8 @@ case "${1:-start}" in
     sleep 2
     echo ""
     echo "========== 重新启动所有服务 =========="
+    check_nacos
+    echo ""
     install_api
     echo ""
     for entry in "${MODULES[@]}"; do
