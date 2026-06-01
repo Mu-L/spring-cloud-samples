@@ -29,4 +29,12 @@ cloud-sample-api | api               | interface api
 1. 直接访问 localhost:8763/dubbo?name=hongxi
 1. 通过网关访问 localhost:8764/demo-consumer-reactive/dubbo?name=hongxi
 
+### 脚本演示
+```shell
+# 启动所有服务（脚本最后会执行curl并输出响应结果）
+sh start-all.sh
+# 停止所有服务
+sh start-all.sh stop
+```
+
 &copy; [hongxi.org](http://hongxi.org)
