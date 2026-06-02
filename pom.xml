@@ -24,6 +24,7 @@
         <module>cloud-provider-dubbo-sample</module>
         <module>cloud-sample-api</module>
         <module>cloud-nacos-config-sample</module>
+        <module>cloud-sentinel-sample</module>
     </modules>
 
     <properties>
