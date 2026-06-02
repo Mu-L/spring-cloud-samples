@@ -26,6 +26,7 @@
         <module>cloud-nacos-config-sample</module>
         <module>cloud-sentinel-sample</module>
         <module>cloud-sentinel-gateway-sample</module>
+        <module>cloud-stream-sample</module>
     </modules>
 
     <properties>

@@ -14,6 +14,7 @@ cloud-sample-api | api               | interface api
 cloud-nacos-config-sample | config            | nacos config
 cloud-sentinel-sample | sentinel          | sentinel
 cloud-sentinel-gateway-sample | sentinel-gateway  | sentinel gateway
+cloud-stream-sample | stream            | spring cloud stream
 
 ### 演示
 首先安装部署nacos，请参考 nacos.io
