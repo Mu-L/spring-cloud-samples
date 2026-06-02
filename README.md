@@ -11,6 +11,7 @@ cloud-consumer-reactive-sample | consumer-reactive | webflux consumer
 cloud-provider-reactive-sample | provider-reactive | webflux provider    
 cloud-provider-dubbo-sample | provider-dubbo    | dubbo provider
 cloud-sample-api | api               | interface api
+cloud-nacos-config-sample | config            | nacos config
 
 ### 演示
 首先安装部署nacos，请参考 nacos.io
