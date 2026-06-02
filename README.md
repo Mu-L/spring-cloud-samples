@@ -13,6 +13,7 @@ cloud-provider-dubbo-sample | provider-dubbo    | dubbo provider
 cloud-sample-api | api               | interface api
 cloud-nacos-config-sample | config            | nacos config
 cloud-sentinel-sample | sentinel          | sentinel
+cloud-sentinel-gateway-sample | sentinel-gateway  | sentinel gateway
 
 ### 演示
 首先安装部署nacos，请参考 nacos.io
@@ -38,5 +39,11 @@ sh start-all.sh
 # 停止所有服务
 sh start-all.sh stop
 ```
+
+### 带哨兵的网关演示
+1. 执行`start-all.sh`后手动启动 sentinel-gateway
+1. 访问 localhost:8768/consumer-sample/hi?name=hongxi （快速点几次会触发限流）
+1. 访问 localhost:8768/consumer-reactive-sample/hi?name=hongxi
+1. 访问 localhost:8768/gateway
 
 &copy; [hongxi.org](http://hongxi.org)
