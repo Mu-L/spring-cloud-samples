@@ -1,0 +1,15 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: nacos-config-sample
+  cloud:
+    nacos:
+      config:
+        serverAddr: 127.0.0.1:8848
+        username: nacos
+        password: 7fDJZBbiLzO2
+  config:
+    import:
+      - nacos:cloud-agent.properties?refreshEnabled=true&group=DEFAULT_GROUP

@@ -23,6 +23,7 @@
         <module>cloud-consumer-sample</module>
         <module>cloud-provider-dubbo-sample</module>
         <module>cloud-sample-api</module>
+        <module>cloud-nacos-config-sample</module>
     </modules>
 
     <properties>
@@ -49,5 +50,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
 
 </project>
