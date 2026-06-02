@@ -6,7 +6,7 @@ import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Component;
 
 /**
- * Created by shenhongxi on 2020/7/12.
+ * Created by javahongxi on 2026/6/1.
  */
 @Slf4j
 @Component

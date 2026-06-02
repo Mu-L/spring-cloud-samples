@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Created by shenhongxi on 2017/9/14.
+ * Created by javahongxi on 2026/6/1.
  */
 @RestController
 public class DemoController {

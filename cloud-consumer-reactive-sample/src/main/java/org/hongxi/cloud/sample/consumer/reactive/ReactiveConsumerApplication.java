@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
- * Created by shenhongxi on 2017/9/14.
+ * Created by javahongxi on 2026/6/1.
  */
 @EnableDubbo
 @EnableDiscoveryClient

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Created by shenhongxi on 2020/7/12.
+ * Created by javahongxi on 2026/6/1.
  */
 @RestController
 public class SentinelGatewayRulesController {

@@ -3,7 +3,7 @@ package org.hongxi.cloud.sample.api;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by shenhongxi on 2026/6/1.
+ * Created by javahongxi on 2026/6/1.
  */
 public interface DemoService {
 

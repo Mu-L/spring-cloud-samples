@@ -12,7 +12,7 @@ import org.springframework.web.server.ServerWebExchange;
 import static org.springframework.web.reactive.function.BodyInserters.fromValue;
 
 /**
- * Created by shenhongxi on 2020/7/12.
+ * Created by javahongxi on 2026/6/1.
  */
 @Configuration
 public class SentinelGatewayConfiguration {

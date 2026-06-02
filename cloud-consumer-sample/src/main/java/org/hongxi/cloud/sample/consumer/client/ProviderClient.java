@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * Created by shenhongxi on 2020/7/12.
+ * Created by javahongxi on 2026/6/1.
  */
 @FeignClient("provider-sample")
 public interface ProviderClient {

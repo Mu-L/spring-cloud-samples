@@ -4,6 +4,9 @@ import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * Created by javahongxi on 2026/6/1.
+ */
 @SpringBootApplication
 @EnableDubbo
 public class DubboProviderApplication {

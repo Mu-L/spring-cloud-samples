@@ -4,6 +4,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+/**
+ * Created by javahongxi on 2026/6/1.
+ */
 @Data
 @ConfigurationProperties(prefix = "cloud.agent")
 @Component
