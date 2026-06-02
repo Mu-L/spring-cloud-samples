@@ -2,7 +2,7 @@ server:
   port: 8764
 spring:
   application:
-    name: demo-gateway
+    name: gateway-sample
   cloud:
     nacos:
       username: nacos
@@ -14,19 +14,19 @@ spring:
       server:
         webflux:
           routes:
-            - id: demo-consumer-reactive
-              uri: lb://demo-consumer-reactive
+            - id: consumer-reactive-sample
+              uri: lb://consumer-reactive-sample
               predicates:
                 - name: Path
                   args:
-                    pattern: /demo-consumer-reactive/**
+                    pattern: /consumer-reactive-sample/**
               filters:
                 - StripPrefix=1
-            - id: demo-consumer
-              uri: lb://demo-consumer
+            - id: consumer-sample
+              uri: lb://consumer-sample
               predicates:
                 - name: Path
                   args:
-                    pattern: /demo-consumer/**
+                    pattern: /consumer-sample/**
               filters:
                 - StripPrefix=1

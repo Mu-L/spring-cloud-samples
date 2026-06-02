@@ -18,17 +18,17 @@ cloud-nacos-config-sample | config            | nacos config
 
 依次启动provider-reactive,consumer-reactive,gateway <br>
 1. 直接访问 localhost:8763/hi?name=hongxi
-1. 通过网关访问 localhost:8764/demo-consumer-reactive/hi?name=hongxi
+1. 通过网关访问 localhost:8764/consumer-reactive-sample/hi?name=hongxi
 
 接着启动provider,consumer <br>
 1. 直接访问 localhost:8766/hi?name=hongxi
-1. 通过网关访问 localhost:8764/demo-consumer/hi?name=hongxi
+1. 通过网关访问 localhost:8764/consumer-sample/hi?name=hongxi
 
 接着启动provider-dubbo <br>
 1. 直接访问 localhost:8766/dubbo?name=hongxi
-1. 通过网关访问 localhost:8764/demo-consumer/dubbo?name=hongxi
+1. 通过网关访问 localhost:8764/consumer-sample/dubbo?name=hongxi
 1. 直接访问 localhost:8763/dubbo?name=hongxi
-1. 通过网关访问 localhost:8764/demo-consumer-reactive/dubbo?name=hongxi
+1. 通过网关访问 localhost:8764/consumer-reactive-sample/dubbo?name=hongxi
 
 ### 脚本演示
 ```shell

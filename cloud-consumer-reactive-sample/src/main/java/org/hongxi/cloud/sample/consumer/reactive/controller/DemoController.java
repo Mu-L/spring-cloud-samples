@@ -37,7 +37,7 @@ public class DemoController {
 
     @GetMapping("/services")
     public Flux<String> allServices() {
-        return reactiveDiscoveryClient.getInstances("demo-provider-reactive")
+        return reactiveDiscoveryClient.getInstances("provider-reactive-sample")
                 .map(serviceInstance -> serviceInstance.getHost() + ":"
                         + serviceInstance.getPort());
     }

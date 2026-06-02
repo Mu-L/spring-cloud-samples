@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @EnableDiscoveryClient
 @SpringBootApplication
 @LoadBalancerClients({
-        @LoadBalancerClient("demo-provider-reactive")
+        @LoadBalancerClient("provider-reactive-sample")
 })
 public class ReactiveConsumerApplication {
     public static void main(String[] args) {
@@ -33,7 +33,7 @@ public class ReactiveConsumerApplication {
     @Bean
     public WebClient webClient(WebClient.Builder webClientBuilder) {
         return webClientBuilder
-                .baseUrl("http://demo-provider-reactive")
+                .baseUrl("http://provider-reactive-sample")
                 .build();
     }
 }

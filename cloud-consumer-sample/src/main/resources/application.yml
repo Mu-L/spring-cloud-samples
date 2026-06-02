@@ -2,7 +2,7 @@ server:
   port: 8766
 spring:
   application:
-    name: demo-consumer
+    name: consumer-sample
   cloud:
     nacos:
       username: nacos

@@ -100,13 +100,13 @@ demo_urls() {
   echo "========== 访问演示 URL =========="
   local urls=(
     "http://localhost:8763/hi?name=hongxi|直接访问 consumer-reactive"
-    "http://localhost:8764/demo-consumer-reactive/hi?name=hongxi|通过网关访问 consumer-reactive"
+    "http://localhost:8764/consumer-reactive-sample/hi?name=hongxi|通过网关访问 consumer-reactive"
     "http://localhost:8766/hi?name=hongxi|直接访问 consumer"
-    "http://localhost:8764/demo-consumer/hi?name=hongxi|通过网关访问 consumer"
+    "http://localhost:8764/consumer-sample/hi?name=hongxi|通过网关访问 consumer"
     "http://localhost:8766/dubbo?name=hongxi|直接访问 consumer (dubbo)"
-    "http://localhost:8764/demo-consumer/dubbo?name=hongxi|通过网关访问 consumer (dubbo)"
+    "http://localhost:8764/consumer-sample/dubbo?name=hongxi|通过网关访问 consumer (dubbo)"
     "http://localhost:8763/dubbo?name=hongxi|直接访问 consumer-reactive (dubbo)"
-    "http://localhost:8764/demo-consumer-reactive/dubbo?name=hongxi|通过网关访问 consumer-reactive (dubbo)"
+    "http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi|通过网关访问 consumer-reactive (dubbo)"
   )
   for entry in "${urls[@]}"; do
     IFS='|' read -r url desc <<< "$entry"

@@ -2,7 +2,7 @@ server:
   port: 8763
 spring:
   application:
-    name: demo-consumer-reactive
+    name: consumer-reactive-sample
   cloud:
     nacos:
       username: nacos

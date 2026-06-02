@@ -17,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableDiscoveryClient
 @SpringBootApplication
 @LoadBalancerClients({
-        @LoadBalancerClient("demo-provider")
+        @LoadBalancerClient("provider-sample")
 })
 public class ConsumerApplication {
 

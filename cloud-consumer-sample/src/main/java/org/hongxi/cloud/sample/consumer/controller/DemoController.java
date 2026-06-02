@@ -28,7 +28,7 @@ public class DemoController {
     @RequestMapping("/hi")
     public String hi(String name) {
         return restTemplate.getForObject(
-                "http://demo-provider/hello?name=" + name, String.class);
+                "http://provider-sample/hello?name=" + name, String.class);
     }
 
     @GetMapping("/services/{service}")

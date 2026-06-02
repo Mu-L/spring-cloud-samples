@@ -12,8 +12,8 @@ import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 @EnableDiscoveryClient
 @SpringBootApplication
 @LoadBalancerClients({
-        @LoadBalancerClient("demo-consumer-reactive"),
-        @LoadBalancerClient("demo-consumer")
+        @LoadBalancerClient("consumer-reactive-sample"),
+        @LoadBalancerClient("consumer-sample")
 })
 public class GatewayApplication {
     public static void main(String[] args) {
