@@ -30,3 +30,12 @@ spring:
                     pattern: /consumer-sample/**
               filters:
                 - StripPrefix=1
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info

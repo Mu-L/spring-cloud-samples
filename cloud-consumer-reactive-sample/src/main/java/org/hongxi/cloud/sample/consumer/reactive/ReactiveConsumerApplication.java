@@ -7,6 +7,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Hooks;
 
 /**
  * Created by javahongxi on 2026/6/1.
@@ -16,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @SpringBootApplication
 public class ReactiveConsumerApplication {
     public static void main(String[] args) {
+        Hooks.enableAutomaticContextPropagation();
         SpringApplication.run(ReactiveConsumerApplication.class, args);
     }
 

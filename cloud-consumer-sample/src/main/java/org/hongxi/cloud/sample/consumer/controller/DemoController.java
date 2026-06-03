@@ -1,5 +1,6 @@
 package org.hongxi.cloud.sample.consumer.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.hongxi.cloud.sample.api.DemoService;
 import org.hongxi.cloud.sample.consumer.client.ProviderClient;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -14,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Created by javahongxi on 2026/6/1.
  */
+@Slf4j
 @RestController
 public class DemoController {
 
@@ -30,13 +33,17 @@ public class DemoController {
     private DemoService demoService;
 
     @RequestMapping("/hi")
-    public String hi(String name) {
+    public String hi(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
+        log.info("traceparent: {}", traceparent);
+        log.info("Consumer calling provider via RestTemplate, name: {}", name);
         return restTemplate.getForObject(
                 "http://provider-sample/hello?name=" + name, String.class);
     }
 
     @RequestMapping("/hi/feign")
-    public String hiFeign(String name) {
+    public String hiFeign(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
+        log.info("traceparent: {}", traceparent);
+        log.info("Consumer calling provider via Feign, name: {}", name);
         return providerClient.hello(name);
     }
 

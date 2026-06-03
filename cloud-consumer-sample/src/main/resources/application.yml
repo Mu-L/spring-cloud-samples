@@ -11,6 +11,15 @@ spring:
         server-addr: 127.0.0.1:8848
         enabled: true
 
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 dubbo:
   application:
     name: ${spring.application.name}
@@ -25,3 +34,4 @@ dubbo:
       group: dubbo-demo-group
       username: nacos
       password: 7fDJZBbiLzO2
+
