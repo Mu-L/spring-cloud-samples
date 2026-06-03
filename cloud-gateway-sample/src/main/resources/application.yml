@@ -32,9 +32,9 @@ spring:
                 - StripPrefix=1
 
 management:
-  metrics:
-    export:
-      otlp:
+  otlp:
+    metrics:
+      export:
         enabled: false
   tracing:
     sampling:

@@ -12,9 +12,9 @@ spring:
         enabled: true
 
 management:
-  metrics:
-    export:
-      otlp:
+  otlp:
+    metrics:
+      export:
         enabled: false
   tracing:
     sampling:
