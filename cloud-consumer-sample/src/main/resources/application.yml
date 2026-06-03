@@ -12,6 +12,10 @@ spring:
         enabled: true
 
 management:
+  metrics:
+    export:
+      otlp:
+        enabled: false
   tracing:
     sampling:
       probability: 1.0
