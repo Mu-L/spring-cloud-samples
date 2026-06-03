@@ -15,12 +15,12 @@ mkdir -p "$LOG_DIR" "$PID_DIR"
 
 # 模块列表: 目录名 | 显示名称 | 端口
 MODULES=(
+  "cloud-provider-dubbo-sample|provider-dubbo|-"
   "cloud-provider-reactive-sample|provider-reactive|8762"
   "cloud-consumer-reactive-sample|consumer-reactive|8763"
   "cloud-gateway-sample|gateway|8764"
   "cloud-provider-sample|provider|8765"
   "cloud-consumer-sample|consumer|8766"
-  "cloud-provider-dubbo-sample|provider-dubbo|50051"
 )
 
 start_module() {
@@ -49,21 +49,22 @@ start_module() {
       rm -f "$pid_file"
       return 1
     fi
-    if [ "$port" != "-" ] && curl -s -o /dev/null -w '' "http://localhost:$port" 2>/dev/null; then
+    if [ "$port" = "-" ]; then
+      # 无 HTTP 端口的模块，检测进程是否存活
+      if kill -0 "$pid" 2>/dev/null; then
+        echo " 已启动 (PID: $pid)"
+        return 0
+      fi
+    elif curl -s -o /dev/null -w '' "http://localhost:$port" 2>/dev/null; then
       echo " 成功 (PID: $pid, port: $port)"
       return 0
     fi
     sleep 1
   done
 
-  # 对于没有 http 端口的模块（如 dubbo provider），只检查进程是否存活
-  if kill -0 "$pid" 2>/dev/null; then
-    echo " 已启动 (PID: $pid)"
-  else
-    echo " 失败! 请查看日志: $log_file"
-    rm -f "$pid_file"
-    return 1
-  fi
+  echo " 超时! 请查看日志: $log_file"
+  rm -f "$pid_file"
+  return 1
 }
 
 stop_all() {
