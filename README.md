@@ -100,4 +100,8 @@ curl http://localhost:8768/gateway
 ### 其他演示
 见相关模块下的README
 
+### 分支说明
+- branch springboot3: 基于 Spring Boot 3.5.0+ 的示例
+- branch eureka: 初始版本，使用eureka作为注册中心
+
 &copy; [hongxi.org](http://hongxi.org)
