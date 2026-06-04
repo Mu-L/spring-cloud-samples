@@ -38,3 +38,5 @@ dubbo:
       group: DEFAULT_GROUP
       username: nacos
       password: 7fDJZBbiLzO2
+  tracing:
+    enabled: true

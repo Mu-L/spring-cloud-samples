@@ -14,7 +14,9 @@ import reactor.core.publisher.Hooks;
  */
 @EnableDubbo
 @EnableDiscoveryClient
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
+})
 public class ReactiveConsumerApplication {
     public static void main(String[] args) {
         Hooks.enableAutomaticContextPropagation();
