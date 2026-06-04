@@ -1,5 +1,6 @@
 # Spring Cloud Alibaba Samples
-Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alibaba**），打造一个完整的 Spring Cloud 示例项目。
+Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alibaba 2025.x**） <br>
+以生产环境可参考为目标，打造一个完整的 Spring Cloud 示例项目。
 
 ### 模块介绍
 模块 | 简称                | 端口    | 说明
