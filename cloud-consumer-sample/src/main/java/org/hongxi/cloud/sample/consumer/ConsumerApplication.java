@@ -18,7 +18,9 @@ import org.springframework.web.client.RestTemplate;
  */
 @EnableDubbo
 @EnableDiscoveryClient
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+    org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
+})
 @EnableFeignClients
 public class ConsumerApplication {
 

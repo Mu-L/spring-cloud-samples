@@ -7,7 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Created by javahongxi on 2026/6/1.
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
+})
 @EnableDubbo
 public class DubboProviderApplication {
     public static void main(String[] args) {
