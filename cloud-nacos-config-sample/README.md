@@ -4,7 +4,9 @@
 nacos console 创建配置<br>
 dataId: github.username<br>
 content: javahongxi
-1. 访问 localhost:8761/config/hello
+```shell
+curl http://localhost:8761/config/hello
+```
 1. 修改配置后再访问
 1. 删除配置后观察日志
 
@@ -21,12 +23,18 @@ cloud.agent.provider.name=Alibaba
 cloud.agent.provider.model=Qwen3.7 Plus
 cloud.agent.provider.api-key=xxx123aa
 ```
-1. 访问 localhost:8761/config/agent
-1. 访问 localhost:8761/config/value
-1. 修改配置后再访问
+```shell
+curl http://localhost:8761/config/agent
+```
+```shell
+curl http://localhost:8761/config/value
+```
+修改配置后再访问
 
 ### 演示Nacos原生API
-1. 访问 localhost:8761/nacos/listener?dataId=my.city
-1. 访问 localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan
-1. 访问 localhost:8761/nacos/getConfig?dataId=my.city
-1. 访问 localhost:8761/nacos/removeConfig?dataId=my.city
+```shell
+curl 'http://localhost:8761/nacos/listener?dataId=my.city'
+curl 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan'
+curl 'http://localhost:8761/nacos/getConfig?dataId=my.city'
+curl 'http://localhost:8761/nacos/removeConfig?dataId=my.city'
+```

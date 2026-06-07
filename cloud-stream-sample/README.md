@@ -8,4 +8,7 @@ bin/mqnamesrv
 ```shell
 bin/mqbroker -n localhost:9876
 ```
-访问 localhost:8769/send?message=hello
+发送消息
+```shell
+curl 'http://localhost:8769/send?message=hello'
+```
