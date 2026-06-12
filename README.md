@@ -11,11 +11,13 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-consumer-reactive-sample | consumer-reactive | 8763  | Reactive Web Consumer |
 | cloud-provider-reactive-sample | provider-reactive | 8762  | Reactive Web Provider |
 | cloud-provider-dubbo-sample    | provider-dubbo    | 50051 | Dubbo Provider        |
+| cloud-consumer-dubbo-sample    | consumer-dubbo    | -     | Dubbo Consumer        |
 | cloud-sample-api               | api               | -     | interface             |
 | cloud-nacos-config-sample      | config            | 8761  | Nacos Config          |
 | cloud-sentinel-sample          | sentinel          | 8767  | Sentinel              |
 | cloud-sentinel-gateway-sample  | sentinel-gateway  | 8768  | Gateway with Sentinel |
-| cloud-stream-sample            | stream            | 8769  | Spring Cloud Stream   |
+| cloud-stream-sample            | stream            | -     | Spring Cloud Stream   |
+| cloud-rocketmq-sample          | rocketmq-consumer | -     | RocketMQ Consumer     |
 
 ### 服务注册与发现演示
 首先安装部署nacos，请参考 nacos.io
@@ -97,8 +99,26 @@ curl http://localhost:8768/gateway
 ```
 第一个url快速访问几次会触发限流
 
-### 其他演示
-见相关模块下的README
+### RocketMQ 相关演示
+#### Run RocketMQ locally
+download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
+```shell
+bin/mqnamesrv
+bin/mqbroker -n localhost:9876 --enable-proxy
+```
+
+#### Create Topic and Consumer Group
+```shell
+bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t demo-normal-topic -a +message.type=NORMAL
+bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g my-consumer_demo-normal-topic
+bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL
+bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group
+```
+
+#### Run Demo
+1. 启动`rocketmq-consumer` `provider-dubbo` `consumer-dubbo`
+2. 观察`consumer-dubbo`日志
+3. 启动`stream`，观察日志
 
 ### 分支说明
 - branch springboot3: 基于 Spring Boot 3.5.0+ 的示例

@@ -27,12 +27,16 @@
         <module>cloud-sentinel-sample</module>
         <module>cloud-sentinel-gateway-sample</module>
         <module>cloud-stream-sample</module>
+        <module>cloud-rocketmq-sample</module>
+        <module>cloud-consumer-dubbo-sample</module>
     </modules>
 
     <properties>
         <spring-cloud.version>2025.1.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.1.0.0</spring-cloud-alibaba.version>
         <dubbo.version>3.3.6</dubbo.version>
+        <protobuf-java.version>4.34.1</protobuf-java.version>
+        <rocketmq-spring.version>2.3.5</rocketmq-spring.version>
     </properties>
 
     <dependencyManagement>
@@ -50,6 +54,29 @@
                 <version>${spring-cloud-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>${dubbo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-registry-nacos</artifactId>
+                <version>${dubbo.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-v5-client-spring-boot-starter</artifactId>
+                <version>${rocketmq-spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

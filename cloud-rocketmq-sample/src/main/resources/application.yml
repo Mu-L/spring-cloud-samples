@@ -1,0 +1,4 @@
+rocketmq:
+  push-consumer:
+    endpoints: localhost:8081
+    tag: '*'
