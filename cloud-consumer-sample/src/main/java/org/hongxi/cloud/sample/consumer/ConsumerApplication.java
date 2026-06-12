@@ -3,7 +3,6 @@ package org.hongxi.cloud.sample.consumer;
 import feign.RequestInterceptor;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
-import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -16,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Created by javahongxi on 2026/6/1.
  */
-@EnableDubbo
 @EnableDiscoveryClient
 @SpringBootApplication(exclude = {
     org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
