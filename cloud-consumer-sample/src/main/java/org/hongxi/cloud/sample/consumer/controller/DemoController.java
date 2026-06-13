@@ -32,7 +32,7 @@ public class DemoController {
     @DubboReference(check = false)
     private DemoService demoService;
 
-    @RequestMapping("/hi")
+    @RequestMapping(value = "/hi", version = "1.0")
     public String hi(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
         log.info("traceparent: {}", traceparent);
         log.info("Consumer calling provider via RestTemplate, name: {}", name);
@@ -40,7 +40,7 @@ public class DemoController {
                 "http://provider-sample/hello?name=" + name, String.class);
     }
 
-    @RequestMapping("/hi/feign")
+    @RequestMapping(value = "/hi", version = "2.0")
     public String hiFeign(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
         log.info("traceparent: {}", traceparent);
         log.info("Consumer calling provider via Feign, name: {}", name);

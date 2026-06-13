@@ -10,6 +10,11 @@ spring:
       discovery:
         server-addr: 127.0.0.1:8848
         enabled: true
+  mvc:
+    apiversion:
+      default: 1.0
+      use:
+        query-parameter: version
 
 management:
   otlp:
