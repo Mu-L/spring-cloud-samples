@@ -19,6 +19,9 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-stream-sample            | stream            | -     | Spring Cloud Stream   |
 | cloud-rocketmq-sample          | rocketmq-consumer | -     | RocketMQ Consumer     |
 
+
+![arch](arch.svg)
+
 ### 服务注册与发现演示
 首先安装部署nacos，请参考 nacos.io
 
