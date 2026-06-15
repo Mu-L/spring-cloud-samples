@@ -19,16 +19,3 @@ dubbo:
   tracing:
     enabled: true
 
-management:
-  otlp:
-    metrics:
-      export:
-        enabled: false
-  tracing:
-    sampling:
-      probability: 1.0
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-

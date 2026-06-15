@@ -9,9 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 @Slf4j
-@SpringBootApplication(exclude = {
-        org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
-})
+@SpringBootApplication
 public class DubboConsumerApplication {
 
     @DubboReference
