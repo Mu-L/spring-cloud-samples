@@ -32,6 +32,3 @@ management:
       exposure:
         include: health,info
 
-rocketmq:
-  producer:
-    endpoints: localhost:8081
