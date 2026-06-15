@@ -22,7 +22,7 @@ public class DubboConsumerApplication {
     @Bean
     CommandLineRunner runner() {
         return args -> {
-            String result =demoService.sayHello("lily");
+            String result = demoService.sayHello("lily");
             log.info("invoke dubbo provider, result: {}", result);
         };
     }
