@@ -25,23 +25,4 @@ public class ConsumerApplication {
     public static void main(String[] args) {
         SpringApplication.run(ConsumerApplication.class, args);
     }
-
-    @Bean
-    @LoadBalanced
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder.build();
-    }
-
-    @Bean
-    public RequestInterceptor feignTracingInterceptor(Tracer tracer) {
-        return template -> {
-            Span currentSpan = tracer.currentSpan();
-            if (currentSpan != null) {
-                String traceparent = String.format("00-%s-%s-01",
-                        currentSpan.context().traceId(),
-                        currentSpan.context().spanId());
-                template.header("traceparent", traceparent);
-            }
-        };
-    }
 }
