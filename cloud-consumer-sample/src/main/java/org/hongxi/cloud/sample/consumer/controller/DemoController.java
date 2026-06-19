@@ -5,7 +5,6 @@ import org.apache.dubbo.config.annotation.DubboReference;
 import org.hongxi.cloud.sample.api.DemoService;
 import org.hongxi.cloud.sample.consumer.client.ProviderClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,9 +31,6 @@ public class DemoController {
 
     @DubboReference(check = false)
     private DemoService demoService;
-
-    @Autowired
-    private CircuitBreakerFactory circuitBreakerFactory;
 
     @RequestMapping(value = "/hi", version = "1.0")
     public String hi(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
@@ -66,21 +62,5 @@ public class DemoController {
         log.info("traceparent: {}", traceparent);
         log.info("Consumer calling provider via Dubbo Reference, name: {}", name);
         return demoService.sayHello(name);
-    }
-
-    /**
-     * 慢调用熔断示例：通过 CircuitBreakerFactory 包装调用，
-     * 模拟 500ms 慢响应，触发 Sentinel 降级规则后返回 fallback 兜底值。
-     */
-    @GetMapping("/slow")
-    public String slow() {
-        return circuitBreakerFactory.create("slow").run(() -> {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            return "slow";
-        }, throwable -> "fallback");
     }
 }
