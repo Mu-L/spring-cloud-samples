@@ -50,7 +50,7 @@ public class EssentialConfiguration {
         public static SentinelClientHttpResponse handleException(
                 HttpRequest request, byte[] body, ClientHttpRequestExecution execution, BlockException e) {
             log.info("Oops: {}", e.getClass().getCanonicalName());
-            return new SentinelClientHttpResponse("custom block info");
+            return new SentinelClientHttpResponse("Blocked by Sentinel");
         }
     }
 }
