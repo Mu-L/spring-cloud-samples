@@ -20,7 +20,7 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by javahongxi on 2026/6/1.
@@ -50,13 +50,16 @@ public class EssentialConfiguration {
     }
 
     @Bean
-    public Customizer<SentinelCircuitBreakerFactory> defaultConfig() {
+    public Customizer<SentinelCircuitBreakerFactory> circuitBreakerFactory() {
         return factory -> {
             factory.configureDefault(
-                    id -> new SentinelConfigBuilder().resourceName(id)
-                            .rules(Collections.singletonList(new DegradeRule(id)
-                                    .setGrade(RuleConstant.DEGRADE_GRADE_RT).setCount(100)
-                                    .setTimeWindow(10)))
+                    resourceName -> new SentinelConfigBuilder()
+                            .resourceName(resourceName)
+                            .rules(List.of(new DegradeRule(resourceName)
+                                    .setGrade(RuleConstant.DEGRADE_GRADE_RT)
+                                    .setCount(100)
+                                    .setTimeWindow(10))
+                            )
                             .build());
         };
     }
