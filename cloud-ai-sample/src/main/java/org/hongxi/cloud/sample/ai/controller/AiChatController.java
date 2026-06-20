@@ -4,11 +4,8 @@ import org.hongxi.cloud.sample.ai.service.AiChatService;
 import org.hongxi.cloud.sample.ai.vo.PersonInfo;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
-
-import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/ai")
