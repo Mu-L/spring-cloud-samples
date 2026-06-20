@@ -1,5 +1,6 @@
 package org.hongxi.cloud.sample.ai.mcp;
 
+import org.hongxi.cloud.sample.ai.tool.WeatherTools;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
@@ -24,39 +25,33 @@ import org.springframework.context.annotation.Configuration;
 public class McpServerConfig {
 
     /**
-     * 注册天气工具
+     * 注册天气工具到 MCP Server
      * <p>
-     * 将 WeatherToolService 中所有 @Tool 方法注册到 MCP Server
+     * 复用 tool/WeatherTools，同时用于 Tool Calling 和 MCP 对外暴露
      * </p>
      */
     @Bean
-    public ToolCallbackProvider weatherTools(WeatherToolService weatherToolService) {
+    public ToolCallbackProvider mcpWeatherToolProvider(WeatherTools weatherTools) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(weatherToolService)
+                .toolObjects(weatherTools)
                 .build();
     }
 
     /**
-     * 注册系统工具
-     * <p>
-     * 将 SystemToolService 中所有 @Tool 方法注册到 MCP Server
-     * </p>
+     * 注册系统工具到 MCP Server
      */
     @Bean
-    public ToolCallbackProvider systemTools(SystemToolService systemToolService) {
+    public ToolCallbackProvider mcpSystemToolProvider(SystemToolService systemToolService) {
         return MethodToolCallbackProvider.builder()
                 .toolObjects(systemToolService)
                 .build();
     }
 
     /**
-     * 注册数据转换工具
-     * <p>
-     * 将 ConversionToolService 中所有 @Tool 方法注册到 MCP Server
-     * </p>
+     * 注册数据转换工具到 MCP Server
      */
     @Bean
-    public ToolCallbackProvider conversionTools(ConversionToolService conversionToolService) {
+    public ToolCallbackProvider mcpConversionToolProvider(ConversionToolService conversionToolService) {
         return MethodToolCallbackProvider.builder()
                 .toolObjects(conversionToolService)
                 .build();

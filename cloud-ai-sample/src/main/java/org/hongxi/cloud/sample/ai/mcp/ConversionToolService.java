@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * 数据转换工具服务
+ * 数据转换工具服务（MCP）
  * <p>
  * 提供常见数据格式转换功能，通过 MCP 协议对外暴露。
  * MCP Client 可以利用这些工具进行编码、解码、格式转换等操作。

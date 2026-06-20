@@ -9,3 +9,9 @@ spring:
         options:
           model: qwen-plus
           temperature: 0.7
+    # MCP Server 配置：启动后 /mcp 端点对外暴露 Tool 服务，可被 MCP Client 调用
+    mcp:
+      server:
+        name: spring-cloud-samples-mcp-server    # MCP 服务名称，Client 连接时使用
+        version: 1.0.0                            # 服务版本
+        type: SYNC                                # 运行模式：SYNC（同步）或 ASYNC（异步）

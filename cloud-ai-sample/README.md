@@ -13,9 +13,8 @@
 - ✅ 多模态图像处理（图片分析、OCR、图表分析、代码识别、多图对比）
 - ✅ Tool Calling 工具调用（@Tool 注解，Spring AI 2.0 新特性）
 - ✅ ReAct Agent 智能体（多步推理 + 工具调用）
+- ✅ MCP Server（通过 HTTP 端点暴露 Tool 服务，支持 Agent 互联）
 - ✅ 支持通义千问模型（兼容 OpenAI API）
-
-> 💡 **MCP 示例**：MCP Server 示例请参考 `cloud-ai-mcp-sample` 模块
 
 ## 快速开始
 
@@ -271,13 +270,17 @@ cloud-ai-sample/
 │   │   ├── AdvancedChatService.java          # 高级聊天服务
 │   │   └── VisionService.java                # 多模态图像处理服务
 │   ├── tool/
-│   │   ├── WeatherTools.java                 # 🔥 天气工具（@Tool 注解）
-│   │   ├── TimeTools.java                    # 🔥 时间工具（@Tool 注解）
-│   │   └── SearchTools.java                  # 🔥 搜索工具（@Tool 注解）
+│   │   ├── WeatherTools.java                 # 🔥 天气工具（@Tool 注解，供 AI 内部调用）
+│   │   ├── TimeTools.java                    # 🔥 时间工具（@Tool 注解，供 AI 内部调用）
+│   │   └── SearchTools.java                  # 🔥 搜索工具（@Tool 注解，供 AI 内部调用）
+│   ├── mcp/
+│   │   ├── McpServerConfig.java              # 🔥 MCP Server 配置（ToolCallbackProvider）
+│   │   ├── SystemToolService.java            # 🔥 系统工具（时间、计算、字符串处理）
+│   │   └── ConversionToolService.java        # 🔥 数据转换工具（URL/Base64 编解码）
 │   └── vo/
 │       └── PersonInfo.java                   # 结构化输出 VO（record）
 └── src/main/resources/
-    └── application.yml                        # 配置文件
+    └── application.yml                        # 配置文件（含 OpenAI + MCP Server 配置）
 ```
 
 ## 技术栈
@@ -322,26 +325,18 @@ cloud-ai-sample/
 5. 多模态功能（Vision）需要使用支持多模态的模型，如 `qwen3.7-plus`，可在 `application.yml` 中修改 model 配置
 6. 本项目默认使用通义千问 qwen-plus 模型，Base URL 为 `https://dashscope.aliyuncs.com/compatible-mode/v1`
 
-## MCP Server 模块
+## MCP Server
 
-本项目还包含一个独立的 **MCP Server** 模块 `cloud-ai-mcp-sample`，演示如何使用 Spring AI 2.0 的 MCP（Model Context Protocol）能力。
+本模块内置了 **MCP Server**，启动后 `/mcp` 端点对外暴露 Tool 服务，可被任何 MCP Client（如 AI 助手、IDE 插件）调用。
 
 **MCP 是什么？**
-- MCP 是 AI Agent 之间的标准化通信协议
-- MCP Server 对外暴露 Tool 服务，任何 MCP Client（如 AI 助手、IDE 插件）都可以调用
+- MCP（Model Context Protocol）是 AI Agent 之间的标准化通信协议
 - 类比：如果说 Tool Calling 是「AI 调本地方法」，MCP 就是「AI 调远程服务」
 
-**快速启动 MCP Server：**
-```bash
-cd cloud-ai-mcp-sample
-mvn spring-boot:run
-# 默认监听 8091 端口，MCP 端点为 /mcp
-```
-
 **MCP Server 提供的工具：**
-- 天气查询（`getWeatherByCity`、`getWeatherAdvice`）
-- 系统工具（`getCurrentDate`、`getCurrentTime`、`add`、`multiply`、`toUpperCase`、`reverseString`）
-- 数据转换（`urlEncode`、`urlDecode`、`base64Encode`、`base64Decode`、`wordCount`）
+- 天气查询（复用 `tool/WeatherTools`）：`getWeather`、`getWeatherForecast`
+- 系统工具（`mcp/SystemToolService`）：`getCurrentDate`、`getCurrentTime`、`add`、`multiply`、`toUpperCase`、`reverseString`
+- 数据转换（`mcp/ConversionToolService`）：`urlEncode`、`urlDecode`、`base64Encode`、`base64Decode`、`wordCount`
 
 ## 扩展阅读
 

@@ -9,7 +9,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 系统工具服务
+ * 系统工具服务（MCP）
  * <p>
  * 提供日期、时间、字符串处理等系统信息查询功能。
  * 这些工具通过 MCP 协议对外暴露，可被任何 MCP Client 调用。
