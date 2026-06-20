@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: grpc-client-sample
+  grpc:
+    client:
+      default-channel:
+        address: static://localhost:9090

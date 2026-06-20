@@ -15,6 +15,8 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-sample-api               | api               | -     | interface             |
 | cloud-nacos-config-sample      | config            | 8761  | Nacos Config          |
 | cloud-stream-sample            | stream            | -     | Spring Cloud Stream   |
+| cloud-grpc-server-sample       | grpc-server       | 9090  | gPPC Server           |
+| cloud-grpc-client-sample       | grpc-client       | -     | gPPC Client           |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
