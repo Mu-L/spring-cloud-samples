@@ -17,6 +17,20 @@
             <artifactId>spring-boot-starter-grpc-server</artifactId>
         </dependency>
 
+        <!--Spring Cloud 的服务发现需要 Web Server，且 Provider 端需要 actuator-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.hongxi</groupId>
             <artifactId>cloud-sample-api</artifactId>

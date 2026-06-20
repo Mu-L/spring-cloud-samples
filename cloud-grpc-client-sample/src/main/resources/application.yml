@@ -1,7 +1,16 @@
+server:
+  port: 8091
 spring:
   application:
     name: grpc-client-sample
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
   grpc:
     client:
       default-channel:
-        address: static://localhost:9090
+        address: discovery:///grpc-server-sample
