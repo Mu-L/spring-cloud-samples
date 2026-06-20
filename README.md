@@ -17,6 +17,7 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-stream-sample            | stream            | -            | Spring Cloud Stream         |
 | cloud-grpc-server-sample       | grpc-server       | 9090<br>8090 | gPPC Server<br>(8090是Web端口) |
 | cloud-grpc-client-sample       | grpc-client       | 8091         | gPPC Client<br>(8091是Web端口) |
+| cloud-ai-sample                | ai                | 8080         | Spring AI                   |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
