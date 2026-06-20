@@ -11,7 +11,11 @@
 - ✅ Few-shot Prompting 示例引导
 - ✅ 多轮对话（上下文维护）
 - ✅ 多模态图像处理（图片分析、OCR、图表分析、代码识别、多图对比）
+- ✅ Tool Calling 工具调用（@Tool 注解，Spring AI 2.0 新特性）
+- ✅ ReAct Agent 智能体（多步推理 + 工具调用）
 - ✅ 支持通义千问模型（兼容 OpenAI API）
+
+> 💡 **MCP 示例**：MCP Server 示例请参考 `cloud-ai-mcp-sample` 模块
 
 ## 快速开始
 
@@ -193,6 +197,63 @@ curl -X POST "http://localhost:8090/ai/vision/code-from-image?imageUrl=https://e
 curl -X POST "http://localhost:8090/ai/vision/compare?imageUrl1=https://example.com/img1.jpg&imageUrl2=https://example.com/img2.jpg"
 ```
 
+### 14. Tool Calling - 天气查询
+
+> ⭐ **Spring AI 2.0 新特性**：AI 模型根据用户问题自动决定是否调用工具方法
+
+**请求：**
+```bash
+curl "http://localhost:8090/ai/tool/weather?question=北京今天的天气怎么样？"
+```
+
+**工作原理：**
+1. AI 分析问题，识别出需要查询天气
+2. AI 自动生成工具调用：`getWeather("北京")`
+3. Spring AI 执行 `WeatherTools.getWeather()` 方法
+4. AI 基于返回的天气数据生成自然语言回答
+
+### 15. Tool Calling - 时间查询
+
+**请求：**
+```bash
+curl "http://localhost:8090/ai/tool/time?question=现在几点了？"
+curl "http://localhost:8090/ai/tool/time?question=距离2027年春节还有多少天？"
+```
+
+### 16. Tool Calling - 智能助手（多工具自动选择）
+
+AI 会根据问题自动选择调用哪些工具：
+
+**请求：**
+```bash
+# AI 自动调用 WeatherTools
+curl "http://localhost:8090/ai/tool/ask?question=帮我查一下上海的天气"
+
+# AI 自动调用 TimeTools
+curl "http://localhost:8090/ai/tool/ask?question=现在几点了？"
+
+# AI 自动调用 SearchTools
+curl "http://localhost:8090/ai/tool/ask?question=什么是Spring AI？"
+```
+
+### 17. ReAct Agent - 智能问答
+
+> ⭐ **ReAct (Reasoning + Acting)** 模式：AI 结合推理和工具调用解决复杂问题
+
+**请求：**
+```bash
+curl "http://localhost:8090/ai/agent/chat?question=北京今天的天气怎么样？适合出门吗？"
+```
+
+### 18. ReAct Agent - 复杂任务处理
+
+Agent 会将复杂问题拆解，逐步调用工具获取所需信息，最终整合出完整答案。
+
+**请求：**
+```bash
+curl "http://localhost:8090/ai/agent/complex-task?task=我想去杭州旅游，帮我查一下杭州的天气，以及介绍一下杭州"
+```
+
 ## 项目结构
 
 ```
@@ -202,11 +263,17 @@ cloud-ai-sample/
 │   ├── controller/
 │   │   ├── AiChatController.java             # 基础聊天接口（对话、流式、结构化输出）
 │   │   ├── AdvancedChatController.java       # 高级聊天接口（System Message、Few-shot、多轮对话）
-│   │   └── VisionController.java             # 多模态图像处理接口
+│   │   ├── VisionController.java             # 多模态图像处理接口
+│   │   ├── ToolCallingController.java        # 🔥 Tool Calling 工具调用接口
+│   │   └── ReactAgentController.java         # 🔥 ReAct Agent 智能体接口
 │   ├── service/
 │   │   ├── AiChatService.java                # 基础聊天服务
 │   │   ├── AdvancedChatService.java          # 高级聊天服务
 │   │   └── VisionService.java                # 多模态图像处理服务
+│   ├── tool/
+│   │   ├── WeatherTools.java                 # 🔥 天气工具（@Tool 注解）
+│   │   ├── TimeTools.java                    # 🔥 时间工具（@Tool 注解）
+│   │   └── SearchTools.java                  # 🔥 搜索工具（@Tool 注解）
 │   └── vo/
 │       └── PersonInfo.java                   # 结构化输出 VO（record）
 └── src/main/resources/
@@ -232,7 +299,17 @@ cloud-ai-sample/
 5. **Few-shot Prompting** - 在 System Message 中提供示例，引导 AI 按照期望格式输出
 6. **多轮对话** - 通过 `messages()` 方法传入历史消息维护上下文
 7. **多模态支持** - 通过 `media()` 方法传入图片资源，实现图像理解和分析
-8. **构造函数注入** - 推荐使用构造函数注入 `ChatClient.Builder`
+8. **Tool Calling（@Tool）** - 🔥 2.0 新特性：通过 `@Tool` 注解定义工具方法，AI 自动决定是否调用
+9. **ReAct Agent** - 🔥 2.0 新特性：结合推理和工具调用的智能体模式
+10. **构造函数注入** - 推荐使用构造函数注入 `ChatClient.Builder`
+
+### Tool Calling vs 1.x 对比
+
+| 特性 | Spring AI 1.x | Spring AI 2.0 |
+|------|-------------|---------------|
+| 工具注解 | `@AiFunction`（限制多） | `@Tool`（支持 POJO、可空值、嵌套） |
+| 注册方式 | 手动注册 Function | `.tools()` 链式调用，自动发现 |
+| Agent 模式 | 不原生支持 | 完整 ReAct Agent 支持 |
 
 ## 注意事项
 
@@ -245,9 +322,31 @@ cloud-ai-sample/
 5. 多模态功能（Vision）需要使用支持多模态的模型，如 `qwen3.7-plus`，可在 `application.yml` 中修改 model 配置
 6. 本项目默认使用通义千问 qwen-plus 模型，Base URL 为 `https://dashscope.aliyuncs.com/compatible-mode/v1`
 
+## MCP Server 模块
+
+本项目还包含一个独立的 **MCP Server** 模块 `cloud-ai-mcp-sample`，演示如何使用 Spring AI 2.0 的 MCP（Model Context Protocol）能力。
+
+**MCP 是什么？**
+- MCP 是 AI Agent 之间的标准化通信协议
+- MCP Server 对外暴露 Tool 服务，任何 MCP Client（如 AI 助手、IDE 插件）都可以调用
+- 类比：如果说 Tool Calling 是「AI 调本地方法」，MCP 就是「AI 调远程服务」
+
+**快速启动 MCP Server：**
+```bash
+cd cloud-ai-mcp-sample
+mvn spring-boot:run
+# 默认监听 8091 端口，MCP 端点为 /mcp
+```
+
+**MCP Server 提供的工具：**
+- 天气查询（`getWeatherByCity`、`getWeatherAdvice`）
+- 系统工具（`getCurrentDate`、`getCurrentTime`、`add`、`multiply`、`toUpperCase`、`reverseString`）
+- 数据转换（`urlEncode`、`urlDecode`、`base64Encode`、`base64Decode`、`wordCount`）
+
 ## 扩展阅读
 
 - [Spring AI 官方文档](https://docs.spring.io/spring-ai/reference/)
 - [Spring AI 2.0 新特性](https://spring.io/blog/2026/05/spring-ai-2-0-ga)
+- [MCP 协议规范](https://modelcontextprotocol.io/)
 - [通义千问 DashScope 文档](https://help.aliyun.com/zh/model-studio/)
 - [OpenAI API 文档](https://platform.openai.com/docs/api-reference)

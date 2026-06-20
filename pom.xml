@@ -30,6 +30,7 @@
         <module>cloud-grpc-server-sample</module>
         <module>cloud-grpc-client-sample</module>
         <module>cloud-ai-sample</module>
+        <module>cloud-ai-mcp-sample</module>
     </modules>
 
     <properties>
