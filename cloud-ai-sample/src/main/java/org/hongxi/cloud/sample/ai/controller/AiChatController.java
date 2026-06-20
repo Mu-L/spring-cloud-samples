@@ -2,8 +2,13 @@ package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.AiChatService;
 import org.hongxi.cloud.sample.ai.vo.PersonInfo;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/ai")
@@ -26,9 +31,12 @@ public class AiChatController {
     /**
      * 流式聊天接口（SSE）
      */
-    @GetMapping(value = "/chat/stream", produces = "text/event-stream;charset=UTF-8")
-    public Flux<String> chatStream(@RequestParam String message) {
-        return aiChatService.chatStream(message);
+    @GetMapping("/chat/stream")
+    public ResponseEntity<Flux<String>> chatStream(@RequestParam String message) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("text/event-stream;charset=UTF-8"))
+                .header("Cache-Control", "no-cache")
+                .body(aiChatService.chatStream(message));
     }
 
     /**
