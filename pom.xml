@@ -29,17 +29,25 @@
         <module>cloud-consumer-dubbo-sample</module>
         <module>cloud-grpc-server-sample</module>
         <module>cloud-grpc-client-sample</module>
+        <module>cloud-ai-sample</module>
     </modules>
 
     <properties>
+        <spring-ai.version>2.0.0</spring-ai.version>
         <spring-cloud.version>2025.1.2</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.1.0.0</spring-cloud-alibaba.version>
         <dubbo.version>3.3.6</dubbo.version>
-        <protobuf-java.version>4.34.1</protobuf-java.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -64,12 +72,6 @@
                 <groupId>org.apache.dubbo</groupId>
                 <artifactId>dubbo-registry-nacos</artifactId>
                 <version>${dubbo.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuf-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
