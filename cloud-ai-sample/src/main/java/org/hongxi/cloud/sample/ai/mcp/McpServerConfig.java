@@ -1,5 +1,9 @@
 package org.hongxi.cloud.sample.ai.mcp;
 
+import org.hongxi.cloud.sample.ai.tool.ConversionTools;
+import org.hongxi.cloud.sample.ai.tool.SearchTools;
+import org.hongxi.cloud.sample.ai.tool.SystemTools;
+import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
@@ -14,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
  * </p>
  * <p>
  * 这是 Spring AI 2.0 MCP 的核心配置方式：
- * 1. 使用 @Tool 注解标注工具方法
+ * 1. 使用 @Tool 注解标注工具方法（统一放在 tool 包下）
  * 2. 使用 MethodToolCallbackProvider 将工具注册到 MCP Server
  * 3. MCP Client 通过 /mcp 端点自动发现并调用这些工具
  * </p>
@@ -25,35 +29,20 @@ import org.springframework.context.annotation.Configuration;
 public class McpServerConfig {
 
     /**
-     * 注册天气工具到 MCP Server
+     * 将所有工具统一注册到 MCP Server
      * <p>
-     * 复用 tool/WeatherTools，同时用于 Tool Calling 和 MCP 对外暴露
+     * 复用 tool 包下的工具类，同时用于内部 Tool Calling 和 MCP 对外暴露。
      * </p>
      */
     @Bean
-    public ToolCallbackProvider mcpWeatherToolProvider(WeatherTools weatherTools) {
+    public ToolCallbackProvider mcpToolProvider(
+            WeatherTools weatherTools,
+            TimeTools timeTools,
+            SearchTools searchTools,
+            SystemTools systemTools,
+            ConversionTools conversionTools) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(weatherTools)
-                .build();
-    }
-
-    /**
-     * 注册系统工具到 MCP Server
-     */
-    @Bean
-    public ToolCallbackProvider mcpSystemToolProvider(SystemToolService systemToolService) {
-        return MethodToolCallbackProvider.builder()
-                .toolObjects(systemToolService)
-                .build();
-    }
-
-    /**
-     * 注册数据转换工具到 MCP Server
-     */
-    @Bean
-    public ToolCallbackProvider mcpConversionToolProvider(ConversionToolService conversionToolService) {
-        return MethodToolCallbackProvider.builder()
-                .toolObjects(conversionToolService)
+                .toolObjects(weatherTools, timeTools, searchTools, systemTools, conversionTools)
                 .build();
     }
 }

@@ -1,55 +1,20 @@
-package org.hongxi.cloud.sample.ai.mcp;
+package org.hongxi.cloud.sample.ai.tool;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import org.springframework.stereotype.Component;
 
 /**
- * 系统工具服务（MCP）
+ * 通用工具类
  * <p>
- * 提供日期、时间、字符串处理等系统信息查询功能。
- * 这些工具通过 MCP 协议对外暴露，可被任何 MCP Client 调用。
+ * 提供数学运算和字符串处理等通用功能，既可用于内部 AI Tool Calling，
+ * 也可通过 MCP 协议对外暴露给 MCP Client 调用。
  * </p>
  *
  * @author hongxi
  */
-@Service
-public class SystemToolService {
-
-    /**
-     * 获取当前日期
-     *
-     * @return 当前日期字符串
-     */
-    @Tool(description = "获取当前日期，格式为 yyyy-MM-dd")
-    public String getCurrentDate() {
-        return LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-    }
-
-    /**
-     * 获取当前时间
-     *
-     * @return 当前时间字符串
-     */
-    @Tool(description = "获取当前时间，格式为 HH:mm:ss")
-    public String getCurrentTime() {
-        return LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-    }
-
-    /**
-     * 获取当前日期和时间
-     *
-     * @return 当前日期时间字符串
-     */
-    @Tool(description = "获取当前的日期和时间，格式为 yyyy-MM-dd HH:mm:ss")
-    public String getCurrentDateTime() {
-        return LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE) + " " +
-                LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-    }
+@Component
+public class SystemTools {
 
     /**
      * 计算两个数的和

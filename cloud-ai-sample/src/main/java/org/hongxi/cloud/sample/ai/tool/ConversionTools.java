@@ -1,8 +1,8 @@
-package org.hongxi.cloud.sample.ai.mcp;
+package org.hongxi.cloud.sample.ai.tool;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -10,16 +10,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * 数据转换工具服务（MCP）
+ * 数据转换工具类
  * <p>
- * 提供常见数据格式转换功能，通过 MCP 协议对外暴露。
- * MCP Client 可以利用这些工具进行编码、解码、格式转换等操作。
+ * 提供常见数据格式转换功能，既可用于内部 AI Tool Calling，
+ * 也可通过 MCP 协议对外暴露给 MCP Client 调用。
  * </p>
  *
  * @author hongxi
  */
-@Service
-public class ConversionToolService {
+@Component
+public class ConversionTools {
 
     /**
      * URL 编码

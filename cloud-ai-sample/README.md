@@ -270,13 +270,13 @@ cloud-ai-sample/
 │   │   ├── AdvancedChatService.java          # 高级聊天服务
 │   │   └── VisionService.java                # 多模态图像处理服务
 │   ├── tool/
-│   │   ├── WeatherTools.java                 # 🔥 天气工具（@Tool 注解，供 AI 内部调用）
-│   │   ├── TimeTools.java                    # 🔥 时间工具（@Tool 注解，供 AI 内部调用）
-│   │   └── SearchTools.java                  # 🔥 搜索工具（@Tool 注解，供 AI 内部调用）
+│   │   ├── WeatherTools.java                 # 🔥 天气工具（@Tool 注解）
+│   │   ├── TimeTools.java                    # 🔥 时间工具（@Tool 注解）
+│   │   ├── SearchTools.java                  # 🔥 搜索工具（@Tool 注解）
+│   │   ├── SystemTools.java                  # 🔥 通用工具（数学运算、字符串处理）
+│   │   └── ConversionTools.java              # 🔥 数据转换工具（URL/Base64 编解码）
 │   ├── mcp/
-│   │   ├── McpServerConfig.java              # 🔥 MCP Server 配置（ToolCallbackProvider）
-│   │   ├── SystemToolService.java            # 🔥 系统工具（时间、计算、字符串处理）
-│   │   └── ConversionToolService.java        # 🔥 数据转换工具（URL/Base64 编解码）
+│   │   └── McpServerConfig.java              # 🔥 MCP Server 配置（统一注册所有工具）
 │   └── vo/
 │       └── PersonInfo.java                   # 结构化输出 VO（record）
 └── src/main/resources/
@@ -306,14 +306,6 @@ cloud-ai-sample/
 9. **ReAct Agent** - 🔥 2.0 新特性：结合推理和工具调用的智能体模式
 10. **构造函数注入** - 推荐使用构造函数注入 `ChatClient.Builder`
 
-### Tool Calling vs 1.x 对比
-
-| 特性 | Spring AI 1.x | Spring AI 2.0 |
-|------|-------------|---------------|
-| 工具注解 | `@AiFunction`（限制多） | `@Tool`（支持 POJO、可空值、嵌套） |
-| 注册方式 | 手动注册 Function | `.tools()` 链式调用，自动发现 |
-| Agent 模式 | 不原生支持 | 完整 ReAct Agent 支持 |
-
 ## 注意事项
 
 ⚠️ **重要提示：**
@@ -327,16 +319,37 @@ cloud-ai-sample/
 
 ## MCP Server
 
-本模块内置了 **MCP Server**，启动后 `/mcp` 端点对外暴露 Tool 服务，可被任何 MCP Client（如 AI 助手、IDE 插件）调用。
+本模块内置了 **MCP Server**，启动后通过 `/sse` 端点对外暴露 Tool 服务，可被任何 MCP Client（如 AI 助手、IDE 插件）调用。
 
 **MCP 是什么？**
 - MCP（Model Context Protocol）是 AI Agent 之间的标准化通信协议
 - 类比：如果说 Tool Calling 是「AI 调本地方法」，MCP 就是「AI 调远程服务」
 
+**连接配置：**
+
+在 MCP Client 中添加以下配置即可连接到本服务：
+
+```json
+{
+  "mcpServers": {
+    "cloud-ai-mcp-server": {
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
 **MCP Server 提供的工具：**
-- 天气查询（复用 `tool/WeatherTools`）：`getWeather`、`getWeatherForecast`
-- 系统工具（`mcp/SystemToolService`）：`getCurrentDate`、`getCurrentTime`、`add`、`multiply`、`toUpperCase`、`reverseString`
-- 数据转换（`mcp/ConversionToolService`）：`urlEncode`、`urlDecode`、`base64Encode`、`base64Decode`、`wordCount`
+
+所有工具类统一放在 `tool/` 包下，既用于内部 AI Tool Calling，也通过 MCP 对外暴露：
+
+| 工具类 | 工具方法 |
+|--------|----------|
+| `WeatherTools` | `getWeather`、`getWeatherForecast` |
+| `TimeTools` | `getCurrentTime`、`getCurrentDate`、`daysUntil` |
+| `SearchTools` | `search`、`getLatestNews` |
+| `SystemTools` | `add`、`multiply`、`toUpperCase`、`toLowerCase`、`reverseString` |
+| `ConversionTools` | `urlEncode`、`urlDecode`、`base64Encode`、`base64Decode`、`stringLength`、`wordCount` |
 
 ## 扩展阅读
 
