@@ -3,20 +3,20 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 以生产环境可参考为目标，打造一个完整的 Spring Cloud 示例项目。
 
 ### 模块介绍
-| 模块                             | 简称                | 端口    | 说明                    |
-|--------------------------------|-------------------|-------|-----------------------|
-| cloud-gateway-sample           | gateway           | 8764  | Spring Cloud Gateway  |
-| cloud-consumer-sample          | consumer          | 8766  | Web Consumer          |
-| cloud-provider-sample          | provider          | 8765  | Web Provider          |
-| cloud-consumer-reactive-sample | consumer-reactive | 8763  | Reactive Web Consumer |
-| cloud-provider-reactive-sample | provider-reactive | 8762  | Reactive Web Provider |
-| cloud-provider-dubbo-sample    | provider-dubbo    | 50051 | Dubbo Provider        |
-| cloud-consumer-dubbo-sample    | consumer-dubbo    | -     | Dubbo Consumer        |
-| cloud-sample-api               | api               | -     | interface             |
-| cloud-nacos-config-sample      | config            | 8761  | Nacos Config          |
-| cloud-stream-sample            | stream            | -     | Spring Cloud Stream   |
-| cloud-grpc-server-sample       | grpc-server       | 9090  | gPPC Server           |
-| cloud-grpc-client-sample       | grpc-client       | -     | gPPC Client           |
+| 模块                             | 简称                | 端口           | 说明                          |
+|--------------------------------|-------------------|--------------|-----------------------------|
+| cloud-gateway-sample           | gateway           | 8764         | Spring Cloud Gateway        |
+| cloud-consumer-sample          | consumer          | 8766         | Web Consumer                |
+| cloud-provider-sample          | provider          | 8765         | Web Provider                |
+| cloud-consumer-reactive-sample | consumer-reactive | 8763         | Reactive Web Consumer       |
+| cloud-provider-reactive-sample | provider-reactive | 8762         | Reactive Web Provider       |
+| cloud-provider-dubbo-sample    | provider-dubbo    | 50051        | Dubbo Provider              |
+| cloud-consumer-dubbo-sample    | consumer-dubbo    | -            | Dubbo Consumer              |
+| cloud-sample-api               | api               | -            | interface                   |
+| cloud-nacos-config-sample      | config            | 8761         | Nacos Config                |
+| cloud-stream-sample            | stream            | -            | Spring Cloud Stream         |
+| cloud-grpc-server-sample       | grpc-server       | 9090<br>8090 | gPPC Server<br>(8090是Web端口) |
+| cloud-grpc-client-sample       | grpc-client       | 8091         | gPPC Client<br>(8091是Web端口) |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
