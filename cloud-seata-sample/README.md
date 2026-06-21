@@ -86,10 +86,6 @@ seata:
       password: '7fDJZBbiLzO2'
 ```
 
-```shell
-sh seata-server.sh
-```
-
 ### 运行示例
 
 依次启动以下四个应用的主类：
