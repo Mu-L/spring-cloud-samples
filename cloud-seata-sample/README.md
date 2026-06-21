@@ -97,12 +97,13 @@ seata:
 
 启动完成后，通过 GET 请求访问以下接口：
 
+通过 RestTemplate 调用
+```shell
+curl http://127.0.0.1:18081/seata/rest
 ```
-# 通过 FeignClient 调用
-http://127.0.0.1:18081/seata/feign
-
-# 通过 RestTemplate 调用
-http://127.0.0.1:18081/seata/rest
+通过 FeignClient 调用
+```shell
+curl http://127.0.0.1:18081/seata/feign
 ```
 
 返回结果说明：
@@ -118,7 +119,7 @@ http://127.0.0.1:18081/seata/rest
 ```
 Storage Service Begin ... xid: 192.168.x.x:8091:xxxx
 Order Service Begin ... xid: 192.168.x.x:8091:xxxx
-Account Service ... xid: 192.168.x.x:8091:xxxx
+Account Service Begin ... xid: 192.168.x.x:8091:xxxx
 ```
 
 #### 数据一致性
