@@ -59,6 +59,29 @@ service.vgroupMapping.storage-service-tx-group=default
 
 下载 [Seata Server](https://seata.apache.org/zh-cn/download/seata-server)，修改 `conf/application.yml`，确保 config 和 registry 均使用 Nacos，且 `group` 设置与示例应用一致（`SEATA_GROUP`）。
 
+```yaml
+seata:
+  config:
+    type: nacos 
+    nacos:
+      server-addr: 127.0.0.1:8848
+      username: 'nacos'
+      password: '7fDJZBbiLzO2'
+      group: SEATA_GROUP
+      namespace: public
+      data-id: seata.properties
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      group: SEATA_GROUP
+      namespace: public
+      cluster: default
+      server-addr: 127.0.0.1:8848
+      username: 'nacos'
+      password: '7fDJZBbiLzO2'
+```
+
 ```shell
 sh seata-server.sh
 ```
