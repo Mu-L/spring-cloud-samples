@@ -1,0 +1,51 @@
+base:
+  config:
+    mdb:
+      hostname: 127.0.0.1
+      dbname: seata
+      port: 3306
+      username: 'root'
+      password: 'root1234'
+
+server:
+  port: 18083
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: 'nacos'
+        password: '7fDJZBbiLzO2'
+  application:
+    name: order-service
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    name: storageDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${base.config.mdb.hostname}:${base.config.mdb.port}/${base.config.mdb.dbname}?useSSL=false&serverTimezone=UTC
+    username: ${base.config.mdb.username}
+    password: ${base.config.mdb.password}
+
+seata:
+  enabled: true
+  application-id: ${spring.application.name}
+  tx-service-group: ${spring.application.name}-tx-group
+  config:
+    type: nacos
+    nacos:
+      serverAddr: 127.0.0.1:8848
+      dataId: "seata.properties"
+      group: SEATA_GROUP
+      username: 'nacos'
+      password: '7fDJZBbiLzO2'
+  registry:
+    type: nacos
+    nacos:
+      cluster: default
+      group: SEATA_GROUP
+      application: seata-server
+      server-addr: 127.0.0.1:8848
+      username: 'nacos'
+      password: '7fDJZBbiLzO2'
