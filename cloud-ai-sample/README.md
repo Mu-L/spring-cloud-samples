@@ -11,10 +11,10 @@
 - ✅ Few-shot Prompting 示例引导
 - ✅ 多轮对话（上下文维护）
 - ✅ 多模态图像处理（图片分析、OCR、图表分析、代码识别、多图对比）
-- ✅ Tool Calling 工具调用（@Tool 注解，Spring AI 2.0 新特性）
+- ✅ Tool Calling 工具调用
 - ✅ ReAct Agent 智能体（多步推理 + 工具调用）
 - ✅ MCP Server（通过 HTTP 端点暴露 Tool 服务，支持 Agent 互联）
-- ✅ 支持千问模型（兼容 OpenAI API）
+- ✅ 支持千问大模型（兼容 OpenAI API）
 
 ## 快速开始
 
@@ -39,14 +39,20 @@ export OPENAI_API_KEY=your-api-key-here
 **配置示例：**
 ```yaml
 spring:
+  application:
+    name: ai-sample
   ai:
     openai:
+      api-key: ${OPENAI_API_KEY}
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
         options:
           model: qwen-plus
+          temperature: 0.7
 ```
-如果要测试多模态，请将model设置为支持的模型，如`qwen3.7-plus`
+注意：
+1. 2.0 版本的 base-url 带了 `/v1`
+2. 如果要测试多模态，请将model设置为支持的模型，如`qwen3.7-plus`
 
 ### 3. 启动应用
 
@@ -158,7 +164,8 @@ curl -X POST "http://localhost:8080/ai/advanced/creative?message=写一首关于
 
 **请求：**
 ```bash
-curl -X POST "http://localhost:8080/ai/vision/analyze-url?imageUrl=https://example.com/photo.jpg&prompt=请描述这张图片"
+curl -X POST "http://localhost:8080/ai/vision/analyze-url" \
+  -d "imageUrl=https://img1.baidu.com/it/u=3224850734,2174446166&fm=253&fmt=auto&app=120&f=JPEG?w=500&h=837"
 ```
 
 ### 9. 多模态 - 上传图片分析
@@ -172,33 +179,36 @@ curl -X POST -F "file=@/path/to/image.jpg" "http://localhost:8080/ai/vision/anal
 
 **请求：**
 ```bash
-curl -X POST "http://localhost:8080/ai/vision/ocr?imageUrl=https://example.com/text-image.png"
+curl -X POST "http://localhost:8080/ai/vision/ocr" \
+  -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
 ```
 
 ### 11. 多模态 - 图表分析
 
 **请求：**
 ```bash
-curl -X POST "http://localhost:8080/ai/vision/chart-analysis?imageUrl=https://example.com/chart.png"
+curl -X POST "http://localhost:8080/ai/vision/chart-analysis" \
+  -d "imageUrl=https://img0.baidu.com/it/u=3716881902,3785738263&fm=253&app=138&f=JPEG?w=684&h=912"
 ```
 
 ### 12. 多模态 - 代码截图转代码
 
 **请求：**
 ```bash
-curl -X POST "http://localhost:8080/ai/vision/code-from-image?imageUrl=https://example.com/code-screenshot.png"
+curl -X POST "http://localhost:8080/ai/vision/code-from-image" \
+  -d "imageUrl=https://img0.baidu.com/it/u=1426566285,94536163&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=667"
 ```
 
 ### 13. 多模态 - 多图片对比
 
 **请求：**
 ```bash
-curl -X POST "http://localhost:8080/ai/vision/compare?imageUrl1=https://example.com/img1.jpg&imageUrl2=https://example.com/img2.jpg"
+curl -X POST "http://localhost:8080/ai/vision/compare" \
+  -d "imageUrl1=https://img2.baidu.com/it/u=2499517816,3465890141&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=1200" \
+  -d "imageUrl2=https://img2.baidu.com/it/u=748716099,4246587362&fm=253&fmt=auto&app=120&f=JPEG?w=500&h=753"
 ```
 
 ### 14. Tool Calling - 天气查询
-
-> ⭐ **Spring AI 2.0 新特性**：AI 模型根据用户问题自动决定是否调用工具方法
 
 **请求：**
 ```bash
@@ -302,9 +312,8 @@ cloud-ai-sample/
 5. **Few-shot Prompting** - 在 System Message 中提供示例，引导 AI 按照期望格式输出
 6. **多轮对话** - 通过 `messages()` 方法传入历史消息维护上下文
 7. **多模态支持** - 通过 `media()` 方法传入图片资源，实现图像理解和分析
-8. **Tool Calling（@Tool）** - 🔥 2.0 新特性：通过 `@Tool` 注解定义工具方法，AI 自动决定是否调用
-9. **ReAct Agent** - 🔥 2.0 新特性：结合推理和工具调用的智能体模式
-10. **构造函数注入** - 推荐使用构造函数注入 `ChatClient.Builder`
+8. **Tool Calling（@Tool）** - 通过 `@Tool` 注解定义工具方法，AI 自动决定是否调用
+9. **ReAct Agent** - 结合推理和工具调用的智能体模式
 
 ## 注意事项
 
