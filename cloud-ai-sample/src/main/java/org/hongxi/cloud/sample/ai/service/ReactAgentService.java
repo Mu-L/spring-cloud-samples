@@ -1,9 +1,10 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +29,10 @@ import java.util.Map;
  *
  * @author hongxi
  */
-@Slf4j
 @Service
 public class ReactAgentService {
+
+    private static final Logger log = LoggerFactory.getLogger(ReactAgentService.class);
 
     private final ChatClient chatClient;
     private final WeatherTools weatherTools;

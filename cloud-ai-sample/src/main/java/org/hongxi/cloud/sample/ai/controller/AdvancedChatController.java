@@ -1,7 +1,8 @@
 package org.hongxi.cloud.sample.ai.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import org.hongxi.cloud.sample.ai.service.AdvancedChatService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,10 +16,11 @@ import java.util.Map;
  *
  * @author hongxi
  */
-@Slf4j
 @RestController
 @RequestMapping("/ai/advanced")
 public class AdvancedChatController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdvancedChatController.class);
 
     private final AdvancedChatService advancedChatService;
 

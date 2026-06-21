@@ -1,6 +1,7 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -20,9 +21,10 @@ import java.util.Map;
  *
  * @author hongxi
  */
-@Slf4j
 @Service
 public class AdvancedChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdvancedChatService.class);
 
     private final ChatClient chatClient;
 

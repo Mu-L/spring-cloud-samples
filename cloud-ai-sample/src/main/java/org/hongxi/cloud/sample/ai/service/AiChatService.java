@@ -1,15 +1,17 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.hongxi.cloud.sample.ai.vo.PersonInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-@Slf4j
 @Service
 public class AiChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiChatService.class);
 
     private final ChatClient chatClient;
 

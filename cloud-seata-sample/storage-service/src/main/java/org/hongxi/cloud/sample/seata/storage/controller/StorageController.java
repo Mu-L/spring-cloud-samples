@@ -1,16 +1,18 @@
 package org.hongxi.cloud.sample.seata.storage.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.seata.core.context.RootContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
 @RestController
 public class StorageController {
+
+    private static final Logger log = LoggerFactory.getLogger(StorageController.class);
 
     private static final String SUCCESS = "SUCCESS";
 

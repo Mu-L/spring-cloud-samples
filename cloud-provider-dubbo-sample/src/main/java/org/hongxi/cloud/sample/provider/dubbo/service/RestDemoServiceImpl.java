@@ -1,18 +1,20 @@
 package org.hongxi.cloud.sample.provider.dubbo.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.apache.dubbo.remoting.http12.HttpMethods;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.dubbo.remoting.http12.rest.Mapping;
 import org.apache.dubbo.remoting.http12.rest.Param;
 import org.apache.dubbo.remoting.http12.rest.ParamType;
 import org.hongxi.cloud.sample.api.EchoRequest;
 import org.hongxi.cloud.sample.api.RestDemoService;
 
-@Slf4j
 @Mapping("/api")
 @DubboService
 public class RestDemoServiceImpl implements RestDemoService {
+
+    private static final Logger log = LoggerFactory.getLogger(RestDemoServiceImpl.class);
     /**
      * GET /api/hello/{name} —— PathVariable 示例
      * curl http://localhost:50051/api/hello/lily
