@@ -12,10 +12,7 @@ public class DatabaseConfiguration {
     @Bean
     public JdbcTemplate jdbcTemplate(DataSource dataSource) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-
         jdbcTemplate.execute("TRUNCATE TABLE order_tbl");
-
         return jdbcTemplate;
     }
-
 }

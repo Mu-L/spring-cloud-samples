@@ -2,17 +2,15 @@ server:
   port: 18081
 
 spring:
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-        username: 'nacos'
-        password: '7fDJZBbiLzO2'
-    loadbalancer:
-      ribbon:
-        enabled: true
   application:
     name: business-service
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
 
 seata:
   enabled: true
@@ -36,12 +34,6 @@ seata:
       username: 'nacos'
       password: '7fDJZBbiLzO2'
 
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 10000
-        readTimeout: 10000
 logging:
   level:
     io:

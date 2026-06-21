@@ -3,8 +3,6 @@ package org.hongxi.cloud.sample.seata.business;
 import org.hongxi.cloud.sample.seata.business.BusinessApplication.OrderService;
 import org.hongxi.cloud.sample.seata.business.BusinessApplication.StorageService;
 import org.apache.seata.spring.annotation.GlobalTransactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,8 +16,6 @@ import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class HomeController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(HomeController.class);
 
     private static final String SUCCESS = "SUCCESS";
 
@@ -45,34 +41,33 @@ public class HomeController {
     }
 
     @GlobalTransactional(timeoutMills = 300000, name = "spring-cloud-demo-tx")
-    @GetMapping(value = "/seata/rest", produces = "application/json")
+    @GetMapping("/seata/rest")
     public String rest() {
 
         String result = restTemplate.getForObject(
-                "http://127.0.0.1:18082/storage/" + COMMODITY_CODE + "/" + ORDER_COUNT,
+                "http://storage-service/storage/" + COMMODITY_CODE + "/" + ORDER_COUNT,
                 String.class);
 
         if (!SUCCESS.equals(result)) {
             throw new RuntimeException();
         }
 
-        String url = "http://127.0.0.1:18083/order";
+        String url = "http://order-service/order";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("userId", USER_ID);
         map.add("commodityCode", COMMODITY_CODE);
         map.add("orderCount", ORDER_COUNT + "");
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(
                 map, headers);
 
         ResponseEntity<String> response;
         try {
             response = restTemplate.postForEntity(url, request, String.class);
-        }
-        catch (Exception exx) {
+        } catch (Exception exx) {
             throw new RuntimeException("mock error");
         }
         result = response.getBody();
@@ -84,9 +79,8 @@ public class HomeController {
     }
 
     @GlobalTransactional(timeoutMills = 300000, name = "spring-cloud-demo-tx")
-    @GetMapping(value = "/seata/feign", produces = "application/json")
+    @GetMapping("/seata/feign")
     public String feign() {
-
         String result = storageService.storage(COMMODITY_CODE, ORDER_COUNT);
 
         if (!SUCCESS.equals(result)) {
@@ -98,9 +92,7 @@ public class HomeController {
         if (!SUCCESS.equals(result)) {
             throw new RuntimeException();
         }
-
         return SUCCESS;
-
     }
 
 }

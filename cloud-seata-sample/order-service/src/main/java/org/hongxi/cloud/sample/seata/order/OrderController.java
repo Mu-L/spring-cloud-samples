@@ -5,9 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Random;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.seata.core.context.RootContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -23,10 +22,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @RestController
 public class OrderController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OrderController.class);
 
     private static final String SUCCESS = "SUCCESS";
 
@@ -40,7 +38,7 @@ public class OrderController {
 
     private final RestTemplate restTemplate;
 
-    private Random random;
+    private final Random random;
 
     public OrderController(JdbcTemplate jdbcTemplate, RestTemplate restTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -48,45 +46,43 @@ public class OrderController {
         this.random = new Random();
     }
 
-    @PostMapping(value = "/order", produces = "application/json")
+    @PostMapping("/order")
     public String order(String userId, String commodityCode, int orderCount) {
-        LOGGER.info("Order Service Begin ... xid: " + RootContext.getXID());
+        log.info("Order Service Begin ... xid: {}", RootContext.getXID());
 
         int orderMoney = calculate(commodityCode, orderCount);
 
         invokerAccountService(orderMoney);
 
-        final Order order = new Order();
-        order.userId = userId;
-        order.commodityCode = commodityCode;
-        order.count = orderCount;
-        order.money = orderMoney;
+        Order order = new Order();
+        order.setUserId(userId);
+        order.setCommodityCode(commodityCode);
+        order.setCount(orderCount);
+        order.setMoney(orderMoney);
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         int result = jdbcTemplate.update(new PreparedStatementCreator() {
-
             @Override
-            public PreparedStatement createPreparedStatement(Connection con)
-                    throws SQLException {
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                 PreparedStatement pst = con.prepareStatement(
                         "insert into order_tbl (user_id, commodity_code, count, money) values (?, ?, ?, ?)",
                         PreparedStatement.RETURN_GENERATED_KEYS);
-                pst.setObject(1, order.userId);
-                pst.setObject(2, order.commodityCode);
-                pst.setObject(3, order.count);
-                pst.setObject(4, order.money);
+                pst.setObject(1, order.getUserId());
+                pst.setObject(2, order.getCommodityCode());
+                pst.setObject(3, order.getCount());
+                pst.setObject(4, order.getMoney());
                 return pst;
             }
         }, keyHolder);
 
-        order.id = keyHolder.getKey().longValue();
+        order.setId(keyHolder.getKey().longValue());
 
         if (random.nextBoolean()) {
-            throw new RuntimeException("this is a mock Exception");
+            throw new RuntimeException("This is a mock Exception");
         }
 
-        LOGGER.info("Order Service End ... Created " + order);
+        log.info("Order Service End ... Created {}", order);
 
         if (result == 1) {
             return SUCCESS;
@@ -99,20 +95,17 @@ public class OrderController {
     }
 
     private void invokerAccountService(int orderMoney) {
-        String url = "http://127.0.0.1:18084/account";
+        String url = "http://account-service/account";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-
         map.add("userId", USER_ID);
         map.add("money", orderMoney + "");
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(
-                map, headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(url, request,
-                String.class);
+        restTemplate.postForEntity(url, request, String.class);
     }
 
 }

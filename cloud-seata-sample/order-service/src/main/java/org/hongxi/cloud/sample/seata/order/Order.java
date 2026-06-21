@@ -1,23 +1,19 @@
 package org.hongxi.cloud.sample.seata.order;
 
+import lombok.Data;
+
 import java.io.Serializable;
 
+@Data
 public class Order implements Serializable {
 
-    public long id;
+    private Long id;
 
-    public String userId;
+    private String userId;
 
-    public String commodityCode;
+    private String commodityCode;
 
-    public int count;
+    private int count;
 
-    public int money;
-
-    @Override
-    public String toString() {
-        return "Order{" + "id=" + id + ", userId='" + userId + '\'' + ", commodityCode='"
-                + commodityCode + '\'' + ", count=" + count + ", money=" + money + '}';
-    }
-
+    private int money;
 }

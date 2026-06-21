@@ -1,32 +1,22 @@
-base:
-  config:
-    mdb:
-      hostname: 127.0.0.1
-      dbname: seata
-      port: 3306
-      username: 'root'
-      password: 'root1234'
-
 server:
   port: 18083
 
 spring:
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-        username: 'nacos'
-        password: '7fDJZBbiLzO2'
   application:
     name: order-service
-  main:
-    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
   datasource:
     name: storageDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${base.config.mdb.hostname}:${base.config.mdb.port}/${base.config.mdb.dbname}?useSSL=false&serverTimezone=UTC
-    username: ${base.config.mdb.username}
-    password: ${base.config.mdb.password}
+    url: jdbc:mysql://127.0.0.1:3306/seata?useSSL=false&serverTimezone=UTC
+    username: root
+    password: root1234
 
 seata:
   enabled: true
