@@ -1,21 +1,12 @@
 package org.hongxi.cloud.sample.ai.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.hongxi.cloud.sample.ai.tool.TimeTools;
-import org.hongxi.cloud.sample.ai.tool.WeatherTools;
-import org.hongxi.cloud.sample.ai.tool.SearchTools;
-import org.springframework.ai.chat.client.ChatClient;
+import org.hongxi.cloud.sample.ai.service.ToolCallingService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Tool Calling（工具调用）示例控制器
- * <p>
- * 演示 Spring AI 2.0 的 @Tool 注解如何让 AI 模型自动调用 Java 方法来获取实时数据。
- * 这是 2.0 相比 1.x 的核心区别之一：AI 模型可以根据用户问题自主决定是否调用工具。
- * </p>
  *
  * <p>
  * 工作流程：
@@ -28,25 +19,14 @@ import java.util.Map;
  *
  * @author hongxi
  */
-@Slf4j
 @RestController
 @RequestMapping("/ai/tool")
 public class ToolCallingController {
 
-    private final ChatClient chatClient;
-    private final WeatherTools weatherTools;
-    private final TimeTools timeTools;
-    private final SearchTools searchTools;
+    private final ToolCallingService toolCallingService;
 
-    public ToolCallingController(
-            ChatClient.Builder builder,
-            WeatherTools weatherTools,
-            TimeTools timeTools,
-            SearchTools searchTools) {
-        this.chatClient = builder.build();
-        this.weatherTools = weatherTools;
-        this.timeTools = timeTools;
-        this.searchTools = searchTools;
+    public ToolCallingController(ToolCallingService toolCallingService) {
+        this.toolCallingService = toolCallingService;
     }
 
     /**
@@ -60,20 +40,7 @@ public class ToolCallingController {
      */
     @GetMapping("/weather")
     public Map<String, Object> getWeather(@RequestParam String question) {
-        log.info("天气查询: {}", question);
-
-        String response = chatClient.prompt()
-                .user(question)
-                .tools(weatherTools)
-                .call()
-                .content();
-
-        log.info("AI 回复: {}", response);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        return result;
+        return toolCallingService.getWeather(question);
     }
 
     /**
@@ -87,20 +54,7 @@ public class ToolCallingController {
      */
     @GetMapping("/time")
     public Map<String, Object> getTime(@RequestParam String question) {
-        log.info("时间查询: {}", question);
-
-        String response = chatClient.prompt()
-                .user(question)
-                .tools(timeTools)
-                .call()
-                .content();
-
-        log.info("AI 回复: {}", response);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        return result;
+        return toolCallingService.getTime(question);
     }
 
     /**
@@ -117,20 +71,6 @@ public class ToolCallingController {
      */
     @GetMapping("/ask")
     public Map<String, Object> smartAssistant(@RequestParam String question) {
-        log.info("智能助手收到问题: {}", question);
-
-        String response = chatClient.prompt()
-                .system("你是一个智能助手，可以根据用户的问题自动调用合适的工具来获取信息。请用中文回答。")
-                .user(question)
-                .tools(weatherTools, timeTools, searchTools)
-                .call()
-                .content();
-
-        log.info("AI 回复: {}", response);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        return result;
+        return toolCallingService.smartAssistant(question);
     }
 }

@@ -1,13 +1,8 @@
 package org.hongxi.cloud.sample.ai.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.hongxi.cloud.sample.ai.tool.SearchTools;
-import org.hongxi.cloud.sample.ai.tool.TimeTools;
-import org.hongxi.cloud.sample.ai.tool.WeatherTools;
-import org.springframework.ai.chat.client.ChatClient;
+import org.hongxi.cloud.sample.ai.service.ReactAgentService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,11 +10,6 @@ import java.util.Map;
  * <p>
  * ReAct (Reasoning + Acting) 是一种结合推理和行动的 Agent 模式。
  * Agent 会根据任务需求，自主决定调用哪些工具来获取信息或执行操作。
- * </p>
- * <p>
- * 这是 Spring AI 2.0 最具价值的特性之一：
- * - 1.x 版本只能通过 Function Calling 实现简单的工具调用
- * - 2.0 版本支持完整的 ReAct Agent 模式，AI 可以进行多步推理和工具调用
  * </p>
  * <p>
  * 工作流程：
@@ -33,24 +23,14 @@ import java.util.Map;
  *
  * @author hongxi
  */
-@Slf4j
 @RestController
 @RequestMapping("/ai/agent")
 public class ReactAgentController {
 
-    private final ChatClient chatClient;
-    private final WeatherTools weatherTools;
-    private final TimeTools timeTools;
-    private final SearchTools searchTools;
+    private final ReactAgentService reactAgentService;
 
-    public ReactAgentController(ChatClient.Builder builder,
-                                WeatherTools weatherTools,
-                                TimeTools timeTools,
-                                SearchTools searchTools) {
-        this.chatClient = builder.build();
-        this.weatherTools = weatherTools;
-        this.timeTools = timeTools;
-        this.searchTools = searchTools;
+    public ReactAgentController(ReactAgentService reactAgentService) {
+        this.reactAgentService = reactAgentService;
     }
 
     /**
@@ -71,36 +51,7 @@ public class ReactAgentController {
      */
     @GetMapping("/chat")
     public Map<String, Object> agentChat(@RequestParam String question) {
-        log.info("Agent 收到问题: {}", question);
-
-        String response = chatClient.prompt()
-                .system("""
-                        你是一个智能助手，可以使用各种工具来帮助用户解决问题。
-                        
-                        你可以使用的工具包括：
-                        - 天气查询：获取城市当前天气和天气预报
-                        - 时间查询：获取当前日期、时间，计算日期差
-                        - 知识搜索：搜索技术主题的相关信息
-                        - 最新资讯：获取技术领域的最新动态
-                        
-                        回答要求：
-                        1. 根据问题需要，主动调用合适的工具获取信息
-                        2. 基于工具返回的结果给出完整、有用的回答
-                        3. 如果一个问题需要多个工具配合，依次调用
-                        4. 保持回答简洁、准确、有用
-                        """)
-                .user(question)
-                .tools(weatherTools, timeTools, searchTools)
-                .call()
-                .content();
-
-        log.info("Agent 回复: {}", response);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        result.put("type", "react-agent");
-        return result;
+        return reactAgentService.agentChat(question);
     }
 
     /**
@@ -120,33 +71,6 @@ public class ReactAgentController {
      */
     @GetMapping("/complex-task")
     public Map<String, Object> handleComplexTask(@RequestParam String task) {
-        log.info("Agent 收到复杂任务: {}", task);
-
-        String response = chatClient.prompt()
-                .system("""
-                        你是一个强大的 AI Agent，擅长解决复杂问题。
-                        
-                        解决复杂问题的步骤：
-                        1. 理解任务目标
-                        2. 分解任务为多个子任务
-                        3. 对每个子任务选择合适的工具获取信息
-                        4. 整合所有信息给出最终答案
-                        
-                        可用的工具：天气查询、时间查询、知识搜索、最新资讯
-                        
-                        请详细展示你的思考过程和每一步的操作结果。
-                        """)
-                .user(task)
-                .tools(weatherTools, timeTools, searchTools)
-                .call()
-                .content();
-
-        log.info("Agent 完成复杂任务");
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("task", task);
-        result.put("solution", response);
-        result.put("type", "complex-task-solving");
-        return result;
+        return reactAgentService.handleComplexTask(task);
     }
 }
