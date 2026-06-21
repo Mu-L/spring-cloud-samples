@@ -33,8 +33,3 @@ seata:
       server-addr: 127.0.0.1:8848
       username: 'nacos'
       password: '7fDJZBbiLzO2'
-
-logging:
-  level:
-    io:
-      seata: debug
