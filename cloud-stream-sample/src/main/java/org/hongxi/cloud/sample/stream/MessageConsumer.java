@@ -22,4 +22,12 @@ public class MessageConsumer {
     public Consumer<String> input() {
         return message -> log.info("Received message: {}", message);
     }
+
+    /**
+     * 函数式消费者，自动绑定到 input2-in-0 binding
+     */
+    @Bean
+    public Consumer<String> input2() {
+        return message -> log.info("收到消息: {}", message);
+    }
 }

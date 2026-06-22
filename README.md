@@ -176,10 +176,16 @@ bin/mqbroker -n localhost:9876 --enable-proxy
 ```shell
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group
+bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic2 -a +message.type=NORMAL
+bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group2
 ```
 
 #### Run Demo
-启动`stream`，观察日志
+启动`stream`，观察日志 <br>
+命令查看消费组的消费进度
+```shell
+bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
+```
 
 ### 分支说明
 - branch springboot3: 基于 Spring Boot 3.5.0+ 的示例

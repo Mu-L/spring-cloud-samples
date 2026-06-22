@@ -2,9 +2,9 @@ spring:
   application:
     name: stream-sample
   cloud:
+    function:
+      definition: input;input2;output2
     stream:
-      function:
-        definition: input
       rocketmq:
         binder:
           name-server: 127.0.0.1:9876
@@ -14,3 +14,8 @@ spring:
           group: stream-demo-consumer-group
         output-out-0:
           destination: stream-demo-topic
+        input2-in-0:
+          destination: stream-demo-topic2
+          group: stream-demo-consumer-group2
+        output2-out-0:
+          destination: stream-demo-topic2

@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 
+import java.util.function.Supplier;
+
 /**
  * Created by javahongxi on 2026/6/1.
  */
@@ -24,6 +26,19 @@ public class StreamApplication {
         return args -> {
             boolean result = streamBridge.send("output-out-0", "Hello");
             log.info("Send message: {}, result: {}", "Hello", result);
+        };
+    }
+
+    /**
+     * 每隔1秒会自动发送消息
+     * @return
+     */
+    @Bean
+    Supplier<String> output2() {
+        return () -> {
+            String value = "你好";
+            log.info("发送消息: {}", value);
+            return value;
         };
     }
 }
