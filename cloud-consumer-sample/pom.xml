@@ -63,6 +63,20 @@
             <artifactId>dubbo-registry-nacos</artifactId>
         </dependency>
 
+        <!--升级过程中发现，没有如下依赖，dubbo provider/consumer 启动或运行可能异常-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.hongxi</groupId>
             <artifactId>cloud-sample-api</artifactId>
