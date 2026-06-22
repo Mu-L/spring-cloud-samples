@@ -21,6 +21,9 @@ MODULES=(
   "cloud-gateway-sample|gateway|8764"
   "cloud-provider-sample|provider|8765"
   "cloud-consumer-sample|consumer|8766"
+  "cloud-grpc-server-sample|grpc-server|8090"
+  "cloud-grpc-client-sample|grpc-client|8081"
+  "cloud-nacos-config-sample|nacos-config|8761"
 )
 
 start_module() {
@@ -136,7 +139,44 @@ demo_urls() {
       echo "  请求失败"
     fi
   done
+
+  # Nacos Config 配置中心验证
   echo ""
+  echo "========== Nacos Config 验证 =========="
+  echo "[Nacos Config] 发布配置: dataId=my.city, content=wuhan"
+  local pub_resp
+  pub_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan' 2>/dev/null)
+  echo "  响应: $pub_resp"
+  echo "[Nacos Config] 读取配置: dataId=my.city"
+  local get_resp
+  get_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' 'http://localhost:8761/nacos/getConfig?dataId=my.city' 2>/dev/null)
+  echo "  响应: $get_resp"
+  if echo "$get_resp" | grep -q "wuhan" 2>/dev/null; then
+    echo "[Nacos Config] 验证成功! 配置读写正常"
+  else
+    echo "[Nacos Config] 验证失败，请查看日志: $LOG_DIR/nacos-config.log"
+  fi
+  echo "=================================="
+
+  # gRPC 调用验证
+  echo ""
+  echo "========== gRPC 调用验证 =========="
+  local grpc_log="$LOG_DIR/grpc-client.log"
+  if [ -f "$grpc_log" ] && grep -q "Hello, lily" "$grpc_log" 2>/dev/null; then
+    echo "[gRPC] 调用成功! 客户端日志包含预期响应: Hello, lily"
+  else
+    echo "[gRPC] 等待客户端日志输出 (最多 15 秒) ..."
+    for i in $(seq 1 15); do
+      if [ -f "$grpc_log" ] && grep -q "Hello, lily" "$grpc_log" 2>/dev/null; then
+        echo "[gRPC] 调用成功! 客户端日志包含预期响应: Hello, lily"
+        break
+      fi
+      sleep 1
+    done
+    if ! grep -q "Hello, lily" "$grpc_log" 2>/dev/null; then
+      echo "[gRPC] 未检测到预期响应，请查看日志: $grpc_log"
+    fi
+  fi
   echo "=================================="
 }
 
