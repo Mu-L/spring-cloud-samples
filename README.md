@@ -70,8 +70,16 @@ curl 'http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi'
 ```
 
 #### gRPC 服务注册与发现
-启动grpc-server,grpc-client，观察日志 <br>
-Spring Cloud 的服务发现需要 Web Server，因此grpc-server,grpc-client都引入了`webmvc`依赖
+Spring Cloud 的服务发现需要 Web Server，因此grpc-server,grpc-client都引入了`webmvc`依赖 <br>
+启动grpc-server,grpc-client <br>
+直接访问(grpc-client → grpc-server)
+```shell
+curl 'http://localhost:8081/grpc/hello?name=hongxi'
+```
+通过网关访问(gateway → grpc-client → grpc-server)
+```shell
+curl 'http://localhost:8764/grpc-client-sample/grpc/hello?name=hongxi'
+```
 
 ### 脚本演示
 启动所有服务（脚本最后会执行curl并输出响应结果）

@@ -38,6 +38,14 @@ spring:
                     pattern: /provider-dubbo-sample/**
               filters:
                 - StripPrefix=1
+            - id: grpc-client-sample
+              uri: lb://grpc-client-sample
+              predicates:
+                - name: Path
+                  args:
+                    pattern: /grpc-client-sample/**
+              filters:
+                - StripPrefix=1
     sentinel:
       transport:
         dashboard: localhost:8081

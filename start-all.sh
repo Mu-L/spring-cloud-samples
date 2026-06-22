@@ -113,8 +113,39 @@ stop_all() {
   echo "所有服务已停止，logs 和 .pids 目录已清理"
 }
 
+# 验证计数器
+VERIFY_PASS=0
+VERIFY_FAIL=0
+
+# 执行 curl 请求并记录结果: verify_url url desc
+verify_url() {
+  local url="$1"
+  local desc="$2"
+  echo ""
+  echo "[$desc]"
+  echo "  URL: $url"
+  local response
+  response=$(curl -s -w '\n%{http_code}' --max-time 10 "$url" 2>/dev/null)
+  local http_code
+  http_code=$(echo "$response" | tail -n1)
+  local body
+  body=$(echo "$response" | sed '$d')
+  echo "  响应: $body"
+  echo "  HTTP Status: $http_code"
+  if [ "$http_code" = "200" ]; then
+    VERIFY_PASS=$((VERIFY_PASS + 1))
+  else
+    VERIFY_FAIL=$((VERIFY_FAIL + 1))
+    VERIFY_FAILED_LIST+=("[$desc] $url (HTTP $http_code)")
+  fi
+}
+
 # README 中的演示 URL 列表
 demo_urls() {
+  VERIFY_PASS=0
+  VERIFY_FAIL=0
+  VERIFY_FAILED_LIST=()
+
   echo "========== 访问演示 URL =========="
   local urls=(
     "http://localhost:8763/hi?name=hongxi|直接访问 consumer-reactive"
@@ -128,16 +159,7 @@ demo_urls() {
   )
   for entry in "${urls[@]}"; do
     IFS='|' read -r url desc <<< "$entry"
-    echo ""
-    echo "[$desc]"
-    echo "  URL: $url"
-    local response
-    response=$(curl -s -w '\n  HTTP Status: %{http_code}' "$url" 2>/dev/null)
-    if [ $? -eq 0 ]; then
-      echo "  响应: $response"
-    else
-      echo "  请求失败"
-    fi
+    verify_url "$url" "$desc"
   done
 
   # Nacos Config 配置中心验证
@@ -145,39 +167,52 @@ demo_urls() {
   echo "========== Nacos Config 验证 =========="
   echo "[Nacos Config] 发布配置: dataId=my.city, content=wuhan"
   local pub_resp
-  pub_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan' 2>/dev/null)
+  pub_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' --max-time 10 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan' 2>/dev/null)
   echo "  响应: $pub_resp"
   echo "[Nacos Config] 读取配置: dataId=my.city"
   local get_resp
-  get_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' 'http://localhost:8761/nacos/getConfig?dataId=my.city' 2>/dev/null)
+  get_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' --max-time 10 'http://localhost:8761/nacos/getConfig?dataId=my.city' 2>/dev/null)
   echo "  响应: $get_resp"
   if echo "$get_resp" | grep -q "wuhan" 2>/dev/null; then
     echo "[Nacos Config] 验证成功! 配置读写正常"
+    VERIFY_PASS=$((VERIFY_PASS + 1))
   else
     echo "[Nacos Config] 验证失败，请查看日志: $LOG_DIR/nacos-config.log"
+    VERIFY_FAIL=$((VERIFY_FAIL + 1))
+    VERIFY_FAILED_LIST+=("[Nacos Config] 配置读写验证失败")
   fi
   echo "=================================="
 
   # gRPC 调用验证
   echo ""
   echo "========== gRPC 调用验证 =========="
-  local grpc_log="$LOG_DIR/grpc-client.log"
-  if [ -f "$grpc_log" ] && grep -q "Hello, lily" "$grpc_log" 2>/dev/null; then
-    echo "[gRPC] 调用成功! 客户端日志包含预期响应: Hello, lily"
-  else
-    echo "[gRPC] 等待客户端日志输出 (最多 15 秒) ..."
-    for i in $(seq 1 15); do
-      if [ -f "$grpc_log" ] && grep -q "Hello, lily" "$grpc_log" 2>/dev/null; then
-        echo "[gRPC] 调用成功! 客户端日志包含预期响应: Hello, lily"
-        break
-      fi
-      sleep 1
-    done
-    if ! grep -q "Hello, lily" "$grpc_log" 2>/dev/null; then
-      echo "[gRPC] 未检测到预期响应，请查看日志: $grpc_log"
-    fi
-  fi
+  local grpc_urls=(
+    "http://localhost:8081/grpc/hello?name=hongxi|直接访问 grpc-client"
+    "http://localhost:8764/grpc-client-sample/grpc/hello?name=hongxi|通过网关访问 grpc-client"
+  )
+  for entry in "${grpc_urls[@]}"; do
+    IFS='|' read -r url desc <<< "$entry"
+    verify_url "$url" "$desc"
+  done
   echo "=================================="
+
+  # 汇总验证结果
+  echo ""
+  echo "=========================================="
+  echo "  验证结果汇总: 通过 $VERIFY_PASS 项, 失败 $VERIFY_FAIL 项"
+  echo "=========================================="
+  if [ "$VERIFY_FAIL" -eq 0 ]; then
+    echo ""
+    echo "  ★ 全部验证通过! 所有服务运行正常 ★"
+    echo ""
+  else
+    echo ""
+    echo "  以下验证项失败:"
+    for failed in "${VERIFY_FAILED_LIST[@]}"; do
+      echo "    - $failed"
+    done
+    echo ""
+  fi
 }
 
 status_all() {

@@ -14,3 +14,16 @@ spring:
     client:
       default-channel:
         address: discovery:///grpc-server-sample
+
+management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info
