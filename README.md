@@ -97,13 +97,13 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
-### 纯 Dubbo Provider/Consumer 演示
+#### 纯 Dubbo Provider/Consumer 演示
 启动provider-dubbo,consumer-dubbo，观察日志
 
-### 纯 gRPC Server/Client 演示
+#### 纯 gRPC Server/Client 演示
 启动grpc-server,grpc-client，观察日志
 
-### Dubbo REST 演示
+#### Dubbo REST 演示
 启动provider-dubbo,gateway<br>
 直接访问`dubbo rest`接口
 ```shell
