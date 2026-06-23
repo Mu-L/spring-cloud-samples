@@ -12,6 +12,7 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.Status;
+import io.grpc.StatusOr;
 
 /**
  * 基于 Spring Cloud {@link DiscoveryClient} 的 gRPC NameResolver 实现。
@@ -109,7 +110,7 @@ public class DiscoveryClientNameResolver extends NameResolver {
 
             // 通知 gRPC 更新地址列表
             listener.onResult(ResolutionResult.newBuilder()
-                    .setAddresses(addressGroups)
+                    .setAddressesOrError(StatusOr.fromValue(addressGroups))
                     .build());
 
             log.info("[gRPC Discovery] Updated {} instances for service {}",
