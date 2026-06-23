@@ -40,8 +40,9 @@ spring:
         query-parameter: version
   grpc:
     client:
-      default-channel:
-        address: discovery:///grpc-server-sample
+      channel:
+        default:
+          target: static://localhost:9090
 
 feign:
   sentinel:

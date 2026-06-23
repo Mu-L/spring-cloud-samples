@@ -15,5 +15,6 @@ spring:
         enabled: false
   grpc:
     client:
-      default-channel:
-        address: discovery:///grpc-server-sample
+      channel:
+        default:
+          target: static://localhost:9090
