@@ -12,6 +12,7 @@
     <artifactId>cloud-nacos-discovery-sample</artifactId>
 
     <dependencies>
+        <!--Spring Cloud 的服务注册需要 Web Server-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
