@@ -32,6 +32,7 @@
         <module>cloud-ai-sample</module>
         <module>cloud-seata-sample</module>
         <module>cloud-nacos-discovery-sample</module>
+        <module>cloud-commons</module>
     </modules>
 
     <properties>

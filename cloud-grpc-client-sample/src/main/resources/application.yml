@@ -11,9 +11,9 @@ spring:
         server-addr: 127.0.0.1:8848
     service-registry:
       auto-registration:
-        enabled: false
+        enabled: false # 纯消费端关闭注册
   grpc:
     client:
       channel:
         default:
-          target: static://localhost:9090
+          target: discovery:///grpc-server-sample

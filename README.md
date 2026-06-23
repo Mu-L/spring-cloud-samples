@@ -20,6 +20,7 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-grpc-client-sample       | grpc-client       | -            | gPPC Client                 |
 | cloud-ai-sample                | ai                | 8080         | Spring AI                   |
 | cloud-seata-sample             | seata             | -            | Apache Seata                |
+| cloud-commons                  | commons           | -            | Cloud Commons               |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
@@ -77,23 +78,21 @@ curl 'http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi'
 ```
 
 #### gRPC 服务注册与发现
-Spring Cloud 的服务注册需要 Web Server，因此grpc-server引入了`webmvc`依赖
-```java
-// AbstractAutoServiceRegistration
-@Override
-public void onApplicationEvent(WebServerInitializedEvent event) {
-    this.port.compareAndSet(0, event.getWebServer().getPort());
-    this.start();
-}
-```
-服务发现不需要 Web Server，在没有引入 Web Server 时，需要添加如下配置
+直接利用 Spring Cloud 的服务注册能力，引入`discovery`和`webmvc`依赖，<br>
+同时，需要设置注册到注册中心的端口，否则默认注册的是`server.port`
 ```yaml
+server:
+  port: 8090 # Web端口
 spring:
   cloud:
-    service-registry:
-      auto-registration:
-        enabled: false
+    nacos:
+      discovery:
+        port: ${spring.grpc.server.port} # 注册到注册中心的端口
+  grpc:
+    server:
+      port: 9090 # gRPC端口
 ```
+服务发现需要client端写一些代码，具体请参考`grpc-client-sample` <br>
 接着前面的，启动grpc-server <br>
 直接访问(consumer → grpc-server)
 ```shell

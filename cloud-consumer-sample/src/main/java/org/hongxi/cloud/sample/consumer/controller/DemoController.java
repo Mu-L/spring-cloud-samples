@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Created by javahongxi on 2026/6/1.
  */
+@DependsOn("nameResolverProvider")
 @RestController
 public class DemoController {
 
@@ -36,7 +38,6 @@ public class DemoController {
     @DubboReference(check = false)
     private DemoService demoService;
 
-    // lazy connection，第一次调用时才建立连接
     @Autowired
     private GreeterGrpc.GreeterBlockingStub greeterBlockingStub;
 

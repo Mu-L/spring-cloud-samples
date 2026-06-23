@@ -41,7 +41,7 @@ spring:
     client:
       channel:
         default:
-          target: static://localhost:9090
+          target: discovery:///grpc-server-sample
 
 feign:
   sentinel:
