@@ -10,20 +10,10 @@ spring:
       discovery:
         server-addr: 127.0.0.1:8848
         enabled: true
+    service-registry:
+      auto-registration:
+        enabled: false
   grpc:
     client:
       default-channel:
         address: discovery:///grpc-server-sample
-
-management:
-  otlp:
-    metrics:
-      export:
-        enabled: false
-  tracing:
-    sampling:
-      probability: 1.0
-  endpoints:
-    web:
-      exposure:
-        include: health,info

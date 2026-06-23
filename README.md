@@ -50,7 +50,7 @@ curl 'http://localhost:8763/hi?name=hongxi'
 curl 'http://localhost:8764/consumer-reactive-sample/hi?name=hongxi'
 ```
 
-#### dubbo 服务注册与发现
+#### Dubbo 服务注册与发现
 接着启动provider-dubbo <br>
 直接访问(consumer → provider-dubbo)
 ```shell
@@ -70,15 +70,31 @@ curl 'http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi'
 ```
 
 #### gRPC 服务注册与发现
-Spring Cloud 的服务发现需要 Web Server，因此grpc-server,grpc-client都引入了`webmvc`依赖 <br>
-启动grpc-server,grpc-client <br>
-直接访问(grpc-client → grpc-server)
-```shell
-curl 'http://localhost:8081/grpc/hello?name=hongxi'
+Spring Cloud 的服务注册需要 Web Server，因此grpc-server引入了`webmvc`依赖
+```java
+// AbstractAutoServiceRegistration
+@Override
+public void onApplicationEvent(WebServerInitializedEvent event) {
+    this.port.compareAndSet(0, event.getWebServer().getPort());
+    this.start();
+}
 ```
-通过网关访问(gateway → grpc-client → grpc-server)
+服务发现不需要 Web Server，在没有引入 Web Server 时，需要添加如下配置
+```yaml
+spring:
+  cloud:
+    service-registry:
+      auto-registration:
+        enabled: false
+```
+接着前面的，启动grpc-server <br>
+直接访问(consumer → grpc-server)
 ```shell
-curl 'http://localhost:8764/grpc-client-sample/grpc/hello?name=hongxi'
+curl 'http://localhost:8766/grpc?name=hongxi'
+```
+通过网关访问(gateway → consumer → grpc-server)
+```shell
+curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
 ### 脚本演示
@@ -91,7 +107,13 @@ sh start-all.sh
 sh start-all.sh stop
 ```
 
-### 网关访问dubbo演示
+### 纯 Dubbo Provider/Consumer 演示
+启动provider-dubbo,consumer-dubbo，观察日志
+
+### 纯 gRPC Server/Client 演示
+启动grpc-server,grpc-client，观察日志
+
+### Dubbo REST 演示
 启动provider-dubbo,gateway<br>
 直接访问`dubbo rest`接口
 ```shell
@@ -108,7 +130,7 @@ curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Ty
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
 
-### sentinel gateway 演示
+### Sentinel Gateway 演示
 `cloud-gateway-sample`集成了sentinel，并采用nacos配置规则，规则示例如下 <br>
 group-id: SENTINEL_GROUP <br>
 data-id: cloud.sample.gateway.gw-api-group

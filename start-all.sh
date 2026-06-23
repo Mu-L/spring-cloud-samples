@@ -16,13 +16,14 @@ mkdir -p "$LOG_DIR" "$PID_DIR"
 # 模块列表: 目录名 | 显示名称 | 端口
 MODULES=(
   "cloud-provider-dubbo-sample|provider-dubbo|-"
+  "cloud-consumer-dubbo-sample|consumer-dubbo|-"
   "cloud-provider-reactive-sample|provider-reactive|8762"
   "cloud-consumer-reactive-sample|consumer-reactive|8763"
   "cloud-gateway-sample|gateway|8764"
   "cloud-provider-sample|provider|8765"
   "cloud-consumer-sample|consumer|8766"
   "cloud-grpc-server-sample|grpc-server|8090"
-  "cloud-grpc-client-sample|grpc-client|8081"
+  "cloud-grpc-client-sample|grpc-client|-"
   "cloud-nacos-config-sample|nacos-config|8761"
 )
 
@@ -46,11 +47,8 @@ start_module() {
       return
     fi
   else
-    # Dubbo 模块检查 50051 端口
-    if lsof -i :50051 >/dev/null 2>&1; then
-      echo "[$display_name] 端口 50051 已被占用，跳过启动"
-      return
-    fi
+    # 无 HTTP 端口的模块，跳过端口检查
+    :
   fi
 
   echo -n "[$display_name] 启动中 (port: $port) ..."
@@ -60,6 +58,7 @@ start_module() {
   echo "$pid" > "$pid_file"
 
   # 等待启动（最多 60 秒，mvn spring-boot:run 比 java -jar 慢一些）
+  local ready=false
   for i in $(seq 1 60); do
     if ! kill -0 "$pid" 2>/dev/null; then
       echo " 失败! 请查看日志: $log_file"
@@ -67,21 +66,25 @@ start_module() {
       return 1
     fi
     if [ "$port" = "-" ]; then
-      # 无 HTTP 端口的模块，检测进程是否存活
-      if kill -0 "$pid" 2>/dev/null; then
+      # 无 HTTP 端口的模块，等待日志中出现关键输出确认 CommandLineRunner 已执行
+      if [ -f "$log_file" ] && grep -qE "Started|started|result:" "$log_file" 2>/dev/null; then
         echo " 已启动 (PID: $pid)"
-        return 0
+        ready=true
+        break
       fi
     elif curl -s -o /dev/null -w '' "http://localhost:$port" 2>/dev/null; then
       echo " 成功 (PID: $pid, port: $port)"
-      return 0
+      ready=true
+      break
     fi
     sleep 1
   done
 
-  echo " 超时! 请查看日志: $log_file"
-  rm -f "$pid_file"
-  return 1
+  if [ "$ready" = false ]; then
+    echo " 超时! 请查看日志: $log_file"
+    rm -f "$pid_file"
+    return 1
+  fi
 }
 
 stop_all() {
@@ -140,6 +143,32 @@ verify_url() {
   fi
 }
 
+# 验证日志中包含指定内容: verify_log log_file keyword desc
+verify_log() {
+  local log_file="$1"
+  local keyword="$2"
+  local desc="$3"
+  echo ""
+  echo "[$desc]"
+  echo "  日志文件: $log_file"
+  if [ ! -f "$log_file" ]; then
+    echo "  日志文件不存在!"
+    VERIFY_FAIL=$((VERIFY_FAIL + 1))
+    VERIFY_FAILED_LIST+=("[$desc] 日志文件不存在")
+    return
+  fi
+  local match
+  match=$(grep "$keyword" "$log_file" 2>/dev/null | tail -1)
+  if [ -n "$match" ]; then
+    echo "  匹配: $match"
+    VERIFY_PASS=$((VERIFY_PASS + 1))
+  else
+    echo "  未找到关键字: $keyword"
+    VERIFY_FAIL=$((VERIFY_FAIL + 1))
+    VERIFY_FAILED_LIST+=("[$desc] 日志中未找到 $keyword")
+  fi
+}
+
 # README 中的演示 URL 列表
 demo_urls() {
   VERIFY_PASS=0
@@ -187,10 +216,35 @@ demo_urls() {
   echo ""
   echo "========== gRPC 调用验证 =========="
   local grpc_urls=(
-    "http://localhost:8081/grpc/hello?name=hongxi|直接访问 grpc-client"
-    "http://localhost:8764/grpc-client-sample/grpc/hello?name=hongxi|通过网关访问 grpc-client"
+    "http://localhost:8766/grpc?name=hongxi|直接访问 consumer (grpc)"
+    "http://localhost:8764/consumer-sample/grpc?name=hongxi|通过网关访问 consumer (grpc)"
   )
   for entry in "${grpc_urls[@]}"; do
+    IFS='|' read -r url desc <<< "$entry"
+    verify_url "$url" "$desc"
+  done
+  echo "=================================="
+
+  # 纯 dubbo provider/consumer 演示验证
+  echo ""
+  echo "========== 纯 Dubbo provider/consumer 验证 =========="
+  verify_log "$LOG_DIR/consumer-dubbo.log" "Hello, lily" "consumer-dubbo 调用 provider-dubbo"
+  echo "=================================="
+
+  # 纯 grpc server/client 演示验证
+  echo ""
+  echo "========== 纯 gRPC server/client 验证 =========="
+  verify_log "$LOG_DIR/grpc-client.log" "Hello, lily" "grpc-client 调用 grpc-server"
+  echo "=================================="
+
+  # Dubbo REST 接口验证
+  echo ""
+  echo "========== Dubbo REST 接口验证 =========="
+  local dubbo_rest_urls=(
+    "http://localhost:50051/api/hello/lily|直接访问 provider-dubbo (dubbo rest)"
+    "http://localhost:8764/provider-dubbo-sample/api/hello/lily|通过网关访问 provider-dubbo (dubbo rest)"
+  )
+  for entry in "${dubbo_rest_urls[@]}"; do
     IFS='|' read -r url desc <<< "$entry"
     verify_url "$url" "$desc"
   done

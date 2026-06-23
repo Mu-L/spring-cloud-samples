@@ -38,6 +38,10 @@ spring:
       default: 1.0
       use:
         query-parameter: version
+  grpc:
+    client:
+      default-channel:
+        address: discovery:///grpc-server-sample
 
 feign:
   sentinel:

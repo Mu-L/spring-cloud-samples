@@ -5,6 +5,7 @@ import org.hongxi.cloud.sample.api.CloudConstants;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.grpc.client.ImportGrpcClients;
 
 import static org.apache.dubbo.common.constants.CommonConstants.DubboProperty.DUBBO_PREFER_JSON_FRAMEWORK_NAME;
 
@@ -15,6 +16,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.DubboProperty.DU
     org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
 })
 @EnableFeignClients
+@ImportGrpcClients(basePackages = "org.hongxi.cloud.sample.idl.unary")
 public class ConsumerApplication {
     public static void main(String[] args) {
         // org.apache.dubbo.common.utils.JsonUtils

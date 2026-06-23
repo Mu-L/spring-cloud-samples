@@ -3,6 +3,8 @@ package org.hongxi.cloud.sample.consumer.controller;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.hongxi.cloud.sample.api.DemoService;
 import org.hongxi.cloud.sample.consumer.client.ProviderClient;
+import org.hongxi.cloud.sample.idl.unary.GreeterGrpc;
+import org.hongxi.cloud.sample.idl.unary.GreeterRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,9 @@ public class DemoController {
     @DubboReference(check = false)
     private DemoService demoService;
 
+    @Autowired
+    private GreeterGrpc.GreeterBlockingStub greeterBlockingStub;
+
     @RequestMapping(value = "/hi", version = "1.0")
     public String hi(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
         log.info("traceparent: {}", traceparent);
@@ -62,7 +67,15 @@ public class DemoController {
     @RequestMapping("/dubbo")
     public String sayHello(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
         log.info("traceparent: {}", traceparent);
-        log.info("Consumer calling provider via Dubbo Reference, name: {}", name);
+        log.info("Calling dubbo service, name: {}", name);
         return demoService.sayHello(name);
+    }
+
+    @RequestMapping("/grpc")
+    public String hello(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
+        log.info("traceparent: {}", traceparent);
+        log.info("Calling gRPC service, {}", name);
+        GreeterRequest request = GreeterRequest.newBuilder().setName(name).build();
+        return greeterBlockingStub.greet(request).getMessage();
     }
 }
