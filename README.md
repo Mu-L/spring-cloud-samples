@@ -14,6 +14,7 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-consumer-dubbo-sample    | consumer-dubbo    | -            | Dubbo Consumer              |
 | cloud-sample-api               | api               | -            | interface                   |
 | cloud-nacos-config-sample      | config            | 8761         | Nacos Config                |
+| cloud-nacos-discovery-sample   | discovery         | 8760         | Nacos Discovery             |
 | cloud-stream-sample            | stream            | -            | Spring Cloud Stream         |
 | cloud-grpc-server-sample       | grpc-server       | 9090<br>8090 | gPPC Server<br>(8090是Web端口) |
 | cloud-grpc-client-sample       | grpc-client       | -            | gPPC Client                 |
@@ -27,6 +28,12 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 
 ### 服务注册与发现演示
 首先安装部署nacos，请参考 nacos.io
+
+#### Nacos Discovery 演示
+启动`nacos-discovery-sample`，访问如下接口
+```shell
+curl http://localhost:8760/discovery/instances
+```
 
 #### 普通Web服务的注册与发现
 依次启动provider,consumer,gateway <br>
@@ -122,15 +129,15 @@ curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 
 ### 脚本演示
 使用脚本一次性验证如下内容：
-1. Nacos Config 验证 ← 最前面
-2. 如果失败 → 打印汇总并停止后续验证
-3. 普通 Web 服务注册与发现
-4. Reactive Web 服务注册与发现
-5. Dubbo 服务注册与发现
-6. gRPC 服务注册与发现
-7. 纯 Dubbo provider/consumer 验证
-8. 纯 gRPC server/client 验证
-9. Dubbo REST 接口验证
+1. Nacos Discovery 验证
+2. 普通 Web 服务注册与发现
+3. Reactive Web 服务注册与发现
+4. Dubbo 服务注册与发现
+5. gRPC 服务注册与发现
+6. 纯 Dubbo provider/consumer 验证
+7. 纯 gRPC server/client 验证
+8. Dubbo REST 接口验证
+9. Nacos Config 验证
 10. 汇总验证结果
 
 启动所有服务

@@ -13,17 +13,25 @@ PID_DIR="$BASE_DIR/.pids"
 
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
-# 模块列表: 目录名 | 显示名称 | 端口
+# 模块列表: 目录名 | 显示名称 | 端口（启动顺序与验证顺序一致）
 MODULES=(
-  "cloud-provider-dubbo-sample|provider-dubbo|-"
-  "cloud-consumer-dubbo-sample|consumer-dubbo|-"
-  "cloud-provider-reactive-sample|provider-reactive|8762"
-  "cloud-consumer-reactive-sample|consumer-reactive|8763"
+  # 1. Nacos Discovery
+  "cloud-nacos-discovery-sample|nacos-discovery|8760"
+  # 2. Gateway（验证 Web/Reactive/Dubbo/gRPC/REST 都需要）
   "cloud-gateway-sample|gateway|8764"
+  # 3. Providers
   "cloud-provider-sample|provider|8765"
-  "cloud-consumer-sample|consumer|8766"
+  "cloud-provider-reactive-sample|provider-reactive|8762"
+  "cloud-provider-dubbo-sample|provider-dubbo|-"
+  # 4. gRPC Server
   "cloud-grpc-server-sample|grpc-server|8090"
+  # 5. Consumers
+  "cloud-consumer-sample|consumer|8766"
+  "cloud-consumer-reactive-sample|consumer-reactive|8763"
+  # 6. 纯 Dubbo/gRPC Client
+  "cloud-consumer-dubbo-sample|consumer-dubbo|-"
   "cloud-grpc-client-sample|grpc-client|-"
+  # 7. Nacos Config
   "cloud-nacos-config-sample|nacos-config|8761"
 )
 
@@ -175,39 +183,10 @@ demo_urls() {
   VERIFY_FAIL=0
   VERIFY_FAILED_LIST=()
 
-  # Nacos Config 配置中心验证（优先验证，失败则停止后续验证）
+  # Nacos Discovery 服务发现验证
   echo ""
-  echo "========== Nacos Config 验证 =========="
-  echo "[Nacos Config] 发布配置: dataId=my.city, content=wuhan"
-  local pub_resp
-  pub_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' --max-time 10 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan' 2>/dev/null)
-  echo "  响应: $pub_resp"
-  echo "[Nacos Config] 读取配置: dataId=my.city"
-  local get_resp
-  get_resp=$(curl -s -w '\n  HTTP Status: %{http_code}' --max-time 10 'http://localhost:8761/nacos/getConfig?dataId=my.city' 2>/dev/null)
-  echo "  响应: $get_resp"
-  if echo "$get_resp" | grep -q "wuhan" 2>/dev/null; then
-    echo "[Nacos Config] 验证成功! 配置读写正常"
-    VERIFY_PASS=$((VERIFY_PASS + 1))
-  else
-    echo "[Nacos Config] 验证失败，请查看日志: $LOG_DIR/nacos-config.log"
-    echo "[Nacos Config] 停止后续验证..."
-    VERIFY_FAIL=$((VERIFY_FAIL + 1))
-    VERIFY_FAILED_LIST+=("[Nacos Config] 配置读写验证失败")
-    echo "=================================="
-    # 汇总验证结果
-    echo ""
-    echo "=========================================="
-    echo "  验证结果汇总: 通过 $VERIFY_PASS 项, 失败 $VERIFY_FAIL 项"
-    echo "=========================================="
-    echo ""
-    echo "  以下验证项失败:"
-    for failed in "${VERIFY_FAILED_LIST[@]}"; do
-      echo "    - $failed"
-    done
-    echo ""
-    return 1
-  fi
+  echo "========== Nacos Discovery 验证 =========="
+  verify_url "http://localhost:8760/discovery/instances" "Nacos Discovery 获取服务实例列表"
   echo "=================================="
 
   # 普通 Web 服务注册与发现
@@ -284,6 +263,19 @@ demo_urls() {
     "http://localhost:8764/provider-dubbo-sample/api/hello/lily|通过网关访问 provider-dubbo (dubbo rest)"
   )
   for entry in "${dubbo_rest_urls[@]}"; do
+    IFS='|' read -r url desc <<< "$entry"
+    verify_url "$url" "$desc"
+  done
+  echo "=================================="
+
+  # Nacos Config 验证
+  echo ""
+  echo "========== Nacos Config 验证 =========="
+  local nacos_config_urls=(
+    "http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan|Nacos Config 发布配置"
+    "http://localhost:8761/nacos/getConfig?dataId=my.city|Nacos Config 获取配置"
+  )
+  for entry in "${nacos_config_urls[@]}"; do
     IFS='|' read -r url desc <<< "$entry"
     verify_url "$url" "$desc"
   done

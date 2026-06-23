@@ -1,0 +1,12 @@
+server:
+  port: 8760
+spring:
+  application:
+    name: nacos-discovery-sample
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
