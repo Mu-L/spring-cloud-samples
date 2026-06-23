@@ -17,7 +17,7 @@
             <artifactId>spring-boot-starter-grpc-server</artifactId>
         </dependency>
 
-        <!--Spring Cloud 的服务发现需要 Web Server，且 Provider 端需要 actuator-->
+        <!--Spring Cloud 的服务发现需要 Web Server-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
