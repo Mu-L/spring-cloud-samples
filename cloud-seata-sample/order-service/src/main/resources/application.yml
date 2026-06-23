@@ -10,7 +10,6 @@ spring:
       password: 7fDJZBbiLzO2
       discovery:
         server-addr: 127.0.0.1:8848
-        enabled: true
   datasource:
     name: storageDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
