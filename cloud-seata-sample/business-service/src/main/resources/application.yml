@@ -12,6 +12,19 @@ spring:
         server-addr: 127.0.0.1:8848
         enabled: true
 
+management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 seata:
   enabled: true
   application-id: ${spring.application.name}

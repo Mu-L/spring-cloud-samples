@@ -1,5 +1,8 @@
 package org.hongxi.cloud.sample.seata.business;
 
+import feign.RequestInterceptor;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -25,6 +28,19 @@ public class BusinessApplication {
     @LoadBalanced
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         return builder.build();
+    }
+
+    @Bean
+    public RequestInterceptor feignTracingInterceptor(Tracer tracer) {
+        return template -> {
+            Span currentSpan = tracer.currentSpan();
+            if (currentSpan != null) {
+                String traceparent = String.format("00-%s-%s-01",
+                        currentSpan.context().traceId(),
+                        currentSpan.context().spanId());
+                template.header("traceparent", traceparent);
+            }
+        };
     }
 
     @FeignClient("storage-service")

@@ -18,6 +18,19 @@ spring:
     username: root
     password: root1234
 
+management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 seata:
   enabled: true
   application-id: ${spring.application.name}
