@@ -16,7 +16,7 @@ Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alib
 | cloud-nacos-config-sample      | config            | 8761         | Nacos Config                |
 | cloud-stream-sample            | stream            | -            | Spring Cloud Stream         |
 | cloud-grpc-server-sample       | grpc-server       | 9090<br>8090 | gPPC Server<br>(8090是Web端口) |
-| cloud-grpc-client-sample       | grpc-client       | 8081         | gPPC Client<br>(8081是Web端口) |
+| cloud-grpc-client-sample       | grpc-client       | -            | gPPC Client                 |
 | cloud-ai-sample                | ai                | 8080         | Spring AI                   |
 | cloud-seata-sample             | seata             | -            | Apache Seata                |
 
@@ -97,16 +97,6 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
-### 脚本演示
-启动所有服务（脚本最后会执行curl并输出响应结果）
-```shell
-sh start-all.sh
-```
-停止所有服务
-```shell
-sh start-all.sh stop
-```
-
 ### 纯 Dubbo Provider/Consumer 演示
 启动provider-dubbo,consumer-dubbo，观察日志
 
@@ -128,6 +118,28 @@ curl http://localhost:8764/provider-dubbo-sample/api/hello/lily
 curl 'http://localhost:8764/provider-dubbo-sample/api/add?a=1&b=2'
 curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Type: application/json" -d '{"message":"hi"}'
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
+```
+
+### 脚本演示
+使用脚本一次性验证如下内容：
+1. Nacos Config 验证 ← 最前面
+2. 如果失败 → 打印汇总并停止后续验证
+3. 普通 Web 服务注册与发现
+4. Reactive Web 服务注册与发现
+5. Dubbo 服务注册与发现
+6. gRPC 服务注册与发现
+7. 纯 Dubbo provider/consumer 验证
+8. 纯 gRPC server/client 验证
+9. Dubbo REST 接口验证
+10. 汇总验证结果
+
+启动所有服务
+```shell
+sh start-all.sh
+```
+停止所有服务
+```shell
+sh start-all.sh stop
 ```
 
 ### Sentinel Gateway 演示

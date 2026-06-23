@@ -36,6 +36,7 @@ public class DemoController {
     @DubboReference(check = false)
     private DemoService demoService;
 
+    // lazy connection，第一次调用时才建立连接
     @Autowired
     private GreeterGrpc.GreeterBlockingStub greeterBlockingStub;
 

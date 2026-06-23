@@ -175,23 +175,7 @@ demo_urls() {
   VERIFY_FAIL=0
   VERIFY_FAILED_LIST=()
 
-  echo "========== 访问演示 URL =========="
-  local urls=(
-    "http://localhost:8763/hi?name=hongxi|直接访问 consumer-reactive"
-    "http://localhost:8764/consumer-reactive-sample/hi?name=hongxi|通过网关访问 consumer-reactive"
-    "http://localhost:8766/hi?name=hongxi|直接访问 consumer"
-    "http://localhost:8764/consumer-sample/hi?name=hongxi|通过网关访问 consumer"
-    "http://localhost:8766/dubbo?name=hongxi|直接访问 consumer (dubbo)"
-    "http://localhost:8764/consumer-sample/dubbo?name=hongxi|通过网关访问 consumer (dubbo)"
-    "http://localhost:8763/dubbo?name=hongxi|直接访问 consumer-reactive (dubbo)"
-    "http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi|通过网关访问 consumer-reactive (dubbo)"
-  )
-  for entry in "${urls[@]}"; do
-    IFS='|' read -r url desc <<< "$entry"
-    verify_url "$url" "$desc"
-  done
-
-  # Nacos Config 配置中心验证
+  # Nacos Config 配置中心验证（优先验证，失败则停止后续验证）
   echo ""
   echo "========== Nacos Config 验证 =========="
   echo "[Nacos Config] 发布配置: dataId=my.city, content=wuhan"
@@ -207,17 +191,72 @@ demo_urls() {
     VERIFY_PASS=$((VERIFY_PASS + 1))
   else
     echo "[Nacos Config] 验证失败，请查看日志: $LOG_DIR/nacos-config.log"
+    echo "[Nacos Config] 停止后续验证..."
     VERIFY_FAIL=$((VERIFY_FAIL + 1))
     VERIFY_FAILED_LIST+=("[Nacos Config] 配置读写验证失败")
+    echo "=================================="
+    # 汇总验证结果
+    echo ""
+    echo "=========================================="
+    echo "  验证结果汇总: 通过 $VERIFY_PASS 项, 失败 $VERIFY_FAIL 项"
+    echo "=========================================="
+    echo ""
+    echo "  以下验证项失败:"
+    for failed in "${VERIFY_FAILED_LIST[@]}"; do
+      echo "    - $failed"
+    done
+    echo ""
+    return 1
   fi
   echo "=================================="
 
-  # gRPC 调用验证
+  # 普通 Web 服务注册与发现
   echo ""
-  echo "========== gRPC 调用验证 =========="
+  echo "========== 普通 Web 服务注册与发现 =========="
+  local web_urls=(
+    "http://localhost:8766/hi?name=hongxi|直接访问 consumer (consumer → provider)"
+    "http://localhost:8764/consumer-sample/hi?name=hongxi|通过网关访问 consumer (gateway → consumer → provider)"
+  )
+  for entry in "${web_urls[@]}"; do
+    IFS='|' read -r url desc <<< "$entry"
+    verify_url "$url" "$desc"
+  done
+  echo "=================================="
+
+  # Reactive Web 服务注册与发现
+  echo ""
+  echo "========== Reactive Web 服务注册与发现 =========="
+  local reactive_urls=(
+    "http://localhost:8763/hi?name=hongxi|直接访问 consumer-reactive (consumer-reactive → provider-reactive)"
+    "http://localhost:8764/consumer-reactive-sample/hi?name=hongxi|通过网关访问 consumer-reactive (gateway → consumer-reactive → provider-reactive)"
+  )
+  for entry in "${reactive_urls[@]}"; do
+    IFS='|' read -r url desc <<< "$entry"
+    verify_url "$url" "$desc"
+  done
+  echo "=================================="
+
+  # Dubbo 服务注册与发现
+  echo ""
+  echo "========== Dubbo 服务注册与发现 =========="
+  local dubbo_urls=(
+    "http://localhost:8766/dubbo?name=hongxi|直接访问 consumer (consumer → provider-dubbo)"
+    "http://localhost:8764/consumer-sample/dubbo?name=hongxi|通过网关访问 consumer (gateway → consumer → provider-dubbo)"
+    "http://localhost:8763/dubbo?name=hongxi|直接访问 consumer-reactive (consumer-reactive → provider-dubbo)"
+    "http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi|通过网关访问 consumer-reactive (gateway → consumer-reactive → provider-dubbo)"
+  )
+  for entry in "${dubbo_urls[@]}"; do
+    IFS='|' read -r url desc <<< "$entry"
+    verify_url "$url" "$desc"
+  done
+  echo "=================================="
+
+  # gRPC 服务注册与发现
+  echo ""
+  echo "========== gRPC 服务注册与发现 =========="
   local grpc_urls=(
-    "http://localhost:8766/grpc?name=hongxi|直接访问 consumer (grpc)"
-    "http://localhost:8764/consumer-sample/grpc?name=hongxi|通过网关访问 consumer (grpc)"
+    "http://localhost:8766/grpc?name=hongxi|直接访问 consumer (consumer → grpc-server)"
+    "http://localhost:8764/consumer-sample/grpc?name=hongxi|通过网关访问 consumer (gateway → consumer → grpc-server)"
   )
   for entry in "${grpc_urls[@]}"; do
     IFS='|' read -r url desc <<< "$entry"
