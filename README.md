@@ -35,7 +35,7 @@ export SPRING_CLOUD_NACOS_PASSWORD=your_password
 ```
 
 #### 🟢 Nacos Discovery 演示
-启动`nacos-discovery-sample`，访问如下接口
+启动discovery，访问如下接口
 ```shell
 curl http://localhost:8760/discovery/instances
 ```
