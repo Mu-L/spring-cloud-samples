@@ -33,9 +33,9 @@ dubbo:
   registry:
     id: nacos-registry
     address: nacos://127.0.0.1:8848
+    username: ${spring.cloud.nacos.username}
+    password: ${spring.cloud.nacos.password}
     parameters:
       group: DEFAULT_GROUP
-      username: nacos
-      password: 7fDJZBbiLzO2
   tracing:
     enabled: true
