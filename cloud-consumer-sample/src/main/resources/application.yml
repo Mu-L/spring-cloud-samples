@@ -63,7 +63,7 @@ management:
 dubbo:
   application:
     name: ${spring.application.name}
-    qos-port: 33333
+    qos-port: 22224
   protocol:
     name: tri
     port: -1
