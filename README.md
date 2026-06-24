@@ -1,42 +1,43 @@
-# Spring Cloud Alibaba Samples
-Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alibaba 2025.1.x**） <br>
-以生产环境可参考为目标，打造一个完整的 Spring Cloud 示例项目。
+# ☁️ Spring Cloud Alibaba Samples
+> Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alibaba 2025.1.x**） <br>
+> 🎯 以生产环境可参考为目标，打造一个完整的 Spring Cloud 示例项目。
 
-### 模块介绍
-| 模块                             | 简称                | 端口           | 说明                          |
-|--------------------------------|-------------------|--------------|-----------------------------|
-| cloud-gateway-sample           | gateway           | 8764         | Spring Cloud Gateway        |
-| cloud-consumer-sample          | consumer          | 8766         | Web Consumer                |
-| cloud-provider-sample          | provider          | 8765         | Web Provider                |
-| cloud-consumer-reactive-sample | consumer-reactive | 8763         | Reactive Web Consumer       |
-| cloud-provider-reactive-sample | provider-reactive | 8762         | Reactive Web Provider       |
-| cloud-provider-dubbo-sample    | provider-dubbo    | 50051        | Dubbo Provider              |
-| cloud-consumer-dubbo-sample    | consumer-dubbo    | -            | Dubbo Consumer              |
-| cloud-sample-api               | api               | -            | interface                   |
-| cloud-nacos-config-sample      | config            | 8761         | Nacos Config                |
-| cloud-nacos-discovery-sample   | discovery         | 8760         | Nacos Discovery             |
-| cloud-stream-sample            | stream            | -            | Spring Cloud Stream         |
-| cloud-grpc-server-sample       | grpc-server       | 9090<br>8090 | gPPC Server<br>(8090是Web端口) |
-| cloud-grpc-client-sample       | grpc-client       | -            | gPPC Client                 |
-| cloud-ai-sample                | ai                | 8080         | Spring AI                   |
-| cloud-seata-sample             | seata             | -            | Apache Seata                |
-| cloud-commons                  | commons           | -            | Cloud Commons               |
+### 📦 模块介绍
+| 模块                               | 简称                | 端口           | 说明                          |
+|----------------------------------|-------------------|--------------|-----------------------------|
+| 🌐 cloud-gateway-sample          | gateway           | 8764         | Spring Cloud Gateway        |
+| 📥 cloud-consumer-sample         | consumer          | 8766         | Web Consumer                |
+| 📤 cloud-provider-sample         | provider          | 8765         | Web Provider                |
+| ⚡ cloud-consumer-reactive-sample | consumer-reactive | 8763         | Reactive Web Consumer       |
+| ⚡ cloud-provider-reactive-sample | provider-reactive | 8762         | Reactive Web Provider       |
+| 🔗 cloud-provider-dubbo-sample   | provider-dubbo    | 50051        | Dubbo Provider              |
+| 🔗 cloud-consumer-dubbo-sample   | consumer-dubbo    | -            | Dubbo Consumer              |
+| 📋 cloud-sample-api              | api               | -            | Interface & Proto           |
+| ⚙️ cloud-nacos-config-sample     | config            | 8761         | Nacos Config                |
+| 🔍 cloud-nacos-discovery-sample  | discovery         | 8760         | Nacos Discovery             |
+| 📨 cloud-stream-sample           | stream            | -            | Spring Cloud Stream         |
+| 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
+| 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
+| 🤖 cloud-ai-sample               | ai                | 8080         | Spring AI                   |
+| 🔄 cloud-seata-sample            | seata             | -            | Apache Seata                |
+| 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
   <img src="arch.png" alt="架构图">
 </picture>
 
-### 服务注册与发现演示
-首先安装部署nacos，请参考 nacos.io
+### 🔍 服务注册与发现演示
 
-#### Nacos Discovery 演示
+> 首先安装部署 Nacos，请参考 [nacos.io](https://nacos.io)
+
+#### 🟢 Nacos Discovery 演示
 启动`nacos-discovery-sample`，访问如下接口
 ```shell
 curl http://localhost:8760/discovery/instances
 ```
 
-#### 普通Web服务的注册与发现
+#### 🌐 普通 Web 服务的注册与发现
 依次启动provider,consumer,gateway <br>
 直接访问(consumer → provider)
 ```shell
@@ -47,7 +48,7 @@ curl 'http://localhost:8766/hi?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/hi?name=hongxi'
 ```
 
-#### Reactive Web 服务注册与发现
+#### ⚡ Reactive Web 服务注册与发现
 接着启动provider-reactive,consumer-reactive <br>
 直接访问(consumer-reactive → provider-reactive)
 ```shell
@@ -58,7 +59,7 @@ curl 'http://localhost:8763/hi?name=hongxi'
 curl 'http://localhost:8764/consumer-reactive-sample/hi?name=hongxi'
 ```
 
-#### Dubbo 服务注册与发现
+#### 🔗 Dubbo 服务注册与发现
 接着启动provider-dubbo <br>
 直接访问(consumer → provider-dubbo)
 ```shell
@@ -77,7 +78,7 @@ curl 'http://localhost:8763/dubbo?name=hongxi'
 curl 'http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi'
 ```
 
-#### gRPC 服务注册与发现
+#### 🔌 gRPC 服务注册与发现
 直接利用 Spring Cloud 的服务注册能力，引入`discovery`和`webmvc`依赖，<br>
 同时，需要设置注册到注册中心的端口，否则默认注册的是`server.port`
 ```yaml
@@ -92,7 +93,9 @@ spring:
     server:
       port: 9090 # gRPC端口
 ```
-服务发现需要client端写一些代码，具体请参考`grpc-client-sample` <br>
+关于服务发现，Spring Cloud 与 gRPC 是两套服务发现模式，本项目使用 <br>
+NameResolver SPI 桥接 DiscoveryClient 方式实现了两者服务发现模式的集成， <br>
+具体实现请参考`cloud-commons`和`grpc-client-sample` <br>
 接着前面的，启动grpc-server <br>
 直接访问(consumer → grpc-server)
 ```shell
@@ -103,14 +106,14 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
-#### 纯 Dubbo Provider/Consumer 演示
+#### 🎯 纯 Dubbo Provider/Consumer 演示
 启动provider-dubbo,consumer-dubbo，观察日志
 
-#### 纯 gRPC Server/Client 演示
+#### 🎯 纯 gRPC Server/Client 演示
 启动grpc-server,grpc-client，观察日志
 
-#### Dubbo REST 演示
-启动provider-dubbo,gateway<br>
+#### 🌐 Dubbo REST 演示
+启动provider-dubbo,gateway <br>
 直接访问`dubbo rest`接口
 ```shell
 curl http://localhost:50051/api/hello/lily
@@ -126,8 +129,9 @@ curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Ty
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
 
-### 脚本演示
-使用脚本一次性验证如下内容：
+### 🚀 脚本演示
+
+> 使用脚本一次性验证如下内容：
 1. Nacos Discovery 验证
 2. 普通 Web 服务注册与发现
 3. Reactive Web 服务注册与发现
@@ -148,7 +152,7 @@ sh start-all.sh
 sh start-all.sh stop
 ```
 
-### Sentinel Gateway 演示
+### 🛡️ Sentinel Gateway 演示
 `cloud-gateway-sample`集成了sentinel，并采用nacos配置规则，规则示例如下 <br>
 group-id: SENTINEL_GROUP <br>
 data-id: cloud.sample.gateway.gw-api-group
@@ -204,15 +208,16 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 {"code":444,"msg":"Sentinel gateway block"}
 ```
 
-### Stream 演示
-#### Run RocketMQ locally
+### 📨 Stream 演示
+
+#### 🏃 Run RocketMQ locally
 download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
 ```shell
 bin/mqnamesrv
 bin/mqbroker -n localhost:9876 --enable-proxy
 ```
 
-#### Create Topic and Consumer Group
+#### 📝 Create Topic and Consumer Group
 ```shell
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group
@@ -220,15 +225,15 @@ bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group2
 ```
 
-#### Run Demo
+#### 🏃 Run Demo
 启动`stream`，观察日志 <br>
 命令查看消费组的消费进度
 ```shell
 bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 ```
 
-### 分支说明
-- branch springboot3: 基于 Spring Boot 3.5.0+ 的示例
-- branch eureka: 初始版本，使用eureka作为注册中心
+### 🌿 分支说明
+- 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例
+- 🌿 `eureka`: 初始版本，使用 Eureka 作为注册中心
 
 &copy; [hongxi.org](http://hongxi.org)
