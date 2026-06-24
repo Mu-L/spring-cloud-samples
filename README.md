@@ -28,8 +28,11 @@
 </picture>
 
 ### 🔍 服务注册与发现演示
-
-> 首先安装部署 Nacos，请参考 [nacos.io](https://nacos.io)
+> 首先安装部署 Nacos，完成后设置环境变量
+```shell
+export SPRING_CLOUD_NACOS_USERNAME=your_username
+export SPRING_CLOUD_NACOS_PASSWORD=your_password
+```
 
 #### 🟢 Nacos Discovery 演示
 启动`nacos-discovery-sample`，访问如下接口
