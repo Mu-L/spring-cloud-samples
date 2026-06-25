@@ -35,6 +35,145 @@ MODULES=(
   "cloud-nacos-config-sample|nacos-config|8761"
 )
 
+# 特殊模块（需额外条件）
+AI_MODULE=("cloud-ai-sample|ai|8080")
+STREAM_MODULE=("cloud-stream-sample|stream|-")
+SEATA_MODULES=(
+  "cloud-seata-sample/business-service|seata-business|18081"
+  "cloud-seata-sample/storage-service|seata-storage|18082"
+  "cloud-seata-sample/order-service|seata-order|18083"
+  "cloud-seata-sample/account-service|seata-account|18084"
+)
+
+# 特殊模块启动标记
+START_SEATA=false
+START_STREAM=false
+START_AI=false
+
+check_rocketmq() {
+  nc -z 127.0.0.1 9876 2>/dev/null
+}
+
+check_mysql() {
+  mysql -u root -proot1234 -e "SELECT 1" &>/dev/null
+}
+
+check_seata_server() {
+  nc -z 127.0.0.1 8091 2>/dev/null
+}
+
+start_rocketmq() {
+  local rocketmq_home="$HOME/rocketmq-all-5.5.0-bin-release"
+  if [ ! -d "$rocketmq_home" ]; then
+    echo "[RocketMQ] ✗ 未找到 $rocketmq_home，请先下载安装"
+    return 1
+  fi
+  echo -n "[RocketMQ] 启动 NameServer ..."
+  cd "$rocketmq_home"
+  nohup bin/mqnamesrv > "$LOG_DIR/rocketmq-namesrv.log" 2>&1 &
+  sleep 5
+  if nc -z 127.0.0.1 9876 2>/dev/null; then
+    echo " ✓"
+  else
+    echo " ✗ 请查看日志: $LOG_DIR/rocketmq-namesrv.log"
+    return 1
+  fi
+  echo -n "[RocketMQ] 启动 Broker ..."
+  nohup bin/mqbroker -n localhost:9876 > "$LOG_DIR/rocketmq-broker.log" 2>&1 &
+  sleep 10
+  if nc -z 127.0.0.1 10911 2>/dev/null; then
+    echo " ✓"
+  else
+    echo " ✗ 请查看日志: $LOG_DIR/rocketmq-broker.log"
+    return 1
+  fi
+  cd "$BASE_DIR"
+}
+
+start_seata_server() {
+  local seata_src="$HOME/github/seata"
+  if [ ! -d "$seata_src" ]; then
+    echo "[Seata Server] ✗ 未找到 $seata_src，请先克隆源码"
+    return 1
+  fi
+  echo -n "[Seata Server] 启动中 ..."
+  cd "$seata_src"
+  nohup ./mvnw -pl server spring-boot:run > "$LOG_DIR/seata-server.log" 2>&1 &
+  cd "$BASE_DIR"
+  local ready=false
+  for i in $(seq 1 30); do
+    if nc -z 127.0.0.1 8091 2>/dev/null; then
+      echo " ✓ (端口 8091)"
+      ready=true
+      break
+    fi
+    sleep 1
+  done
+  if ! $ready; then
+    echo " ✗ 请查看日志: $LOG_DIR/seata-server.log"
+    return 1
+  fi
+}
+
+check_special_prerequisites() {
+  echo ""
+  echo "========== 检查特殊模块前置条件 =========="
+
+  # RocketMQ: 检查或自动启动
+  if check_rocketmq; then
+    echo "[Stream] ✓ RocketMQ 已运行"
+    START_STREAM=true
+  elif [ -d "$HOME/rocketmq-all-5.5.0-bin-release" ]; then
+    echo "[Stream] RocketMQ 未运行，正在自动启动..."
+    if start_rocketmq; then
+      START_STREAM=true
+    else
+      echo "[Stream] ✗ RocketMQ 启动失败，跳过 Stream 模块"
+    fi
+  else
+    echo "[Stream] ✗ RocketMQ 未运行且未安装，跳过 Stream 模块"
+  fi
+
+  # Seata: MySQL + Seata Server
+  local mysql_ok=false
+  local seata_server_ok=false
+  if check_mysql; then
+    echo "[Seata] ✓ MySQL 已运行"
+    mysql_ok=true
+  else
+    echo "[Seata] ✗ MySQL 未运行，跳过 Seata 模块"
+  fi
+  if check_seata_server; then
+    echo "[Seata] ✓ Seata Server 已运行"
+    seata_server_ok=true
+  elif $mysql_ok && [ -d "$HOME/github/seata" ]; then
+    echo "[Seata] Seata Server 未运行，正在自动启动..."
+    if start_seata_server; then
+      seata_server_ok=true
+    else
+      echo "[Seata] ✗ Seata Server 启动失败"
+    fi
+  elif ! $mysql_ok; then
+    :
+  else
+    echo "[Seata] ✗ Seata Server 未运行且源码不存在，跳过 Seata 模块"
+  fi
+  if $mysql_ok && $seata_server_ok; then
+    START_SEATA=true
+    echo "[Seata] 将启动 4 个微服务 (18081-18084)"
+  fi
+
+  # AI: OPENAI_API_KEY
+  if [ -n "$OPENAI_API_KEY" ]; then
+    echo "[AI] ✓ OPENAI_API_KEY 已配置"
+    START_AI=true
+  else
+    echo "[AI] ✗ OPENAI_API_KEY 未设置，跳过 AI 模块"
+  fi
+
+  echo "=================================="
+}
+
 start_module() {
   local module_dir="$1"
   local display_name="$2"
@@ -95,6 +234,69 @@ start_module() {
   fi
 }
 
+start_ai_module() {
+  IFS='|' read -r module_dir display_name port <<< "${AI_MODULE[0]}"
+  local pid_file="$PID_DIR/$display_name.pid"
+  local log_file="$LOG_DIR/$display_name.log"
+  local jar_file="$BASE_DIR/$module_dir/target/${module_dir}.jar"
+
+  if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
+    echo "[$display_name] 已在运行 (PID: $(cat "$pid_file"))"
+    return
+  fi
+
+  # 打包（如果 jar 不存在）
+  if [ ! -f "$jar_file" ]; then
+    echo -n "[$display_name] 打包中 ..."
+    cd "$BASE_DIR"
+    if ./mvnw -pl "$module_dir" package -DskipTests -q 2>/dev/null; then
+      echo " 完成"
+    else
+      echo " 失败!"
+      return 1
+    fi
+  fi
+
+  echo -n "[$display_name] 启动中 (port: $port) ..."
+  cd "$BASE_DIR"
+  nohup java -jar "$jar_file" --spring.ai.openai.chat.options.model=qwen3.7-plus > "$log_file" 2>&1 &
+  local pid=$!
+  echo "$pid" > "$pid_file"
+
+  local ready=false
+  for i in $(seq 1 60); do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo " 失败! 请查看日志: $log_file"
+      rm -f "$pid_file"
+      return 1
+    fi
+    if curl -s -o /dev/null "http://localhost:$port/actuator/health" 2>/dev/null; then
+      echo " 成功 (PID: $pid, port: $port)"
+      ready=true
+      break
+    fi
+    sleep 1
+  done
+
+  if [ "$ready" = false ]; then
+    echo " 超时! 请查看日志: $log_file"
+    rm -f "$pid_file"
+    return 1
+  fi
+}
+
+start_stream_module() {
+  IFS='|' read -r module_dir display_name port <<< "${STREAM_MODULE[0]}"
+  start_module "$module_dir" "$display_name" "$port"
+}
+
+start_seata_services() {
+  for entry in "${SEATA_MODULES[@]}"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    start_module "$module_dir" "$display_name" "$port"
+  done
+}
+
 stop_all() {
   echo "正在停止所有服务..."
   for pid_file in "$PID_DIR"/*.pid; do
@@ -120,6 +322,43 @@ stop_all() {
     fi
     rm -f "$pid_file"
   done
+  # 停止特殊模块（通过 PID 文件 + pkill 双保险）
+  for pid_file in "$PID_DIR"/ai.pid "$PID_DIR"/stream.pid; do
+    [ -f "$pid_file" ] || continue
+    local name=$(basename "$pid_file" .pid)
+    local pid=$(cat "$pid_file")
+    if kill -0 "$pid" 2>/dev/null; then
+      echo -n "[$name] 停止中 (PID: $pid) ..."
+      kill "$pid"
+      sleep 2
+      kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+      echo " 已停止"
+    fi
+    rm -f "$pid_file"
+  done
+  for entry in "${SEATA_MODULES[@]}"; do
+    IFS='|' read -r _ display_name _ <<< "$entry"
+    local pid_file="$PID_DIR/$display_name.pid"
+    [ -f "$pid_file" ] || continue
+    local pid=$(cat "$pid_file")
+    if kill -0 "$pid" 2>/dev/null; then
+      echo -n "[$display_name] 停止中 (PID: $pid) ..."
+      kill "$pid"
+      sleep 2
+      kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+      echo " 已停止"
+    fi
+    rm -f "$pid_file"
+  done
+  # 兜底：确保残留进程也被清理
+  pkill -f "cloud-ai-sample" 2>/dev/null
+  pkill -f "cloud-stream-sample" 2>/dev/null
+  pkill -f "cloud-seata-sample" 2>/dev/null
+  # 停止 RocketMQ 和 Seata Server
+  pkill -f "rocketmq" 2>/dev/null
+  sleep 1
+  pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null
+  pkill -f "seata.*spring-boot:run" 2>/dev/null
   rm -rf "$LOG_DIR" "$PID_DIR"
   echo "所有服务已停止，logs 和 .pids 目录已清理"
 }
@@ -281,6 +520,39 @@ demo_urls() {
   done
   echo "=================================="
 
+  # AI 模块验证
+  if [ -f "$PID_DIR/ai.pid" ] && kill -0 "$(cat "$PID_DIR/ai.pid")" 2>/dev/null; then
+    echo ""
+    echo "========== Spring AI 模块验证 =========="
+    verify_url "http://localhost:8080/actuator/health" "AI 模块健康检查"
+    echo "=================================="
+  fi
+
+  # Stream 模块验证
+  if [ -f "$PID_DIR/stream.pid" ] && kill -0 "$(cat "$PID_DIR/stream.pid")" 2>/dev/null; then
+    echo ""
+    echo "========== Stream 模块验证 =========="
+    verify_log "$LOG_DIR/stream.log" "result: true" "Stream 模块消息收发"
+    echo "=================================="
+  fi
+
+  # Seata 服务验证
+  if [ -f "$PID_DIR/seata-business.pid" ] && kill -0 "$(cat "$PID_DIR/seata-business.pid")" 2>/dev/null; then
+    echo ""
+    echo "========== Seata 分布式事务验证 =========="
+    local seata_urls=(
+      "http://localhost:18081/actuator/health|business-service 健康检查"
+      "http://localhost:18082/actuator/health|storage-service 健康检查"
+      "http://localhost:18083/actuator/health|order-service 健康检查"
+      "http://localhost:18084/actuator/health|account-service 健康检查"
+    )
+    for entry in "${seata_urls[@]}"; do
+      IFS='|' read -r url desc <<< "$entry"
+      verify_url "$url" "$desc"
+    done
+    echo "=================================="
+  fi
+
   # 汇总验证结果
   echo ""
   echo "=========================================="
@@ -314,6 +586,18 @@ status_all() {
       rm -f "$pid_file"
     fi
   done
+  # 特殊模块
+  local all_special=("${AI_MODULE[0]}" "${STREAM_MODULE[0]}" "${SEATA_MODULES[@]}")
+  for entry in "${all_special[@]}"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    local pid_file="$PID_DIR/$display_name.pid"
+    if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
+      printf "%-22s %-8s %s\n" "$display_name" "运行中" "$(cat "$pid_file")"
+    else
+      printf "%-22s %-8s %s\n" "$display_name" "已停止" "-"
+      rm -f "$pid_file"
+    fi
+  done
   echo "=============================="
 }
 
@@ -323,15 +607,34 @@ NACOS_PORT="8848"
 
 check_nacos() {
   echo -n "[Nacos] 检查注册中心 ($NACOS_HOST:$NACOS_PORT) ..."
-  for i in $(seq 1 15); do
-    if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
-      echo " 就绪"
-      return 0
+  # 已运行
+  if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+    echo " 就绪"
+    return 0
+  fi
+  # 尝试自动启动
+  echo " 未运行，正在尝试自动启动..."
+  if command -v nacos-setup &>/dev/null; then
+    local nacos_bin
+    nacos_bin="$(dirname "$(dirname "$(command -v nacos-setup)")")/bin"
+    [ ! -d "$nacos_bin" ] && nacos_bin="$(dirname "$(command -v nacos-setup)")/../bin"
+    if [ -f "$nacos_bin/startup.sh" ]; then
+      bash "$nacos_bin/startup.sh" -m standalone
+      echo -n "[Nacos] 等待启动就绪..."
+      for i in $(seq 1 30); do
+        if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+          echo " 就绪"
+          return 0
+        fi
+        sleep 2
+      done
     fi
-    sleep 2
-  done
-  echo " 未就绪!"
-  echo "请先启动 Nacos (http://$NACOS_HOST:$NACOS_PORT/nacos)，再运行本脚本。"
+  fi
+  echo " 失败!"
+  echo "请先安装并启动 Nacos:"
+  echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
+  echo "  nacos-setup"
+  echo "  bin/startup.sh -m standalone"
   exit 1
 }
 
@@ -347,6 +650,159 @@ install_deps() {
   fi
 }
 
+install_all() {
+  echo "========== 检查并安装中间件 =========="
+
+  # Nacos
+  echo ""
+  echo "--- Nacos ---"
+  if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+    echo "✓ Nacos 已运行"
+  elif command -v nacos-setup &>/dev/null; then
+    echo "Nacos 已安装但未运行，正在启动..."
+    # 查找 Nacos 安装目录（nacos-setup 所在目录的上级）
+    local nacos_bin
+    nacos_bin="$(dirname "$(dirname "$(command -v nacos-setup)")")/bin"
+    [ ! -d "$nacos_bin" ] && nacos_bin="$(dirname "$(command -v nacos-setup)")/../bin"
+    if [ -f "$nacos_bin/startup.sh" ]; then
+      bash "$nacos_bin/startup.sh" -m standalone
+      echo "等待 Nacos 启动..."
+      for i in $(seq 1 30); do
+        if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+          echo "✓ Nacos 已启动"
+          break
+        fi
+        sleep 2
+      done
+    else
+      echo "✗ 未找到 Nacos 启动脚本，请手动执行: nacos-setup && bin/startup.sh -m standalone"
+    fi
+  else
+    echo "正在安装 Nacos..."
+    curl -fsSL https://nacos.io/nacos-installer.sh | bash
+    echo "正在部署 Nacos..."
+    nacos-setup
+    echo "等待 Nacos 启动..."
+    for i in $(seq 1 30); do
+      if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+        echo "✓ Nacos 已启动"
+        break
+      fi
+      sleep 2
+    done
+  fi
+
+  # RocketMQ
+  echo ""
+  echo "--- RocketMQ ---"
+  if nc -z 127.0.0.1 9876 2>/dev/null; then
+    echo "✓ RocketMQ 已运行"
+  elif [ -d "$HOME/rocketmq-all-5.5.0-bin-release" ]; then
+    echo "✓ RocketMQ 已安装（未运行）"
+  else
+    echo "正在下载 RocketMQ 5.5.0..."
+    cd "$HOME"
+    curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
+    unzip -o rocketmq-all-5.5.0-bin-release.zip -d "$HOME"
+    echo "✓ RocketMQ 已安装到 $HOME/rocketmq-all-5.5.0-bin-release"
+    cd "$BASE_DIR"
+  fi
+
+  # MySQL
+  echo ""
+  echo "--- MySQL ---"
+  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    echo "✓ MySQL 已运行且密码正确"
+  elif command -v mysql &>/dev/null; then
+    echo "✗ MySQL 已安装但密码不是 root1234，请手动执行: mysqladmin -u root password 'root1234'"
+  else
+    echo "正在安装 MySQL..."
+    brew install mysql
+    mysql.server start
+    mysqladmin -u root password 'root1234'
+    echo "✓ MySQL 已安装并设置密码"
+  fi
+
+  # Seata Server
+  echo ""
+  echo "--- Seata Server ---"
+  if nc -z 127.0.0.1 8091 2>/dev/null; then
+    echo "✓ Seata Server 已运行"
+  elif [ -d "$HOME/github/seata" ]; then
+    echo "✓ Seata Server 源码已存在（未运行）"
+  else
+    echo "正在克隆 Seata 源码..."
+    mkdir -p "$HOME/github"
+    git clone https://github.com/javahongxi/seata.git "$HOME/github/seata"
+    echo "正在构建 Seata Server（首次构建耗时较长）..."
+    cd "$HOME/github/seata"
+    ./mvnw clean install -DskipTests -q
+    echo "✓ Seata Server 已构建"
+    cd "$BASE_DIR"
+  fi
+
+  # MySQL 数据库初始化
+  echo ""
+  echo "--- Seata 数据库初始化 ---"
+  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    mysql -u root -proot1234 seata < "$BASE_DIR/cloud-seata-sample/all.sql"
+    echo "✓ Seata 数据库已初始化"
+  else
+    echo "✗ MySQL 未就绪，跳过数据库初始化"
+  fi
+
+  echo ""
+  echo "=========================================="
+  echo "  中间件检查/安装完成"
+  echo "=========================================="
+
+  # 打包项目模块
+  echo ""
+  build_all
+}
+
+build_all() {
+  echo "========== 打包所有模块 =========="
+  cd "$BASE_DIR"
+  ./mvnw clean package -DskipTests -q
+  if [ $? -eq 0 ]; then
+    echo "✓ 所有模块打包成功"
+  else
+    echo "✗ 打包失败"
+    exit 1
+  fi
+}
+
+logs_all() {
+  local module_name="$1"
+  if [ -z "$module_name" ]; then
+    echo "用法: $0 logs <模块名>"
+    echo ""
+    echo "可用模块:"
+    echo "  核心模块: nacos-discovery, gateway, provider, provider-reactive, provider-dubbo,"
+    echo "            grpc-server, consumer, consumer-reactive, consumer-dubbo, grpc-client, nacos-config"
+    echo "  特殊模块: ai, stream, seata-business, seata-storage, seata-order, seata-account"
+    echo "  基础设施: rocketmq-namesrv, rocketmq-broker, seata-server"
+    return
+  fi
+  local log_file="$LOG_DIR/$module_name.log"
+  if [ -f "$log_file" ]; then
+    tail -f "$log_file"
+  else
+    echo "日志文件不存在: $log_file"
+    echo "可用模块的日志:"
+    ls -1 "$LOG_DIR"/*.log 2>/dev/null | sed "s|$LOG_DIR/||;s|\.log||" | sed 's/^/  /'
+  fi
+}
+
+clean_all() {
+  echo "========== 清理构建产物 =========="
+  cd "$BASE_DIR"
+  ./mvnw clean -q
+  echo "✓ 已清理所有 target 目录"
+}
+
 # 主逻辑
 case "${1:-start}" in
   start)
@@ -355,10 +811,16 @@ case "${1:-start}" in
     echo ""
     install_deps
     echo ""
+    build_all
+    check_special_prerequisites
+    echo ""
     for entry in "${MODULES[@]}"; do
       IFS='|' read -r module_dir display_name port <<< "$entry"
       start_module "$module_dir" "$display_name" "$port"
     done
+    $START_SEATA && start_seata_services
+    $START_STREAM && start_stream_module
+    $START_AI && start_ai_module
     echo ""
     status_all
     demo_urls
@@ -375,19 +837,40 @@ case "${1:-start}" in
     echo ""
     install_deps
     echo ""
+    build_all
+    check_special_prerequisites
+    echo ""
     for entry in "${MODULES[@]}"; do
       IFS='|' read -r module_dir display_name port <<< "$entry"
       start_module "$module_dir" "$display_name" "$port"
     done
+    $START_SEATA && start_seata_services
+    $START_STREAM && start_stream_module
+    $START_AI && start_ai_module
     echo ""
     status_all
     demo_urls
+    ;;
+  install)
+    install_all
+    ;;
+  build)
+    build_all
+    ;;
+  clean)
+    clean_all
+    ;;
+  verify)
+    demo_urls
+    ;;
+  logs)
+    logs_all "$2"
     ;;
   status)
     status_all
     ;;
   *)
-    echo "用法: $0 {start|stop|restart|status}"
+    echo "用法: $0 {start|stop|restart|install|build|clean|verify|logs|status}"
     exit 1
     ;;
 esac

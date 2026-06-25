@@ -20,13 +20,29 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 
 若未安装，执行一键安装：
 ```bash
-curl -fsSL https://nacos.io/nacos-installer.sh | sudo bash
+curl -fsSL https://nacos.io/nacos-installer.sh | bash
 ```
 
-安装后设置环境变量：
+安装后部署（首次需要，后续重启无需重复）：
 ```bash
-export SPRING_CLOUD_NACOS_USERNAME=your_username
-export SPRING_CLOUD_NACOS_PASSWORD=your_password
+nacos-setup
+```
+> `nacos-setup` 会自动部署单机实例并创建密码（用户名：nacos），该密码写入内置数据库。
+
+若已安装但未运行，手动启动：
+```bash
+bin/startup.sh -m standalone
+```
+
+停止 Nacos：
+```bash
+bin/shutdown.sh
+```
+
+设置环境变量（用户名/密码为 nacos-setup 创建的凭证）：
+```bash
+export SPRING_CLOUD_NACOS_USERNAME=nacos
+export SPRING_CLOUD_NACOS_PASSWORD=<nacos-setup 创建的密码>
 ```
 
 ### 2. RocketMQ（仅 Stream 模块需要）
@@ -147,7 +163,9 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 ```
 若未安装：
 ```bash
-curl -fsSL https://nacos.io/nacos-installer.sh | sudo bash
+curl -fsSL https://nacos.io/nacos-installer.sh | bash
+nacos-setup  # 首次部署，自动创建密码（用户名：nacos）
+# 若已部署但未运行：bin/startup.sh -m standalone
 ```
 
 Stream 模块还需 RocketMQ：
@@ -193,12 +211,18 @@ nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
 ```
 
 ```bash
-sh start-all.sh        # 启动所有服务
-sh start-all.sh stop   # 停止所有服务
-sh start-all.sh status # 查看服务状态
+sh start-all.sh install  # 检查并安装中间件（Nacos/RocketMQ/MySQL/Seata）+ 打包模块
+sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动）
+sh start-all.sh build    # 打包所有模块
+sh start-all.sh verify   # 执行验证
+sh start-all.sh status   # 查看服务状态
+sh start-all.sh logs <模块名>  # 查看模块日志（如 ai, stream, provider）
+sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
+sh start-all.sh restart  # 重启所有服务
+sh start-all.sh clean    # 清理构建产物
 ```
 
-脚本会自动：检查 Nacos → 安装依赖模块（cloud-commons、cloud-sample-api） → 按顺序启动所有模块 → 执行验证 → 汇总结果。
+脚本启动流程：检查 Nacos → 安装依赖模块 → 打包 → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 按顺序启动所有模块 → 执行验证 → 汇总结果。
 
 ### 方式二：逐个启动（按顺序）
 
@@ -210,7 +234,9 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 ```
 若未安装：
 ```bash
-curl -fsSL https://nacos.io/nacos-installer.sh | sudo bash
+curl -fsSL https://nacos.io/nacos-installer.sh | bash
+nacos-setup  # 首次部署，自动创建密码（用户名：nacos）
+# 若已部署但未运行：bin/startup.sh -m standalone
 ```
 
 Stream 模块还需 RocketMQ：
