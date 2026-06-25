@@ -59,11 +59,12 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 若 Seata Server 未运行，需从源码构建启动：
 
 **Seata Server 源码启动方式**：
+
 ```bash
 # Seata Server 不是 Spring Boot 应用，是 mvn exec:java 方式启动
 # 版本：2.8.0-SNAPSHOT
 
-# 查找或克隆 Seata 源码
+# 1. 查找或克隆 Seata 源码
 SEATA_SRC="$HOME/github/incubator-seata"
 if [ ! -d "$SEATA_SRC" ]; then
   echo "Seata 源码不存在，正在克隆..."
@@ -71,11 +72,69 @@ if [ ! -d "$SEATA_SRC" ]; then
   git clone https://github.com/apache/incubator-seata.git "$SEATA_SRC"
 fi
 
+# 2. 替换 Seata Server 的 application.yml（使用 Nacos 作为配置中心和注册中心）
+# 配置文件路径：$SEATA_SRC/server/src/main/resources/application.yml
+cat > "$SEATA_SRC/server/src/main/resources/application.yml" << 'EOF'
+server:
+  port: 8091
+spring:
+  application:
+    name: seata-server
+  main:
+    web-application-type: none
+logging:
+  config: classpath:logback-spring.xml
+  file:
+    path: ${log.home:${user.home}/logs/seata}
+  extend:
+    logstash-appender:
+      # off by default
+      enabled: false
+      destination: 127.0.0.1:4560
+    kafka-appender:
+      # off by default
+      enabled: false
+      bootstrap-servers: 127.0.0.1:9092
+      topic: logback_to_logstash
+      producer:
+        acks: 0
+        linger-ms: 1000
+        max-block-ms: 0
+    metric-appender:
+      # off by default
+      enabled: false
+
+seata:
+  config:
+    type: nacos
+    nacos:
+      server-addr: 127.0.0.1:8848
+      username: ${spring.cloud.nacos.username}
+      password: ${spring.cloud.nacos.password}
+      group: SEATA_GROUP
+      namespace: public
+      data-id: seata.properties
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      group: SEATA_GROUP
+      namespace: public
+      cluster: default
+      server-addr: 127.0.0.1:8848
+      username: ${spring.cloud.nacos.username}
+      password: ${spring.cloud.nacos.password}
+  store:
+    # support: file 、 db 、 redis 、 raft
+    mode: file
+EOF
+
+# 3. 启动 Seata Server
 cd "$SEATA_SRC"
 nohup mvn exec:java -Dexec.mainClass="org.apache.seata.server.ServerApplication" -pl server > /tmp/seata-server.log 2>&1 &
 echo "Seata Server 启动中..."
 
-# 等待启动完成（检查端口 8091）
+# 4. 等待启动完成（检查端口 8091）
 for i in $(seq 1 30); do
   if nc -z 127.0.0.1 8091 2>/dev/null; then
     echo "✓ Seata Server 已启动 (端口 8091)"
@@ -484,27 +543,9 @@ echo "✓ Nacos 配置创建完成"
    if [ "$SEATA_REGISTERED" -gt 0 ]; then
      echo "✓ Seata Server 已运行并在 Nacos 中注册"
    else
-     echo "✗ Seata Server 未运行，正在从源码启动..."
-     # 查找或克隆 Seata 源码
-     SEATA_SRC="$HOME/github/incubator-seata"
-     if [ ! -d "$SEATA_SRC" ]; then
-       echo "Seata 源码不存在，正在克隆..."
-       mkdir -p "$HOME/github"
-       git clone https://github.com/apache/incubator-seata.git "$SEATA_SRC"
-     fi
-     
-     cd "$SEATA_SRC"
-     nohup mvn exec:java -Dexec.mainClass="org.apache.seata.server.ServerApplication" -pl server > /tmp/seata-server.log 2>&1 &
-     echo "Seata Server 启动中..."
-     
-     # 等待启动完成
-     for i in $(seq 1 30); do
-       if nc -z 127.0.0.1 8091 2>/dev/null; then
-         echo "✓ Seata Server 已启动 (端口 8091)"
-         break
-       fi
-       sleep 1
-     done
+     echo "✗ Seata Server 未运行"
+     echo "请执行前置条件中的「Seata Server 源码启动方式」脚本（含 clone、配置、启动）"
+     return 1
    fi
    ```
 
