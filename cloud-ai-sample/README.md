@@ -165,7 +165,7 @@ curl -X POST "http://localhost:8080/ai/advanced/creative?message=写一首关于
 **请求：**
 ```bash
 curl -X POST "http://localhost:8080/ai/vision/analyze-url" \
-  -d "imageUrl=https://img1.baidu.com/it/u=3224850734,2174446166&fm=253&fmt=auto&app=120&f=JPEG?w=500&h=837"
+  -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg"
 ```
 
 #### 9. 多模态 - 上传图片分析
@@ -188,7 +188,7 @@ curl -X POST "http://localhost:8080/ai/vision/ocr" \
 **请求：**
 ```bash
 curl -X POST "http://localhost:8080/ai/vision/chart-analysis" \
-  -d "imageUrl=https://img0.baidu.com/it/u=3716881902,3785738263&fm=253&app=138&f=JPEG?w=684&h=912"
+  -d "imageUrl=https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%27Q1%27%2C%27Q2%27%2C%27Q3%27%2C%27Q4%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Revenue%27%2Cdata%3A%5B100%2C200%2C150%2C300%5D%7D%5D%7D%7D"
 ```
 
 #### 12. 多模态 - 代码截图转代码
@@ -196,7 +196,7 @@ curl -X POST "http://localhost:8080/ai/vision/chart-analysis" \
 **请求：**
 ```bash
 curl -X POST "http://localhost:8080/ai/vision/code-from-image" \
-  -d "imageUrl=https://img0.baidu.com/it/u=1426566285,94536163&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=667"
+  -d "imageUrl=https://i-blog.csdnimg.cn/blog_migrate/486ded85cb954f0da650e7f9c306900e.png"
 ```
 
 #### 13. 多模态 - 多图片对比
@@ -204,8 +204,8 @@ curl -X POST "http://localhost:8080/ai/vision/code-from-image" \
 **请求：**
 ```bash
 curl -X POST "http://localhost:8080/ai/vision/compare" \
-  -d "imageUrl1=https://img2.baidu.com/it/u=2499517816,3465890141&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=1200" \
-  -d "imageUrl2=https://img2.baidu.com/it/u=748716099,4246587362&fm=253&fmt=auto&app=120&f=JPEG?w=500&h=753"
+  -d "imageUrl1=https://nimg.ws.126.net/?url=http%3A%2F%2Fdingyue.ws.126.net%2F2025%2F0519%2F741a10acj00swie1b004ed200u00140g00zk01be.jpg&thumbnail=660x2147483647&quality=80&type=jpg" \
+  -d "imageUrl2=https://nimg.ws.126.net/?url=http%3A%2F%2Fdingyue.ws.126.net%2F2025%2F0328%2Ffbc14108j00sttzpb002ld000yg00uem.jpg&thumbnail=660x2147483647&quality=80&type=jpg"
 ```
 
 #### 14. Tool Calling - 天气查询
