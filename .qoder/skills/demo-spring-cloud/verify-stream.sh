@@ -167,6 +167,10 @@ echo "=========================================="
 echo "  验证完成，清理..."
 echo "=========================================="
 pkill -f "cloud-stream-sample" 2>/dev/null && echo "✓ Stream 模块已停止" || echo "Stream 模块未运行"
+pkill -f "rocketmq" 2>/dev/null; sleep 1
+pgrep -f "rocketmq" | xargs kill -9 2>/dev/null; sleep 1
+nc -z 127.0.0.1 9876 2>/dev/null && echo "✗ RocketMQ NameServer 仍在运行" || echo "✓ RocketMQ NameServer 已停止"
+nc -z 127.0.0.1 10911 2>/dev/null && echo "✗ RocketMQ Broker 仍在运行" || echo "✓ RocketMQ Broker 已停止"
 
 echo ""
 echo "=========================================="
