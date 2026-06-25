@@ -20,14 +20,13 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
-        <!--
-            MCP Server（WebMVC 模式）
-            将 @Tool 标注的方法通过 HTTP 端点暴露给 MCP Client，
-            与 REST 控制器共存于同一应用。
-        -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
     </dependencies>
 
