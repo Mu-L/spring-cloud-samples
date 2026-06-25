@@ -159,70 +159,33 @@ done
 
 ## 启动方式
 
-### 方式一：一键启动所有服务（推荐）
+> **优先级：AI Skill > 脚本 > 手动**
 
-前置条件：确保 Nacos 已安装并运行：
-```bash
-curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' && echo "✓ Nacos 已运行" || echo "✗ Nacos 未运行"
-```
-若未安装：
-```bash
-curl -fsSL https://nacos.io/nacos-installer.sh | bash
-nacos-setup  # 首次部署，自动创建密码（用户名：nacos）
-```
-若已部署但未运行：
-```bash
-NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
-cd "$NACOS_DIR" && bin/startup.sh -m standalone
-```
+| 方式 | 说明 | 适用场景 |
+|------|------|----------|
+| 🤖 **AI Skill（推荐）** | 告诉 AI "演示项目"，自动完成环境检查、启动、验证全流程 | 快速体验、集成测试 |
+| 📜 **一键脚本** | 通过 `start-all.sh` 自动化启动和验证 | 批量验证、CI/CD |
+| 🔧 **手动启动** | 逐个模块手动启动，灵活控制 | 学习调试、单模块开发 |
 
-Stream 模块还需 RocketMQ：
-```bash
-nc -z 127.0.0.1 9876 && echo "✓ RocketMQ 已运行" || echo "✗ RocketMQ 未运行"
-```
-若未安装：
-```bash
-curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
-unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
-```
-启动 RocketMQ：
-```bash
-ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
-cd "$ROCKETMQ_HOME"
-nohup bin/mqnamesrv > namesrv.log 2>&1 &
-sleep 5
-nohup bin/mqbroker -n localhost:9876 > broker.log 2>&1 &
-sleep 10
-```
+### 方式一：AI Skill（推荐）
 
-Seata 模块还需 MySQL + Seata Server：
-```bash
-mysql -u root -proot1234 -e "SELECT 1"
-nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
-```
-若未安装：
-```bash
-# MySQL（macOS）
-brew install mysql
-mysql.server start
-mysqladmin -u root password 'root1234'
+直接告诉 AI 助手你要做什么，例如：
+- "演示项目"
+- "启动所有服务并验证"
+- "验证 Seata 分布式事务"
+- "验证 Stream 消息收发"
 
-# 初始化数据库
-mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -proot1234 seata < cloud-seata-sample/all.sql
+AI 会自动检查环境、安装依赖、启动服务、执行验证。无需手动操作。
 
-# Seata Server（从源码启动）
-SEATA_SRC="$HOME/github/seata"
-[ ! -d "$SEATA_SRC" ] && git clone https://github.com/javahongxi/seata.git "$SEATA_SRC"
-cd "$SEATA_SRC" && ./mvnw clean install -DskipTests -q
-nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
-```
+### 方式二：一键脚本
+
+前置条件参考上方「前置条件」章节，脚本会自动检查并尝试启动缺失的组件。
 
 ```bash
-sh start-all.sh install  # 检查并安装中间件（Nacos/RocketMQ/MySQL/Seata）+ 打包模块
-sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动）
+sh start-all.sh install  # 检查并安装中间件 + 打包模块
+sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动、验证）
 sh start-all.sh build    # 打包所有模块
-sh start-all.sh verify   # 执行验证
+sh start-all.sh verify   # 执行验证（不启动，仅验证已运行的服务）
 sh start-all.sh status   # 查看服务状态
 sh start-all.sh logs <模块名>  # 查看模块日志（如 ai, stream, provider）
 sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
@@ -230,68 +193,13 @@ sh start-all.sh restart  # 重启所有服务
 sh start-all.sh clean    # 清理构建产物
 ```
 
-脚本启动流程：检查 Nacos → 安装依赖模块 → 打包 → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 按顺序启动所有模块 → 执行验证 → 汇总结果。
+> 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
 
-### 方式二：逐个启动（按顺序）
+### 方式三：手动逐个启动
+
+前置条件参考上方「前置条件」章节。
 
 启动顺序原则：**基础设施 → Provider → Consumer → Client → Config**
-
-前置条件：确保 Nacos 已安装并运行：
-```bash
-curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' && echo "✓ Nacos 已运行" || echo "✗ Nacos 未运行"
-```
-若未安装：
-```bash
-curl -fsSL https://nacos.io/nacos-installer.sh | bash
-nacos-setup  # 首次部署，自动创建密码（用户名：nacos）
-```
-若已部署但未运行：
-```bash
-NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
-cd "$NACOS_DIR" && bin/startup.sh -m standalone
-```
-
-Stream 模块还需 RocketMQ：
-```bash
-nc -z 127.0.0.1 9876 && echo "✓ RocketMQ 已运行" || echo "✗ RocketMQ 未运行"
-```
-若未安装：
-```bash
-curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
-unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
-```
-启动 RocketMQ：
-```bash
-ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
-cd "$ROCKETMQ_HOME"
-nohup bin/mqnamesrv > namesrv.log 2>&1 &
-sleep 5
-nohup bin/mqbroker -n localhost:9876 > broker.log 2>&1 &
-sleep 10
-```
-
-Seata 模块还需 MySQL + Seata Server：
-```bash
-mysql -u root -proot1234 -e "SELECT 1"
-nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
-```
-若未安装：
-```bash
-# MySQL（macOS）
-brew install mysql
-mysql.server start
-mysqladmin -u root password 'root1234'
-
-# 初始化数据库
-mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -proot1234 seata < cloud-seata-sample/all.sql
-
-# Seata Server（从源码启动）
-SEATA_SRC="$HOME/github/seata"
-[ ! -d "$SEATA_SRC" ] && git clone https://github.com/javahongxi/seata.git "$SEATA_SRC"
-cd "$SEATA_SRC" && ./mvnw clean install -DskipTests -q
-nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
-```
 
 | 顺序 | 模块 | 端口 | 说明 |
 |------|------|------|------|
@@ -317,8 +225,8 @@ nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
 | 模块 | 端口 | 说明 |
 |------|------|------|
 | cloud-ai-sample | 8080 | Spring AI，需配置 OPENAI_API_KEY |
-| cloud-stream-sample | - | 需先安装并启动 RocketMQ，验证可直接执行 `bash .qoder/skills/demo-spring-cloud/verify-stream.sh` |
-| cloud-seata-sample | 18081-18084 | 需 MySQL + Seata Server，验证可直接执行 `bash .qoder/skills/demo-spring-cloud/verify-seata.sh` |
+| cloud-stream-sample | - | 需先安装并启动 RocketMQ |
+| cloud-seata-sample | 18081-18084 | 需 MySQL + Seata Server |
 
 ## 演示与验证
 

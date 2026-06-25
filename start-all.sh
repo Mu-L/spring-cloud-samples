@@ -797,8 +797,23 @@ case "${1:-start}" in
   status)
     status_all
     ;;
+  help|--help|-h)
+    echo "用法: $0 {start|stop|restart|install|build|clean|verify|logs|status|help}"
+    echo ""
+    echo "命令说明:"
+    echo "  start    启动所有服务（默认）"
+    echo "  stop     停止所有服务（含 RocketMQ、Seata Server）"
+    echo "  restart  重启所有服务"
+    echo "  install  检查并安装中间件 + 打包模块"
+    echo "  build    打包所有模块"
+    echo "  clean    清理构建产物"
+    echo "  verify   执行验证（不启动，仅验证已运行的服务）"
+    echo "  status   查看服务状态"
+    echo "  logs     查看模块日志 (用法: $0 logs <模块名>)"
+    echo "  help     显示此帮助信息"
+    ;;
   *)
-    echo "用法: $0 {start|stop|restart|install|build|clean|verify|logs|status}"
+    echo "用法: $0 {start|stop|restart|install|build|clean|verify|logs|status|help}"
     exit 1
     ;;
 esac

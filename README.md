@@ -27,6 +27,36 @@
   <img src="arch.png" alt="架构图">
 </picture>
 
+### 🎮 演示方式
+
+> **优先级：AI Skill > 脚本 > 手动**
+
+| 方式 | 说明 | 适用场景 |
+|------|------|----------|
+| 🤖 **AI Skill（推荐）** | 告诉 AI 助手 "演示项目"，自动完成环境检查、启动、验证全流程 | 快速体验、集成测试 |
+| 📜 **一键脚本** | 通过 `start-all.sh` 脚本自动化启动和验证 | 批量验证、CI/CD |
+| 🔧 **手动启动** | 逐个模块手动启动，灵活控制 | 学习调试、单模块开发 |
+
+#### 📜 一键脚本
+
+```shell
+# 查看所有命令
+sh start-all.sh --help
+
+# 常用命令
+sh start-all.sh install  # 检查并安装中间件（Nacos/RocketMQ/MySQL/Seata）+ 打包模块
+sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动、验证）
+sh start-all.sh build    # 打包所有模块
+sh start-all.sh verify   # 执行验证（不启动，仅验证已运行的服务）
+sh start-all.sh status   # 查看服务状态
+sh start-all.sh logs <模块名>  # 查看模块日志（如 ai, stream, provider）
+sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
+sh start-all.sh restart  # 重启所有服务
+sh start-all.sh clean    # 清理构建产物
+```
+
+> 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
+
 ### 🔍 服务注册与发现演示
 > 首先安装部署 Nacos，完成后设置环境变量
 ```shell
@@ -132,29 +162,6 @@ curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Ty
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
 
-### 🚀 脚本演示
-
-> 使用脚本一次性验证如下内容：
-1. Nacos Discovery 验证
-2. 普通 Web 服务注册与发现
-3. Reactive Web 服务注册与发现
-4. Dubbo 服务注册与发现
-5. gRPC 服务注册与发现
-6. 纯 Dubbo provider/consumer 验证
-7. 纯 gRPC server/client 验证
-8. Dubbo REST 接口验证
-9. Nacos Config 验证
-10. 汇总验证结果
-
-启动所有服务
-```shell
-sh start-all.sh
-```
-停止所有服务
-```shell
-sh start-all.sh stop
-```
-
 ### 🛡️ Sentinel Gateway 演示
 `cloud-gateway-sample`集成了sentinel，并采用nacos配置规则，规则示例如下 <br>
 group-id: SENTINEL_GROUP <br>
@@ -234,6 +241,12 @@ bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-co
 ```shell
 bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 ```
+
+### 🔄 Seata 分布式事务演示
+
+前置条件：MySQL + Seata Server，请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的环境准备步骤。
+
+启动 4 个微服务（business 18081、storage 18082、order 18083、account 18084），验证分布式事务的回滚与提交。
 
 ### 🌿 分支说明
 - 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例
