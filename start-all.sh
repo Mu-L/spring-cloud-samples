@@ -69,7 +69,7 @@ start_rocketmq() {
     echo "[RocketMQ] ✗ 未在 $HOME 下找到 rocketmq-* 目录，请先下载安装"
     return 1
   fi
-  echo -n "[RocketMQ] 启动 NameServer ..."
+  printf '[RocketMQ] 启动 NameServer ...'
   cd "$rocketmq_home"
   nohup bin/mqnamesrv > "$LOG_DIR/rocketmq-namesrv.log" 2>&1 &
   sleep 5
@@ -79,7 +79,7 @@ start_rocketmq() {
     echo " ✗ 请查看日志: $LOG_DIR/rocketmq-namesrv.log"
     return 1
   fi
-  echo -n "[RocketMQ] 启动 Broker ..."
+  printf '[RocketMQ] 启动 Broker ...'
   nohup bin/mqbroker -n localhost:9876 > "$LOG_DIR/rocketmq-broker.log" 2>&1 &
   sleep 10
   if nc -z 127.0.0.1 10911 2>/dev/null; then
@@ -97,7 +97,7 @@ start_seata_server() {
     echo "[Seata Server] ✗ 未找到 $seata_src，请先克隆源码"
     return 1
   fi
-  echo -n "[Seata Server] 启动中 ..."
+  printf '[Seata Server] 启动中 ...'
   cd "$seata_src"
   nohup ./mvnw -pl server spring-boot:run > "$LOG_DIR/seata-server.log" 2>&1 &
   cd "$BASE_DIR"
@@ -199,7 +199,7 @@ start_module() {
     :
   fi
 
-  echo -n "[$display_name] 启动中 (port: $port) ..."
+  printf '[%s] 启动中 (port: %s) ...' "$display_name" "$port"
   cd "$BASE_DIR"
   nohup ./mvnw -pl "$module_dir" spring-boot:run > "$log_file" 2>&1 &
   local pid=$!
@@ -259,7 +259,7 @@ stop_all() {
     local name=$(basename "$pid_file" .pid)
     local pid=$(cat "$pid_file")
     if kill -0 "$pid" 2>/dev/null; then
-      echo -n "[$name] 停止中 (PID: $pid) ..."
+      printf '[%s] 停止中 (PID: %s) ...' "$name" "$pid"
       kill "$pid"
       # 等待进程退出（最多 10 秒）
       for i in $(seq 1 10); do
@@ -269,7 +269,7 @@ stop_all() {
         sleep 1
       done
       if kill -0 "$pid" 2>/dev/null; then
-        kill -9 "$pid" 2>/dev/null
+        kill -9 "$pid" 2>/dev/null || true
       fi
       echo " 已停止"
     else
@@ -277,43 +277,15 @@ stop_all() {
     fi
     rm -f "$pid_file"
   done
-  # 停止特殊模块（通过 PID 文件 + pkill 双保险）
-  for pid_file in "$PID_DIR"/ai.pid "$PID_DIR"/stream.pid; do
-    [ -f "$pid_file" ] || continue
-    local name=$(basename "$pid_file" .pid)
-    local pid=$(cat "$pid_file")
-    if kill -0 "$pid" 2>/dev/null; then
-      echo -n "[$name] 停止中 (PID: $pid) ..."
-      kill "$pid"
-      sleep 2
-      kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
-      echo " 已停止"
-    fi
-    rm -f "$pid_file"
-  done
-  for entry in "${SEATA_MODULES[@]}"; do
-    IFS='|' read -r _ display_name _ <<< "$entry"
-    local pid_file="$PID_DIR/$display_name.pid"
-    [ -f "$pid_file" ] || continue
-    local pid=$(cat "$pid_file")
-    if kill -0 "$pid" 2>/dev/null; then
-      echo -n "[$display_name] 停止中 (PID: $pid) ..."
-      kill "$pid"
-      sleep 2
-      kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
-      echo " 已停止"
-    fi
-    rm -f "$pid_file"
-  done
   # 兜底：确保残留进程也被清理
-  pkill -f "cloud-ai-sample" 2>/dev/null
-  pkill -f "cloud-stream-sample" 2>/dev/null
-  pkill -f "cloud-seata-sample" 2>/dev/null
+  pkill -f "cloud-ai-sample" 2>/dev/null || true
+  pkill -f "cloud-stream-sample" 2>/dev/null || true
+  pkill -f "cloud-seata-sample" 2>/dev/null || true
   # 停止 RocketMQ 和 Seata Server
-  pkill -f "rocketmq" 2>/dev/null
+  pkill -f "rocketmq" 2>/dev/null || true
   sleep 1
-  pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null
-  pkill -f "seata.*spring-boot:run" 2>/dev/null
+  pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null || true
+  pkill -f "seata.*spring-boot:run" 2>/dev/null || true
   rm -rf "$LOG_DIR" "$PID_DIR"
   echo "所有服务已停止，logs 和 .pids 目录已清理"
 }
@@ -561,7 +533,7 @@ NACOS_HOST="127.0.0.1"
 NACOS_PORT="8848"
 
 check_nacos() {
-  echo -n "[Nacos] 检查注册中心 ($NACOS_HOST:$NACOS_PORT) ..."
+  printf '[Nacos] 检查注册中心 (%s:%s) ...' "$NACOS_HOST" "$NACOS_PORT"
   # 已运行
   if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
     echo " 就绪"
@@ -576,7 +548,7 @@ check_nacos() {
   if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
     nacos_bin="$nacos_dir/bin"
     bash "$nacos_bin/startup.sh" -m standalone
-    echo -n "[Nacos] 等待启动就绪..."
+    printf '[Nacos] 等待启动就绪...'
     for i in $(seq 1 30); do
       if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
         echo " 就绪"
