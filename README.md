@@ -217,7 +217,7 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
 ```shell
 bin/mqnamesrv
-bin/mqbroker -n localhost:9876 --enable-proxy
+bin/mqbroker -n localhost:9876
 ```
 
 #### 📝 Create Topic and Consumer Group
