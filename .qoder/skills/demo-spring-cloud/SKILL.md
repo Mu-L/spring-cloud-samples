@@ -32,11 +32,11 @@ bin/mqnamesrv
 bin/mqbroker -n localhost:9876 --enable-proxy
 ```
 
-### 3. 安装 API 模块
+### 3. 安装依赖模块
 
-部分模块依赖 `cloud-sample-api`，启动前需先安装：
+部分模块依赖 `cloud-commons` 和 `cloud-sample-api`，启动前需先安装：
 ```bash
-./mvnw -N install -q && ./mvnw -pl cloud-sample-api install -DskipTests -q
+./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q
 ```
 
 ## 启动方式
@@ -49,7 +49,7 @@ sh start-all.sh stop   # 停止所有服务
 sh start-all.sh status # 查看服务状态
 ```
 
-脚本会自动：检查 Nacos → 安装 API → 按顺序启动所有模块 → 执行验证 → 汇总结果。
+脚本会自动：检查 Nacos → 安装依赖模块（cloud-commons、cloud-sample-api） → 按顺序启动所有模块 → 执行验证 → 汇总结果。
 
 ### 方式二：逐个启动（按顺序）
 

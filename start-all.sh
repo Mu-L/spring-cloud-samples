@@ -335,14 +335,14 @@ check_nacos() {
   exit 1
 }
 
-install_api() {
-  echo "正在安装 cloud-sample-api 到本地仓库 ..."
+install_deps() {
+  echo "正在安装依赖模块到本地仓库 ..."
   cd "$BASE_DIR"
-  # 先安装根 pom，再安装 api 模块（api 依赖父 pom）
-  if ./mvnw -N install -q && ./mvnw -pl cloud-sample-api install -DskipTests -q; then
-    echo "cloud-sample-api 安装成功"
+  # 先安装根 pom，再安装依赖模块（cloud-commons、cloud-sample-api 依赖父 pom）
+  if ./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q; then
+    echo "cloud-commons、cloud-sample-api 安装成功"
   else
-    echo "cloud-sample-api 安装失败!"
+    echo "依赖模块安装失败!"
     exit 1
   fi
 }
@@ -353,7 +353,7 @@ case "${1:-start}" in
     echo "========== 启动所有服务 =========="
     check_nacos
     echo ""
-    install_api
+    install_deps
     echo ""
     for entry in "${MODULES[@]}"; do
       IFS='|' read -r module_dir display_name port <<< "$entry"
@@ -373,7 +373,7 @@ case "${1:-start}" in
     echo "========== 重新启动所有服务 =========="
     check_nacos
     echo ""
-    install_api
+    install_deps
     echo ""
     for entry in "${MODULES[@]}"; do
       IFS='|' read -r module_dir display_name port <<< "$entry"
