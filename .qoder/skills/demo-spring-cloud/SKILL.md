@@ -27,12 +27,70 @@ export SPRING_CLOUD_NACOS_PASSWORD=your_password
 
 ### 2. RocketMQ（仅 Stream 模块需要）
 
+Stream 模块依赖 RocketMQ，询问用户是否需要帮助安装和启动。 <br>
+安装与启动指南请参考项目 README 的 [Stream 演示](../../README.md#-stream-演示) 章节。
+
+简要步骤：
+1. 下载 RocketMQ 并解压
+2. 启动 NameServer 和 Broker
+3. 创建 Topic 和 Consumer Group
+4. 启动 Stream 模块，观察日志验证消息收发
+
+### 3. MySQL + Seata Server（仅 Seata 模块需要）
+
+Seata 分布式事务模块依赖 MySQL 和 Seata Server：
+
+**MySQL 检查**：
 ```bash
-bin/mqnamesrv
-bin/mqbroker -n localhost:9876 --enable-proxy
+mysql -u root -proot1234 -e "SELECT 1"
 ```
 
-### 3. 安装依赖模块
+**数据库初始化**：
+```bash
+mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -proot1234 seata < cloud-seata-sample/all.sql
+```
+
+**Seata Server 检查**（端口 8091）：
+```bash
+nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
+```
+
+若 Seata Server 未运行，需从源码构建启动：
+
+**Seata Server 源码启动方式**：
+```bash
+# Seata Server 不是 Spring Boot 应用，是 mvn exec:java 方式启动
+# 版本：2.8.0-SNAPSHOT
+
+# 查找或克隆 Seata 源码
+SEATA_SRC="$HOME/github/incubator-seata"
+if [ ! -d "$SEATA_SRC" ]; then
+  echo "Seata 源码不存在，正在克隆..."
+  mkdir -p "$HOME/github"
+  git clone https://github.com/apache/incubator-seata.git "$SEATA_SRC"
+fi
+
+cd "$SEATA_SRC"
+nohup mvn exec:java -Dexec.mainClass="org.apache.seata.server.ServerApplication" -pl server > /tmp/seata-server.log 2>&1 &
+echo "Seata Server 启动中..."
+
+# 等待启动完成（检查端口 8091）
+for i in $(seq 1 30); do
+  if nc -z 127.0.0.1 8091 2>/dev/null; then
+    echo "✓ Seata Server 已启动 (端口 8091)"
+    break
+  fi
+  sleep 1
+done
+```
+
+**为什么需要从源码启动**：
+- 项目使用的 Nacos 版本与 Seata 官方发布的二进制包存在兼容性问题
+- 源码版本 2.8.0-SNAPSHOT 已修复此问题
+- 启动命令是 `mvn exec:java`，不是 `spring-boot:run`
+
+### 4. 安装依赖模块
 
 部分模块依赖 `cloud-commons` 和 `cloud-sample-api`，启动前需先安装：
 ```bash
@@ -79,7 +137,7 @@ sh start-all.sh status # 查看服务状态
 | 模块 | 端口 | 说明 |
 |------|------|------|
 | cloud-ai-sample | 8080 | Spring AI，需配置 OPENAI_API_KEY |
-| cloud-stream-sample | - | 需先启动 RocketMQ |
+| cloud-stream-sample | - | 需先安装并启动 RocketMQ |
 | cloud-seata-sample | 18081-18084 | 需 MySQL + Seata Server |
 
 ## 演示与验证
@@ -140,7 +198,13 @@ curl 'http://localhost:50051/api/greet/lily?lang=zh'
 curl http://localhost:8764/provider-dubbo-sample/api/hello/lily
 ```
 
-### 7. Nacos Config 动态配置
+### 7. 纯 Dubbo / gRPC 演示
+
+启动后观察日志即可：
+- `cloud-consumer-dubbo-sample`：日志中出现 `Hello, lily` 表示调用成功
+- `cloud-grpc-client-sample`：日志中出现 `Hello, lily` 表示调用成功
+
+### 8. Nacos Config 动态配置
 
 ```bash
 # 发布配置
@@ -149,14 +213,20 @@ curl 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan'
 curl 'http://localhost:8761/nacos/getConfig?dataId=my.city'
 ```
 
-### 8. Sentinel 网关限流
+### 9. Sentinel 网关限流
 
 快速刷新 `http://localhost:8764/consumer-sample/hi?name=hongxi` 触发限流时返回：
 ```json
 {"code":444,"msg":"Sentinel gateway block"}
 ```
 
-### 9. Spring AI 模块
+### 10. Spring AI 模块
+
+**前置步骤：停止所有已运行的服务**（避免端口冲突，AI 模块使用 8080 端口）：
+```bash
+# 在项目根目录下执行
+sh start-all.sh stop
+```
 
 启动前配置 API Key：
 ```bash
@@ -235,11 +305,317 @@ curl -X POST "http://localhost:8080/ai/vision/compare" \
 > 注意：百度图片等部分 CDN 会拒绝 Java `UrlResource` 的请求（无 User-Agent），导致 500 错误。
 > 以上 URL 已验证可稳定访问。如需使用其他图片，请确保 URL 可被服务端直接下载。
 
-### 10. 纯 Dubbo / gRPC 演示
+**验证完成后停止 AI 模块**：
+```bash
+# 查找并停止 AI 模块进程
+pkill -f "cloud-ai-sample" && echo "✓ AI 模块已停止" || echo "AI 模块未运行"
+```
 
-启动后观察日志即可：
-- `cloud-consumer-dubbo-sample`：日志中出现 `Hello, lily` 表示调用成功
-- `cloud-grpc-client-sample`：日志中出现 `Hello, lily` 表示调用成功
+### 11. Stream 消息收发（需 RocketMQ）
+
+**执行流程：**
+
+0. **停止所有已运行的服务**（避免端口冲突和资源占用）：
+   ```bash
+   # 在项目根目录下执行
+   sh start-all.sh stop
+   ```
+
+1. **检查 RocketMQ 是否已安装**：
+   ```bash
+   # 检查 NameServer 端口是否就绪
+   if nc -z 127.0.0.1 9876 2>/dev/null; then
+     echo "✓ RocketMQ 已运行"
+   else
+     echo "✗ RocketMQ 未运行"
+   fi
+   ```
+
+2. **如果 RocketMQ 已运行**，直接跳到步骤 4 创建 Topic 和 Consumer Group，然后启动 Stream 模块验证。
+
+3. **如果 RocketMQ 未安装或未运行**，询问用户：
+   > "Stream 模块依赖 RocketMQ，但当前未检测到运行中的 RocketMQ 服务。是否需要我帮您自动完成以下操作？
+   > 1. 下载并安装 RocketMQ 5.5.0
+   > 2. 启动 NameServer 和 Broker
+   > 3. 创建所需的 Topic 和 Consumer Group
+   > 4. 启动 Stream 模块并验证消息收发"
+
+   **如果用户同意**，按以下步骤执行：
+
+   #### 步骤 1：下载 RocketMQ
+   ```bash
+   cd /tmp
+   curl -LO https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
+   unzip rocketmq-all-5.5.0-bin-release.zip
+   mv rocketmq-all-5.5.0-bin-release ~/rocketmq
+   cd ~/rocketmq
+   ```
+
+   #### 步骤 2：启动 NameServer 和 Broker
+   ```bash
+   # 后台启动 NameServer
+   nohup bin/mqnamesrv > namesrv.log 2>&1 &
+   echo "NameServer 启动中..."
+   sleep 5
+
+   # 后台启动 Broker
+   nohup bin/mqbroker -n localhost:9876 > broker.log 2>&1 &
+   echo "Broker 启动中..."
+   sleep 10
+
+   # 验证是否启动成功
+   if nc -z 127.0.0.1 9876 2>/dev/null; then
+     echo "✓ RocketMQ 已就绪"
+   else
+     echo "✗ RocketMQ 启动失败，请查看日志"
+     return 1
+   fi
+   ```
+
+4. **创建 Topic 和 Consumer Group**（无论是否新安装，都需要执行）：
+   ```bash
+   # 创建 stream-demo-topic 及其消费组
+   bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL
+   bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group
+
+   # 创建 stream-demo-topic2 及其消费组
+   bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic2 -a +message.type=NORMAL
+   bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group2
+
+   echo "✓ Topic 和 Consumer Group 创建完成"
+   ```
+
+5. **启动 Stream 模块并验证**：
+   ```bash
+   # 在项目根目录下执行
+   ./mvnw -pl cloud-stream-sample spring-boot:run > logs/stream-sample.log 2>&1 &
+   echo "Stream 模块启动中..."
+   sleep 15
+
+   # 验证消息收发
+   echo "=== 验证消息消费 ==="
+   grep "Received message: Hello" logs/stream-sample.log && echo "✓ stream-demo-topic 消息消费正常" || echo "✗ 未收到 Hello 消息"
+   grep "收到消息: 你好" logs/stream-sample.log && echo "✓ stream-demo-topic2 消息消费正常" || echo "✗ 未收到 你好 消息"
+   ```
+
+6. **验证完成后停止 Stream 模块**：
+   ```bash
+   pkill -f "cloud-stream-sample" && echo "✓ Stream 模块已停止" || echo "Stream 模块未运行"
+   ```
+
+---
+
+**如果用户选择手动操作**，详细步骤请参考项目 README 的 [Stream 演示](../../README.md#-stream-演示) 章节。
+
+### 12. Seata 分布式事务（需 MySQL + Seata Server）
+
+**执行流程：**
+
+0. **停止所有已运行的服务**（避免端口冲突和资源占用）：
+   ```bash
+   # 在项目根目录下执行
+   sh start-all.sh stop
+   ```
+
+1. **检查前置条件**：
+   ```bash
+   # 检查 Nacos 是否运行
+   if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+     echo "✓ Nacos 已运行"
+   else
+     echo "✗ Nacos 未运行，请先启动 Nacos"
+     return 1
+   fi
+
+   # 检查 MySQL 是否运行
+   if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+     echo "✓ MySQL 已运行"
+   else
+     echo "✗ MySQL 未运行或连接失败"
+     return 1
+   fi
+   ```
+
+2. **询问用户是否需要 AI 自动完成环境准备**：
+   > "Seata 分布式事务示例需要以下环境：
+   > 1. MySQL 数据库（已检测到运行中 / 未检测到）
+   > 2. 初始化 seata 数据库及业务表
+   > 3. 配置 Nacos（创建 seata.properties）
+   > 4. 启动 Seata Server
+   > 5. 启动 4 个微服务并验证分布式事务
+   > 
+   > 是否需要我帮您自动完成以上操作？"
+
+   **如果用户同意**，按以下步骤执行：
+
+   #### 步骤 1：初始化数据库
+   ```bash
+   # 创建 seata 数据库并导入表结构
+   mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   mysql -u root -proot1234 seata < cloud-seata-sample/all.sql
+   echo "✓ 数据库初始化完成"
+   ```
+
+   #### 步骤 2：配置 Nacos（创建 seata.properties）
+   启动 cloud-nacos-config-sample 用于发布配置：
+   
+```shell
+CONTENT="service.vgroupMapping.default_tx_group=default
+service.vgroupMapping.order-service-tx-group=default
+service.vgroupMapping.account-service-tx-group=default
+service.vgroupMapping.business-service-tx-group=default
+service.vgroupMapping.storage-service-tx-group=default"
+
+curl -X POST http://localhost:8761/nacos/publishConfig \
+  -d "dataId=seata.properties" \
+  -d "group=SEATA_GROUP" \
+  -d "type=properties" \
+  --data-urlencode "content=$CONTENT"
+
+echo "✓ Nacos 配置创建完成"
+```
+
+   #### 步骤 3：检查 Seata Server 是否运行
+   启动 cloud-nacos-discovery-sample 用于查询注册的实例：
+   ```bash
+   # 检查 Seata Server 是否在 Nacos 中注册
+   SEATA_REGISTERED=$(curl -s "http://localhost:8760/discovery/instances/seata-server?group=SEATA_GROUP" 2>/dev/null | grep -c '"ip"')
+   
+   if [ "$SEATA_REGISTERED" -gt 0 ]; then
+     echo "✓ Seata Server 已运行并在 Nacos 中注册"
+   else
+     echo "✗ Seata Server 未运行，正在从源码启动..."
+     # 查找或克隆 Seata 源码
+     SEATA_SRC="$HOME/github/incubator-seata"
+     if [ ! -d "$SEATA_SRC" ]; then
+       echo "Seata 源码不存在，正在克隆..."
+       mkdir -p "$HOME/github"
+       git clone https://github.com/apache/incubator-seata.git "$SEATA_SRC"
+     fi
+     
+     cd "$SEATA_SRC"
+     nohup mvn exec:java -Dexec.mainClass="org.apache.seata.server.ServerApplication" -pl server > /tmp/seata-server.log 2>&1 &
+     echo "Seata Server 启动中..."
+     
+     # 等待启动完成
+     for i in $(seq 1 30); do
+       if nc -z 127.0.0.1 8091 2>/dev/null; then
+         echo "✓ Seata Server 已启动 (端口 8091)"
+         break
+       fi
+       sleep 1
+     done
+   fi
+   ```
+
+   #### 步骤 4：启动 4 个微服务
+   ```bash
+   # 在项目根目录下执行
+
+   # 按顺序启动服务
+   echo "启动 storage-service (18082)..."
+   ./mvnw -pl cloud-seata-sample/storage-service spring-boot:run > logs/seata-storage.log 2>&1 &
+   sleep 10
+
+   echo "启动 account-service (18084)..."
+   ./mvnw -pl cloud-seata-sample/account-service spring-boot:run > logs/seata-account.log 2>&1 &
+   sleep 10
+
+   echo "启动 order-service (18083)..."
+   ./mvnw -pl cloud-seata-sample/order-service spring-boot:run > logs/seata-order.log 2>&1 &
+   sleep 10
+
+   echo "启动 business-service (18081)..."
+   ./mvnw -pl cloud-seata-sample/business-service spring-boot:run > logs/seata-business.log 2>&1 &
+   sleep 15
+
+   echo "✓ 所有服务启动完成"
+   ```
+
+   #### 步骤 5：验证分布式事务
+   ```bash
+   # 记录初始数据
+   echo "=== 初始数据状态 ==="
+   mysql -u root -proot1234 seata -e "
+   SELECT '账户余额' AS 类型, money AS 当前值 FROM account_tbl WHERE user_id='U100001'
+   UNION ALL
+   SELECT '库存数量', count FROM storage_tbl WHERE commodity_code='C00321'
+   UNION ALL
+   SELECT '订单数量', COUNT(*) FROM order_tbl;
+   "
+
+   # 场景 1：验证事务回滚（mock 异常）
+   # 接口会随机抛出异常，返回 500 表示触发了异常，此时事务应回滚
+   echo "=== 场景 1：验证事务回滚（返回 500 表示 mock 异常触发）==="
+   curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:18081/seata/rest
+   echo ""
+
+   # 场景 2：验证事务提交成功
+   # 循环调用直到返回 SUCCESS（无异常），验证分布式事务正常提交
+   echo ""
+   echo "=== 场景 2：验证事务提交成功（循环调用直到成功）==="
+   for i in $(seq 1 20); do
+     result=$(curl -s -w "\n%{http_code}" http://127.0.0.1:18081/seata/rest)
+     http_code=$(echo "$result" | tail -1)
+     if [ "$http_code" = "200" ]; then
+       echo "✓ 第 ${i} 次调用成功，事务已提交"
+       break
+     else
+       echo "第 ${i} 次调用返回 ${http_code}（mock 异常，事务已回滚），继续重试..."
+     fi
+   done
+
+   # 验证 Feign 方式（同样循环调用直到成功）
+   echo ""
+   echo "=== 验证 FeignClient 方式 ==="
+   for i in $(seq 1 20); do
+     result=$(curl -s -w "\n%{http_code}" http://127.0.0.1:18081/seata/feign)
+     http_code=$(echo "$result" | tail -1)
+     if [ "$http_code" = "200" ]; then
+       echo "✓ 第 ${i} 次调用成功（Feign），事务已提交"
+       break
+     else
+       echo "第 ${i} 次调用返回 ${http_code}（Feign，mock 异常），继续重试..."
+     fi
+   done
+
+   # 验证 Xid 传递
+   echo ""
+   echo "=== 验证 Xid 传递 ==="
+   grep -E "Begin.*xid:" logs/seata-storage.log | tail -1
+   grep -E "Begin.*xid:" logs/seata-order.log | tail -1
+   grep -E "Begin.*xid:" logs/seata-account.log | tail -1
+
+   # 验证数据一致性
+   echo ""
+   echo "=== 验证数据一致性 ==="
+   mysql -u root -proot1234 seata -e "
+   SELECT '账户余额' AS 类型, money AS 当前值 FROM account_tbl WHERE user_id='U100001'
+   UNION ALL
+   SELECT '库存数量', count FROM storage_tbl WHERE commodity_code='C00321'
+   UNION ALL
+   SELECT '订单数量', COUNT(*) FROM order_tbl;
+   "
+
+   echo ""
+   echo "预期结果："
+   echo "- 用户余额：10000 = 当前余额 + 2(单价) × 订单数 × 2(每单数量)"
+   echo "- 库存数量：100 = 当前库存 + 订单数 × 2(每单数量)"
+   echo ""
+   echo "说明："
+   echo "- 返回 500 时：mock 异常触发，事务回滚，数据不变"
+   echo "- 返回 200 时：事务正常提交，余额减少、库存减少、订单增加"
+   ```
+
+   #### 步骤 6：验证完成后停止所有 Seata 微服务和 Seata Server
+   ```bash
+   pkill -f "cloud-seata-sample" && echo "✓ Seata 微服务已停止" || echo "Seata 微服务未运行"
+   pkill -f "incubator-seata" && echo "✓ Seata Server 已停止" || echo "Seata Server 未运行"
+   ```
+
+---
+
+**如果用户选择手动操作**，详细步骤请参考项目 README 的 [Seata 演示](../../README.md#-seata-分布式事务演示) 章节。
 
 ## 常见问题
 
