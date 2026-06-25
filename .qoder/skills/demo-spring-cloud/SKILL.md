@@ -29,13 +29,17 @@ nacos-setup
 ```
 > `nacos-setup` 会自动部署单机实例并创建密码（用户名：nacos），该密码写入内置数据库。
 
-若已安装但未运行，手动启动：
+若已安装但未运行，在用户目录下查找并启动：
 ```bash
+NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+cd "$NACOS_DIR"
 bin/startup.sh -m standalone
 ```
 
 停止 Nacos：
 ```bash
+NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+cd "$NACOS_DIR"
 bin/shutdown.sh
 ```
 
@@ -62,7 +66,7 @@ unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
 
 启动步骤：
 ```bash
-ROCKETMQ_HOME="$HOME/rocketmq-all-5.5.0-bin-release"
+ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
 cd "$ROCKETMQ_HOME"
 
 # 启动 NameServer
@@ -165,7 +169,11 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 ```bash
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 nacos-setup  # 首次部署，自动创建密码（用户名：nacos）
-# 若已部署但未运行：bin/startup.sh -m standalone
+```
+若已部署但未运行：
+```bash
+NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+cd "$NACOS_DIR" && bin/startup.sh -m standalone
 ```
 
 Stream 模块还需 RocketMQ：
@@ -179,7 +187,7 @@ unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
 ```
 启动 RocketMQ：
 ```bash
-ROCKETMQ_HOME="$HOME/rocketmq-all-5.5.0-bin-release"
+ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
 cd "$ROCKETMQ_HOME"
 nohup bin/mqnamesrv > namesrv.log 2>&1 &
 sleep 5
@@ -236,7 +244,11 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 ```bash
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 nacos-setup  # 首次部署，自动创建密码（用户名：nacos）
-# 若已部署但未运行：bin/startup.sh -m standalone
+```
+若已部署但未运行：
+```bash
+NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+cd "$NACOS_DIR" && bin/startup.sh -m standalone
 ```
 
 Stream 模块还需 RocketMQ：
@@ -250,7 +262,7 @@ unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
 ```
 启动 RocketMQ：
 ```bash
-ROCKETMQ_HOME="$HOME/rocketmq-all-5.5.0-bin-release"
+ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
 cd "$ROCKETMQ_HOME"
 nohup bin/mqnamesrv > namesrv.log 2>&1 &
 sleep 5

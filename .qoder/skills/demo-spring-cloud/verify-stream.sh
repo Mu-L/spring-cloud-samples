@@ -8,7 +8,7 @@ echo "=========================================="
 echo "  Stream 消息收发验证 - 完整流程"
 echo "=========================================="
 
-ROCKETMQ_HOME="$HOME/rocketmq-all-5.5.0-bin-release"
+ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
 
 # ========== Step 0: 清理旧进程 ==========
 echo ""
@@ -36,8 +36,8 @@ echo ">>> Step 2: 检查/启动 RocketMQ..."
 if nc -z 127.0.0.1 9876 2>/dev/null; then
   echo "✓ RocketMQ NameServer 已在运行"
 else
-  if [ ! -d "$ROCKETMQ_HOME" ]; then
-    echo "✗ RocketMQ 未安装，请先安装到 $ROCKETMQ_HOME"
+  if [ -z "$ROCKETMQ_HOME" ] || [ ! -d "$ROCKETMQ_HOME" ]; then
+    echo "✗ RocketMQ 未安装，请在 $HOME 下安装 rocketmq"
     exit 1
   fi
 

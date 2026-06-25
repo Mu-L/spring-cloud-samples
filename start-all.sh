@@ -63,9 +63,10 @@ check_seata_server() {
 }
 
 start_rocketmq() {
-  local rocketmq_home="$HOME/rocketmq-all-5.5.0-bin-release"
-  if [ ! -d "$rocketmq_home" ]; then
-    echo "[RocketMQ] ✗ 未找到 $rocketmq_home，请先下载安装"
+  local rocketmq_home
+  rocketmq_home=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
+  if [ -z "$rocketmq_home" ] || [ ! -d "$rocketmq_home" ]; then
+    echo "[RocketMQ] ✗ 未在 $HOME 下找到 rocketmq-* 目录，请先下载安装"
     return 1
   fi
   echo -n "[RocketMQ] 启动 NameServer ..."
@@ -123,7 +124,7 @@ check_special_prerequisites() {
   if check_rocketmq; then
     echo "[Stream] ✓ RocketMQ 已运行"
     START_STREAM=true
-  elif [ -d "$HOME/rocketmq-all-5.5.0-bin-release" ]; then
+  elif find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' 2>/dev/null | grep -q .; then
     echo "[Stream] RocketMQ 未运行，正在自动启动..."
     if start_rocketmq; then
       START_STREAM=true
@@ -614,21 +615,21 @@ check_nacos() {
   fi
   # 尝试自动启动
   echo " 未运行，正在尝试自动启动..."
-  if command -v nacos-setup &>/dev/null; then
-    local nacos_bin
-    nacos_bin="$(dirname "$(dirname "$(command -v nacos-setup)")")/bin"
-    [ ! -d "$nacos_bin" ] && nacos_bin="$(dirname "$(command -v nacos-setup)")/../bin"
-    if [ -f "$nacos_bin/startup.sh" ]; then
-      bash "$nacos_bin/startup.sh" -m standalone
-      echo -n "[Nacos] 等待启动就绪..."
-      for i in $(seq 1 30); do
-        if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
-          echo " 就绪"
-          return 0
-        fi
-        sleep 2
-      done
-    fi
+  # 在用户目录下查找 Nacos
+  local nacos_bin
+  local nacos_dir
+  nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+  if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
+    nacos_bin="$nacos_dir/bin"
+    bash "$nacos_bin/startup.sh" -m standalone
+    echo -n "[Nacos] 等待启动就绪..."
+    for i in $(seq 1 30); do
+      if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+        echo " 就绪"
+        return 0
+      fi
+      sleep 2
+    done
   fi
   echo " 失败!"
   echo "请先安装并启动 Nacos:"
@@ -658,13 +659,14 @@ install_all() {
   echo "--- Nacos ---"
   if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
     echo "✓ Nacos 已运行"
-  elif command -v nacos-setup &>/dev/null; then
-    echo "Nacos 已安装但未运行，正在启动..."
-    # 查找 Nacos 安装目录（nacos-setup 所在目录的上级）
+  else
+    # 在用户目录下查找 Nacos
     local nacos_bin
-    nacos_bin="$(dirname "$(dirname "$(command -v nacos-setup)")")/bin"
-    [ ! -d "$nacos_bin" ] && nacos_bin="$(dirname "$(command -v nacos-setup)")/../bin"
-    if [ -f "$nacos_bin/startup.sh" ]; then
+    local nacos_dir
+    nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+    if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
+      nacos_bin="$nacos_dir/bin"
+      echo "Nacos 已安装但未运行，正在启动..."
       bash "$nacos_bin/startup.sh" -m standalone
       echo "等待 Nacos 启动..."
       for i in $(seq 1 30); do
@@ -675,21 +677,19 @@ install_all() {
         sleep 2
       done
     else
-      echo "✗ 未找到 Nacos 启动脚本，请手动执行: nacos-setup && bin/startup.sh -m standalone"
+      echo "正在安装 Nacos..."
+      curl -fsSL https://nacos.io/nacos-installer.sh | bash
+      echo "正在部署 Nacos..."
+      nacos-setup
+      echo "等待 Nacos 启动..."
+      for i in $(seq 1 30); do
+        if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+          echo "✓ Nacos 已启动"
+          break
+        fi
+        sleep 2
+      done
     fi
-  else
-    echo "正在安装 Nacos..."
-    curl -fsSL https://nacos.io/nacos-installer.sh | bash
-    echo "正在部署 Nacos..."
-    nacos-setup
-    echo "等待 Nacos 启动..."
-    for i in $(seq 1 30); do
-      if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
-        echo "✓ Nacos 已启动"
-        break
-      fi
-      sleep 2
-    done
   fi
 
   # RocketMQ
@@ -697,14 +697,14 @@ install_all() {
   echo "--- RocketMQ ---"
   if nc -z 127.0.0.1 9876 2>/dev/null; then
     echo "✓ RocketMQ 已运行"
-  elif [ -d "$HOME/rocketmq-all-5.5.0-bin-release" ]; then
+  elif find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' 2>/dev/null | grep -q .; then
     echo "✓ RocketMQ 已安装（未运行）"
   else
     echo "正在下载 RocketMQ 5.5.0..."
     cd "$HOME"
     curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
     unzip -o rocketmq-all-5.5.0-bin-release.zip -d "$HOME"
-    echo "✓ RocketMQ 已安装到 $HOME/rocketmq-all-5.5.0-bin-release"
+    echo "✓ RocketMQ 已安装到 $(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)"
     cd "$BASE_DIR"
   fi
 
@@ -809,10 +809,11 @@ case "${1:-start}" in
     echo "========== 启动所有服务 =========="
     check_nacos
     echo ""
+    check_special_prerequisites
+    echo ""
     install_deps
     echo ""
     build_all
-    check_special_prerequisites
     echo ""
     for entry in "${MODULES[@]}"; do
       IFS='|' read -r module_dir display_name port <<< "$entry"
@@ -835,10 +836,11 @@ case "${1:-start}" in
     echo "========== 重新启动所有服务 =========="
     check_nacos
     echo ""
+    check_special_prerequisites
+    echo ""
     install_deps
     echo ""
     build_all
-    check_special_prerequisites
     echo ""
     for entry in "${MODULES[@]}"; do
       IFS='|' read -r module_dir display_name port <<< "$entry"
