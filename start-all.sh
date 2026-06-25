@@ -237,53 +237,7 @@ start_module() {
 
 start_ai_module() {
   IFS='|' read -r module_dir display_name port <<< "${AI_MODULE[0]}"
-  local pid_file="$PID_DIR/$display_name.pid"
-  local log_file="$LOG_DIR/$display_name.log"
-  local jar_file="$BASE_DIR/$module_dir/target/${module_dir}.jar"
-
-  if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-    echo "[$display_name] 已在运行 (PID: $(cat "$pid_file"))"
-    return
-  fi
-
-  # 打包（如果 jar 不存在）
-  if [ ! -f "$jar_file" ]; then
-    echo -n "[$display_name] 打包中 ..."
-    cd "$BASE_DIR"
-    if ./mvnw -pl "$module_dir" package -DskipTests -q 2>/dev/null; then
-      echo " 完成"
-    else
-      echo " 失败!"
-      return 1
-    fi
-  fi
-
-  echo -n "[$display_name] 启动中 (port: $port) ..."
-  cd "$BASE_DIR"
-  nohup java -jar "$jar_file" --spring.ai.openai.chat.options.model=qwen3.7-plus > "$log_file" 2>&1 &
-  local pid=$!
-  echo "$pid" > "$pid_file"
-
-  local ready=false
-  for i in $(seq 1 60); do
-    if ! kill -0 "$pid" 2>/dev/null; then
-      echo " 失败! 请查看日志: $log_file"
-      rm -f "$pid_file"
-      return 1
-    fi
-    if curl -s -o /dev/null "http://localhost:$port/actuator/health" 2>/dev/null; then
-      echo " 成功 (PID: $pid, port: $port)"
-      ready=true
-      break
-    fi
-    sleep 1
-  done
-
-  if [ "$ready" = false ]; then
-    echo " 超时! 请查看日志: $log_file"
-    rm -f "$pid_file"
-    return 1
-  fi
+  start_module "$module_dir" "$display_name" "$port"
 }
 
 start_stream_module() {
