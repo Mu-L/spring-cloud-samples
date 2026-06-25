@@ -5,9 +5,7 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,5 +22,11 @@ public class DiscoveryController {
     @GetMapping("/instances")
     public List<Instance> allInstances() throws NacosException {
         return nacosServiceManager.getNamingService().getAllInstances(serviceName);
+    }
+
+    @GetMapping("/instances/{serviceName}")
+    public List<Instance> instances(@PathVariable String serviceName,
+                                    @RequestParam(required = false, defaultValue = "DEFAULT_GROUP") String group) throws NacosException {
+        return nacosServiceManager.getNamingService().getAllInstances(serviceName, group);
     }
 }

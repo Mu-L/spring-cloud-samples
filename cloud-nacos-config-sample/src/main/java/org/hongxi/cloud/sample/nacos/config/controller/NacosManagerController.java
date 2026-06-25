@@ -52,14 +52,16 @@ public class NacosManagerController {
      * @param dataId dataId
      * @param group group
      * @param content content
+     * @param type type
      * @return boolean
      */
     @RequestMapping("/publishConfig")
     public boolean publishConfig(@RequestParam("dataId") String dataId,
                                  @RequestParam(value = "group", required = false, defaultValue = DEFAULT_GROUP) String group,
-                                 @RequestParam("content") String content) throws NacosException {
+                                 @RequestParam("content") String content,
+                                 @RequestParam(value = "type", required = false, defaultValue = "text") String type) throws NacosException {
         ConfigService configService = nacosConfigManager.getConfigService();
-        return configService.publishConfig(dataId, group, content);
+        return configService.publishConfig(dataId, group, content, type);
     }
 
     /**
