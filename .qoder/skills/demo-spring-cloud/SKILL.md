@@ -1,4 +1,4 @@
-g---
+---
 name: demo-spring-cloud
 description: 启动和演示 Spring Cloud Alibaba 示例项目的各微服务模块。当用户要求演示项目、启动服务、验证微服务调用、测试网关路由、查看服务注册、或执行集成测试时使用此技能。涵盖 Nacos、Gateway、Dubbo、gRPC、Sentinel、Stream、Seata、Spring AI 等模块的完整演示流程。
 ---
