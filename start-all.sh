@@ -254,6 +254,11 @@ start_seata_services() {
 
 stop_all() {
   echo "正在停止所有服务..."
+
+  # 收集所有模块名（含特殊模块）
+  local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${STREAM_MODULE[@]}" "${SEATA_MODULES[@]}")
+
+  # 第一阶段：通过 PID 文件停止（脚本自身启动的进程）
   for pid_file in "$PID_DIR"/*.pid; do
     [ -f "$pid_file" ] || continue
     local name=$(basename "$pid_file" .pid)
@@ -261,11 +266,8 @@ stop_all() {
     if kill -0 "$pid" 2>/dev/null; then
       printf '[%s] 停止中 (PID: %s) ...' "$name" "$pid"
       kill "$pid"
-      # 等待进程退出（最多 10 秒）
       for i in $(seq 1 10); do
-        if ! kill -0 "$pid" 2>/dev/null; then
-          break
-        fi
+        if ! kill -0 "$pid" 2>/dev/null; then break; fi
         sleep 1
       done
       if kill -0 "$pid" 2>/dev/null; then
@@ -277,10 +279,33 @@ stop_all() {
     fi
     rm -f "$pid_file"
   done
-  # 兜底：确保残留进程也被清理
-  pkill -f "cloud-ai-sample" 2>/dev/null || true
-  pkill -f "cloud-stream-sample" 2>/dev/null || true
-  pkill -f "cloud-seata-sample" 2>/dev/null || true
+
+  # 第二阶段：扫描并停止外部启动的项目模块进程（如 IDE、手动 java -jar 等）
+  echo ""
+  echo "扫描外部启动的模块进程..."
+  local found_external=false
+  for entry in "${all_modules[@]}"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    # 精确匹配: spring-boot:run 或 项目 jar，避免误杀
+    local killed
+    killed=$(pgrep -f "${module_dir}.*(spring-boot:run|${module_dir}.*\.jar)" 2>/dev/null || true)
+    if [ -n "$killed" ]; then
+      found_external=true
+      echo "$killed" | xargs kill 2>/dev/null || true
+      sleep 2
+      # 确认已退出，未退出则强杀
+      local remaining
+      remaining=$(pgrep -f "${module_dir}.*(spring-boot:run|${module_dir}.*\.jar)" 2>/dev/null || true)
+      if [ -n "$remaining" ]; then
+        echo "$remaining" | xargs kill -9 2>/dev/null || true
+      fi
+      echo "[$display_name] 已停止外部进程 (PID: $(echo $killed | tr '\n' ' '))"
+    fi
+  done
+  if ! $found_external; then
+    echo "未发现外部启动的模块进程"
+  fi
+
   # 停止 RocketMQ 和 Seata Server
   pkill -f "rocketmq" 2>/dev/null || true
   sleep 1
