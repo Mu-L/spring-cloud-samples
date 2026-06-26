@@ -50,6 +50,55 @@ START_SEATA=false
 START_STREAM=false
 START_AI=false
 
+check_java() {
+  local min_version=17
+  if ! command -v java &>/dev/null; then
+    echo "[Java] ✗ 未检测到 Java"
+    echo "[Java] 正在通过 Homebrew 安装 JDK $min_version ..."
+    if command -v brew &>/dev/null; then
+      brew install openjdk@$min_version
+      echo "[Java] ✓ JDK $min_version 安装完成"
+      echo "[Java] 请执行以下命令配置 PATH（或添加到 ~/.zshrc）:"
+      echo "  sudo ln -sfn $(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-$min_version.jdk"
+      echo "  export JAVA_HOME=$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
+      echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
+      export JAVA_HOME="$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
+      export PATH="$JAVA_HOME/bin:$PATH"
+    else
+      echo "[Java] ✗ 未安装 Homebrew，请手动安装 JDK $min_version"
+      echo "  brew install openjdk@$min_version"
+      return 1
+    fi
+  fi
+
+  local java_version
+  java_version=$(java -version 2>&1 | head -1 | sed -E 's/.*"([0-9]+)\..*/\1/')
+  if [ "$java_version" -lt "$min_version" ] 2>/dev/null; then
+    echo "[Java] ✗ 当前 Java 版本: $java_version，需要 >= $min_version"
+    printf '[Java] 是否自动安装 JDK %s? [Y/n] ' "$min_version"
+    read -r answer
+    if [[ "$answer" != "n" && "$answer" != "N" ]]; then
+      if command -v brew &>/dev/null; then
+        echo "[Java] 正在通过 Homebrew 安装 JDK $min_version ..."
+        brew install openjdk@$min_version
+        export JAVA_HOME="$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
+        export PATH="$JAVA_HOME/bin:$PATH"
+        echo "[Java] ✓ JDK $min_version 已安装并激活（当前会话）"
+        echo "[Java] 建议将以下内容添加到 ~/.zshrc 以永久生效:"
+        echo "  export JAVA_HOME=$JAVA_HOME"
+        echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
+      else
+        echo "[Java] ✗ 未安装 Homebrew，请手动安装 JDK $min_version"
+        return 1
+      fi
+    else
+      echo "[Java] 跳过安装，继续执行..."
+    fi
+  else
+    echo "[Java] ✓ Java $java_version"
+  fi
+}
+
 check_rocketmq() {
   nc -z 127.0.0.1 9876 2>/dev/null
 }
@@ -758,6 +807,8 @@ clean_all() {
 case "${1:-start}" in
   start)
     echo "========== 启动所有服务 =========="
+    check_java
+    echo ""
     check_nacos
     echo ""
     check_special_prerequisites
@@ -785,6 +836,8 @@ case "${1:-start}" in
     sleep 2
     echo ""
     echo "========== 重新启动所有服务 =========="
+    check_java
+    echo ""
     check_nacos
     echo ""
     check_special_prerequisites
