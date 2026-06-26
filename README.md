@@ -2,6 +2,23 @@
 > Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alibaba 2025.1.x**） <br>
 > 🎯 以生产环境可参考为目标，打造一个完整的 Spring Cloud 示例项目。
 
+### 🤖 AI 一键演示
+
+> 本项目内置 Qoder Agent Skill，clone 后在 Qoder 中输入 `/demo-spring-cloud` 或告诉 AI "演示项目"，
+> 即可自动完成环境检查、服务启动、接口验证全流程。无需手动操作。
+
+```
+# 快速体验（仅需 Nacos）
+告诉 AI: "启动所有服务并验证"
+
+# 单独验证某个场景
+告诉 AI: "验证 Seata 分布式事务"
+告诉 AI: "验证 Stream 消息收发"
+告诉 AI: "演示 Spring AI"
+```
+
+详见 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md)
+
 ### 📦 模块介绍
 | 模块                               | 简称                | 端口           | 说明                          |
 |----------------------------------|-------------------|--------------|-----------------------------|
@@ -18,7 +35,7 @@
 | 📨 cloud-stream-sample           | stream            | -            | Spring Cloud Stream         |
 | 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
 | 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
-| 🤖 cloud-ai-sample               | ai                | 8080         | Spring AI                   |
+| 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
 | 🔄 cloud-seata-sample            | seata             | -            | Apache Seata                |
 | 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
 

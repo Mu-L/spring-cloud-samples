@@ -36,7 +36,7 @@ MODULES=(
 )
 
 # 特殊模块（需额外条件）
-AI_MODULE=("cloud-ai-sample|ai|8080")
+AI_MODULE=("cloud-ai-sample|ai|8888")
 STREAM_MODULE=("cloud-stream-sample|stream|-")
 SEATA_MODULES=(
   "cloud-seata-sample/business-service|seata-business|18081"
@@ -525,7 +525,7 @@ demo_urls() {
   if [ -f "$PID_DIR/ai.pid" ] && kill -0 "$(cat "$PID_DIR/ai.pid")" 2>/dev/null; then
     echo ""
     echo "========== Spring AI 模块验证 =========="
-    verify_url "http://localhost:8080/actuator/health" "AI 模块健康检查"
+    verify_url "http://localhost:8888/actuator/health" "AI 模块健康检查"
     echo "=================================="
   fi
 
@@ -562,6 +562,35 @@ demo_urls() {
   if [ "$VERIFY_FAIL" -eq 0 ]; then
     echo ""
     echo "  ★ 全部验证通过! 所有服务运行正常 ★"
+    echo ""
+    
+    # 显示后续可深入验证的功能提示
+    echo "💡 当前已验证: 服务注册发现、健康检查、基础调用链路"
+    echo ""
+    echo "📌 还可深入验证以下高级功能:"
+    echo ""
+    echo "  1️⃣  Spring AI 深度功能 (端口 8888):"
+    echo "     • 聊天对话、流式输出、结构化提取"
+    echo "     • Tool Calling、ReAct Agent"
+    echo "     • 多模态视觉识别 (6种场景)"
+    echo "     → 使用 demo-spring-cloud skill 或查看 cloud-ai-sample/README.md"
+    echo ""
+    echo "  2️⃣  Seata 分布式事务 (端口 18081-18084):"
+    echo "     • 全局事务回滚/提交场景"
+    echo "     • Feign 调用链 Xid 传递"
+    echo "     • 数据一致性验证"
+    echo "     → 使用 demo-spring-cloud skill 执行 verify-seata.sh"
+    echo ""
+    echo "  3️⃣  Stream 消息消费 (RocketMQ):"
+    echo "     • 消息实际消费逻辑"
+    echo "     • 多个 Topic 处理"
+    echo "     • Consumer Group 行为"
+    echo "     → 使用 demo-spring-cloud skill 执行 verify-stream.sh"
+    echo ""
+    echo "  4️⃣  Sentinel 限流规则:"
+    echo "     • Nacos 配置限流规则"
+    echo "     • 验证限流效果"
+    echo "     → 查看项目主 README.md 的 'Sentinel Gateway 演示' 章节"
     echo ""
   else
     echo ""
