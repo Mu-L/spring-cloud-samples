@@ -336,15 +336,16 @@ stop_all() {
   for entry in "${all_modules[@]}"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     # 精确匹配: spring-boot:run 或 项目 jar，避免误杀
+    # 注意：spring-boot:run 启动的子进程可能以 .jar 结尾，需要同时匹配
     local killed
-    killed=$(pgrep -f "${module_dir}.*(spring-boot:run|${module_dir}.*\.jar)" 2>/dev/null || true)
+    killed=$(pgrep -f "${module_dir}.*(spring-boot:run|\.jar)" 2>/dev/null || true)
     if [ -n "$killed" ]; then
       found_external=true
       echo "$killed" | xargs kill 2>/dev/null || true
       sleep 2
       # 确认已退出，未退出则强杀
       local remaining
-      remaining=$(pgrep -f "${module_dir}.*(spring-boot:run|${module_dir}.*\.jar)" 2>/dev/null || true)
+      remaining=$(pgrep -f "${module_dir}.*(spring-boot:run|\.jar)" 2>/dev/null || true)
       if [ -n "$remaining" ]; then
         echo "$remaining" | xargs kill -9 2>/dev/null || true
       fi
