@@ -1,4 +1,4 @@
----
+g---
 name: demo-spring-cloud
 description: 启动和演示 Spring Cloud Alibaba 示例项目的各微服务模块。当用户要求演示项目、启动服务、验证微服务调用、测试网关路由、查看服务注册、或执行集成测试时使用此技能。涵盖 Nacos、Gateway、Dubbo、gRPC、Sentinel、Stream、Seata、Spring AI 等模块的完整演示流程。
 ---
@@ -303,9 +303,52 @@ curl 'http://localhost:8761/nacos/getConfig?dataId=my.city'
 
 ### 9. Sentinel 网关限流
 
-快速刷新 `http://localhost:8764/consumer-sample/hi?name=hongxi` 触发限流时返回：
+**前提**：`cloud-gateway-sample`（8764）、`cloud-consumer-sample`（8766）、`cloud-provider-sample`（8765）、`cloud-nacos-config-sample`（8761）已启动。
+
+通过 nacos-config 模块的配置管理接口写入 Sentinel 限流配置，配置 JSON 参考项目 README 的 [Sentinel Gateway 演示](../../README.md#-sentinel-gateway-演示) 章节。
+
+**步骤一：发布自定义 API 分组**（group: `SENTINEL_GROUP`, dataId: `cloud.sample.gateway.gw-api-group`, type: `json`）
+
+content 为项目 README [Sentinel Gateway 演示](../../README.md#-sentinel-gateway-演示) 中 `gw-api-group` 的 JSON 内容：
+```bash
+curl -X POST 'http://localhost:8761/nacos/publishConfig' \
+  --data-urlencode 'dataId=cloud.sample.gateway.gw-api-group' \
+  --data-urlencode 'group=SENTINEL_GROUP' \
+  --data-urlencode 'type=json' \
+  --data-urlencode 'content=<README 中 gw-api-group 的 JSON>'
+```
+
+**步骤二：发布流控规则**（group: `SENTINEL_GROUP`, dataId: `cloud.sample.gateway.gw-flow`, type: `json`）
+
+content 为项目 README [Sentinel Gateway 演示](../../README.md#-sentinel-gateway-演示) 中 `gw-flow` 的 JSON 内容：
+```bash
+curl -X POST 'http://localhost:8761/nacos/publishConfig' \
+  --data-urlencode 'dataId=cloud.sample.gateway.gw-flow' \
+  --data-urlencode 'group=SENTINEL_GROUP' \
+  --data-urlencode 'type=json' \
+  --data-urlencode 'content=<README 中 gw-flow 的 JSON>'
+```
+
+**步骤三：验证配置写入成功**
+```bash
+curl 'http://localhost:8761/nacos/getConfig?dataId=cloud.sample.gateway.gw-api-group&group=SENTINEL_GROUP'
+curl 'http://localhost:8761/nacos/getConfig?dataId=cloud.sample.gateway.gw-flow&group=SENTINEL_GROUP'
+```
+
+**步骤四：触发限流验证**
+
+在浏览器快速刷新访问如下接口，触发限流时返回：
+```text
+http://localhost:8764/consumer-sample/hi?name=hongxi
+```
 ```json
 {"code":444,"msg":"Sentinel gateway block"}
+```
+
+**步骤五：验证完成后清理 Sentinel 配置**
+```bash
+curl 'http://localhost:8761/nacos/removeConfig?dataId=cloud.sample.gateway.gw-api-group&group=SENTINEL_GROUP'
+curl 'http://localhost:8761/nacos/removeConfig?dataId=cloud.sample.gateway.gw-flow&group=SENTINEL_GROUP'
 ```
 
 ### 10. Spring AI 模块
