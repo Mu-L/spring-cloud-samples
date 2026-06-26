@@ -28,7 +28,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 只需两步：
 1. 确保 Nacos 已运行（没有？告诉 AI "安装 Nacos"）
-2. 告诉 AI **"启动所有服务并验证"**
+2. 告诉 AI **"演示本项目"**
 
 AI 会自动完成：环境检查 → 依赖安装 → 服务启动 → 接口验证 → 结果汇总。无需手动操作。
 
