@@ -1,6 +1,7 @@
 package org.hongxi.cloud.sample.ai.mcp;
 
 import org.hongxi.cloud.sample.ai.tool.ConversionTools;
+import org.hongxi.cloud.sample.ai.tool.ProjectDemoTools;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.SystemTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
@@ -40,9 +41,10 @@ public class McpServerConfig {
             TimeTools timeTools,
             SearchTools searchTools,
             SystemTools systemTools,
-            ConversionTools conversionTools) {
+            ConversionTools conversionTools,
+            ProjectDemoTools projectDemoTools) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(weatherTools, timeTools, searchTools, systemTools, conversionTools)
+                .toolObjects(weatherTools, timeTools, searchTools, systemTools, conversionTools, projectDemoTools)
                 .build();
     }
 }
