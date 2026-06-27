@@ -733,28 +733,41 @@ curl --get --data-urlencode "question=北京天气怎么样？适合出门吗？
 - ✅ **正确做法**：严格按照下方示例中的 URL 进行测试，这些 URL 已验证可稳定访问。
 - ❌ **错误做法**：自行构造图片 URL（如 `https://example.com/image.jpg`），会导致请求失败。
 
+**🔴 必须逐一演示以下全部 6 个视觉识别接口，不可跳过任何一个：**
+
+| 序号 | 接口 | 说明 |
+|------|------|------|
+| 1 | `/ai/vision/analyze-url` | URL 图片分析 |
+| 2 | `/ai/vision/analyze-upload` | 上传图片分析 |
+| 3 | `/ai/vision/ocr` | OCR 文字识别 |
+| 4 | `/ai/vision/chart-analysis` | 图表分析 |
+| 5 | `/ai/vision/code-from-image` | 代码截图转代码 |
+| 6 | `/ai/vision/compare` | 多图片对比 |
+
+> **每个接口都必须实际调用并展示返回结果**，演示完成后在汇总结果中标注全部 6 个接口的通过/失败状态。
+
 ```bash
-# 通过 URL 分析图片（神舟十号海报）
+# 1/6 URL 图片分析（神舟十号海报）
 curl -X POST "http://localhost:8888/ai/vision/analyze-url" \
   -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg"
 
-# 图片上传分析（项目根目录下的架构图）
+# 2/6 图片上传分析（项目根目录下的架构图）
 curl -X POST "http://localhost:8888/ai/vision/analyze-upload" \
   -F "file=@arch.png"
 
-# OCR 文字识别
+# 3/6 OCR 文字识别
 curl -X POST "http://localhost:8888/ai/vision/ocr" \
   -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
 
-# 图表分析（QuickChart.io 生成的柱状图）
+# 4/6 图表分析（QuickChart.io 生成的柱状图）
 curl -X POST "http://localhost:8888/ai/vision/chart-analysis" \
   -d "imageUrl=https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%27Q1%27%2C%27Q2%27%2C%27Q3%27%2C%27Q4%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Revenue%27%2Cdata%3A%5B100%2C200%2C150%2C300%5D%7D%5D%7D%7D"
 
-# 代码截图转代码（CSDN C语言代码图片）
+# 5/6 代码截图转代码（CSDN C语言代码图片）
 curl -X POST "http://localhost:8888/ai/vision/code-from-image" \
   -d "imageUrl=https://i-blog.csdnimg.cn/blog_migrate/486ded85cb954f0da650e7f9c306900e.png"
 
-# 多图片对比分析（神舟十号海报 vs 北京申奥号外）
+# 6/6 多图片对比分析（神舟十号海报 vs 北京申奥号外）
 curl -X POST "http://localhost:8888/ai/vision/compare" \
   -d "imageUrl1=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg" \
   -d "imageUrl2=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
