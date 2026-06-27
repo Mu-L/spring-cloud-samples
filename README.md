@@ -15,6 +15,7 @@
 告诉 AI: "验证 Seata 分布式事务"
 告诉 AI: "验证 Stream 消息收发"
 告诉 AI: "演示 Spring AI"
+告诉 AI: "演示一下视觉识别"
 ```
 
 详见 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md)
