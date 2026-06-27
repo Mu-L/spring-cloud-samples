@@ -3,8 +3,6 @@ package org.hongxi.cloud.sample.ai.controller;
 import org.hongxi.cloud.sample.ai.service.ProjectDemoService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 /**
  * 项目演示控制器
  * <p>
@@ -62,7 +60,7 @@ public class ProjectDemoController {
      * @return Agent 的执行结果
      */
     @GetMapping
-    public Map<String, Object> demo(@RequestParam String instruction) {
+    public String demo(@RequestParam String instruction) {
         return projectDemoService.demo(instruction);
     }
 }

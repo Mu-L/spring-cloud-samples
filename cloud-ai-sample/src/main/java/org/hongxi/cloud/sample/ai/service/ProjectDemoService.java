@@ -59,7 +59,7 @@ public class ProjectDemoService {
      * @param instruction 用户的演示指令
      * @return Agent 的执行结果
      */
-    public Map<String, Object> demo(String instruction) {
+    public String demo(String instruction) {
         log.info("项目演示 Agent 收到指令: {}", instruction);
 
         String response = chatClient.prompt()
@@ -101,10 +101,6 @@ public class ProjectDemoService {
 
         log.info("项目演示 Agent 完成");
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("instruction", instruction);
-        result.put("result", response);
-        result.put("type", "project-demo");
-        return result;
+        return response;
     }
 }
