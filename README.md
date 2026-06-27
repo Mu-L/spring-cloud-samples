@@ -32,7 +32,7 @@
 | 📋 cloud-sample-api              | api               | -            | Interface & Proto           |
 | ⚙️ cloud-nacos-config-sample     | config            | 8761         | Nacos Config                |
 | 🔍 cloud-nacos-discovery-sample  | discovery         | 8760         | Nacos Discovery             |
-| 📨 cloud-stream-sample           | stream            | -            | Spring Cloud Stream         |
+| 📨 cloud-stream-sample           | stream            | 8767         | Spring Cloud Stream         |
 | 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
 | 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
 | 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |

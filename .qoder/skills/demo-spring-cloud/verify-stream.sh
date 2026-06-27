@@ -118,9 +118,9 @@ java -jar cloud-stream-sample/target/cloud-stream-sample.jar > logs/stream-sampl
 STREAM_PID=$!
 echo "Stream 模块启动中 (PID: $STREAM_PID)..."
 
-# 等待启动（检查日志中的 Started 消息）
+# 等待启动（通过 actuator 健康检查）
 for i in $(seq 1 60); do
-  if grep -q "Started StreamApplication" logs/stream-sample.log 2>/dev/null; then
+  if curl -s "http://127.0.0.1:8767/actuator/health" 2>/dev/null | grep -q '"status":"UP"'; then
     echo "✓ Stream 模块已就绪 (${i}s)"
     break
   fi

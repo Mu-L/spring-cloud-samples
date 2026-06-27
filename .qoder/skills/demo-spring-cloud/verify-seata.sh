@@ -13,10 +13,6 @@ echo "=========================================="
 echo ""
 echo ">>> Step 0: 清理旧进程..."
 pkill -f "cloud-seata-sample" 2>/dev/null || true
-pkill -f "seata-server" 2>/dev/null || true
-pkill -f "spring-boot:run.*server" 2>/dev/null || true
-pkill -f "cloud-nacos-config-sample" 2>/dev/null || true
-pkill -f "cloud-nacos-discovery-sample" 2>/dev/null || true
 sleep 2
 rm -rf logs
 mkdir -p logs
@@ -41,20 +37,28 @@ echo ">>> Step 2b: 打包模块..."
 echo "✓ 模块打包完成"
 
 echo ""
-echo ">>> Step 2c: 并行启动辅助服务..."
-java -jar cloud-nacos-config-sample/target/*.jar > /tmp/nacos-config-sample.log 2>&1 &
-java -jar cloud-nacos-discovery-sample/target/*.jar > /tmp/nacos-discovery-sample.log 2>&1 &
-echo "辅助服务启动中..."
+echo ">>> Step 2c: 启动辅助服务..."
+# 检查是否已在运行（避免重复启动）
+CFG_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8761/actuator/health 2>/dev/null || echo "000")
+DISC_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8760/actuator/health 2>/dev/null || echo "000")
 
-for i in $(seq 1 30); do
-  c1=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8761/actuator/health 2>/dev/null || echo "000")
-  c2=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8760/actuator/health 2>/dev/null || echo "000")
-  if [ "$c1" = "200" ] && [ "$c2" = "200" ]; then
-    echo "✓ nacos-config-sample (8761) 和 nacos-discovery-sample (8760) 均已就绪 (${i}s)"
-    break
-  fi
-  sleep 1
-done
+if [ "$CFG_OK" = "200" ] && [ "$DISC_OK" = "200" ]; then
+  echo "✓ nacos-config-sample (8761) 和 nacos-discovery-sample (8760) 已在运行，跳过启动"
+else
+  java -jar cloud-nacos-config-sample/target/*.jar > /tmp/nacos-config-sample.log 2>&1 &
+  java -jar cloud-nacos-discovery-sample/target/*.jar > /tmp/nacos-discovery-sample.log 2>&1 &
+  echo "辅助服务启动中..."
+
+  for i in $(seq 1 30); do
+    c1=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8761/actuator/health 2>/dev/null || echo "000")
+    c2=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8760/actuator/health 2>/dev/null || echo "000")
+    if [ "$c1" = "200" ] && [ "$c2" = "200" ]; then
+      echo "✓ nacos-config-sample (8761) 和 nacos-discovery-sample (8760) 均已就绪 (${i}s)"
+      break
+    fi
+    sleep 1
+  done
+fi
 
 # ========== Step 3: 发布 seata.properties ==========
 echo ""
@@ -74,39 +78,45 @@ echo "✓ Nacos 配置创建完成"
 # ========== Step 4: 启动 Seata Server ==========
 echo ""
 echo ">>> Step 4: 启动 Seata Server..."
-SEATA_SRC="$HOME/github/seata"
-if [ ! -d "$SEATA_SRC" ]; then
-  echo "Seata 源码不存在，正在克隆..."
-  mkdir -p "$HOME/github"
-  git clone https://github.com/javahongxi/seata.git "$SEATA_SRC"
-fi
 
-cd "$SEATA_SRC"
-
-# Build if needed
-if [ ! -f "$SEATA_SRC/server/target/seata-server.jar" ]; then
-  echo "构建 Seata Server..."
-  ./mvnw clean install -DskipTests -q
-  echo "✓ Seata Server 构建完成"
-fi
-
-cd "$SEATA_SRC"
-nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
-echo "Seata Server 启动中..."
-
-SEATA_OK=0
-for i in $(seq 1 60); do
-  if nc -z 127.0.0.1 8091 2>/dev/null; then
-    echo "✓ Seata Server 已启动 (端口 8091, ${i}s)"
-    SEATA_OK=1
-    break
+# 检查 Seata Server 是否已在运行
+if nc -z 127.0.0.1 8091 2>/dev/null; then
+  echo "✓ Seata Server 已在运行 (端口 8091)，跳过启动"
+else
+  SEATA_SRC="$HOME/github/seata"
+  if [ ! -d "$SEATA_SRC" ]; then
+    echo "Seata 源码不存在，正在克隆..."
+    mkdir -p "$HOME/github"
+    git clone https://github.com/javahongxi/seata.git "$SEATA_SRC"
   fi
-  sleep 1
-done
-if [ "$SEATA_OK" = "0" ]; then
-  echo "✗ Seata Server 启动超时，查看日志："
-  tail -30 /tmp/seata-server.log
-  exit 1
+
+  cd "$SEATA_SRC"
+
+  # Build if needed
+  if [ ! -f "$SEATA_SRC/server/target/seata-server.jar" ]; then
+    echo "构建 Seata Server..."
+    ./mvnw clean install -DskipTests -q
+    echo "✓ Seata Server 构建完成"
+  fi
+
+  cd "$SEATA_SRC"
+  nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
+  echo "Seata Server 启动中..."
+
+  SEATA_OK=0
+  for i in $(seq 1 60); do
+    if nc -z 127.0.0.1 8091 2>/dev/null; then
+      echo "✓ Seata Server 已启动 (端口 8091, ${i}s)"
+      SEATA_OK=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$SEATA_OK" = "0" ]; then
+    echo "✗ Seata Server 启动超时，查看日志："
+    tail -30 /tmp/seata-server.log
+    exit 1
+  fi
 fi
 
 # ========== Step 5: 并行启动 4 个微服务 ==========

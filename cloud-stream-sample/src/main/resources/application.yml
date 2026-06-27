@@ -1,3 +1,5 @@
+server:
+  port: 8767
 spring:
   application:
     name: stream-sample
