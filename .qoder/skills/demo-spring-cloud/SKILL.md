@@ -688,11 +688,11 @@ export OPENAI_API_KEY=your-api-key-here
 
 启动 AI 模块（端口 8888）：
 ```bash
-# 默认模型启动
+# 默认使用 qwen3.7-plus 模型（支持多模态视觉识别）
 ./mvnw -pl cloud-ai-sample spring-boot:run
 
-# 指定模型启动（多模态/视觉识别需使用支持视觉的模型，如 qwen3.7-plus）
-./mvnw -pl cloud-ai-sample spring-boot:run -Dspring-boot.run.arguments=--spring.ai.openai.chat.options.model=qwen3.7-plus
+# 如需切换其他模型，可通过命令行参数覆盖
+./mvnw -pl cloud-ai-sample spring-boot:run -Dspring-boot.run.arguments=--spring.ai.openai.chat.options.model=<模型名>
 ```
 
 等待 AI 模块就绪（通过 actuator 健康检查）：
@@ -723,18 +723,11 @@ curl --get --data-urlencode "question=北京天气怎么样？适合出门吗？
 # 连接地址: http://localhost:8888/sse
 ```
 
-#### 多模态视觉识别（需使用支持视觉的模型）
+#### 多模态视觉识别
 
-**⚠️ 重要前置条件：**
-1. **必须重启 AI 模块并使用支持视觉的模型**，否则视觉识别功能无法正常工作。
+**⚠️ 重要说明：**
+1. **默认模型 `qwen3.7-plus` 已支持视觉识别**，无需重启或切换模型。
 2. **必须使用 SKILL 中提供的真实图片 URL**，不要自行构造不存在的图片地址。
-
-启动时通过命令行参数指定模型（无需修改 application.yml）：
-```bash
-java -jar cloud-ai-sample/target/cloud-ai-sample.jar --spring.ai.openai.chat.options.model=qwen3.7-plus
-```
-
-支持的视觉模型示例：`qwen3.7-plus`、`qwen-vl-max`、`qwen-vl-plus` 等。
 
 **⚠️ 验证规范：**
 - ✅ **正确做法**：严格按照下方示例中的 URL 进行测试，这些 URL 已验证可稳定访问。
@@ -770,9 +763,9 @@ curl -X POST "http://localhost:8888/ai/vision/compare" \
 > **⚠️ 再次强调：**
 > - 以上所有 URL 都是**真实存在且已验证可访问**的图片地址，请直接使用。
 > - **不要自行构造图片 URL**（如 `https://example.com/image.jpg`），这些地址不存在，会导致请求失败。
-> - 如果视觉识别返回"无法查看图片"或 500 错误，请检查：
->   1. AI 模块是否已使用支持视觉的模型重启（如 `qwen3.7-plus`）
->   2. 图片 URL 是否正确（必须使用上方示例中的 URL）
+> - 如果视觉识别返回 500 错误，请检查：
+>   1. 图片 URL 是否正确（必须使用上方示例中的 URL）
+>   2. AI 模块是否正常运行（检查 `http://localhost:8888/actuator/health`）
 > 
 > **🔄 图片 URL 不可用时的处理：**
 > - 如果上述示例中的图片 URL 因 CDN 限制、链接失效或其他原因无法访问，**请自行寻找合适的替代图片**。
