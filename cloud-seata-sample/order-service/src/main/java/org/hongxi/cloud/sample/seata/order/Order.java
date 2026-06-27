@@ -1,8 +1,12 @@
 package org.hongxi.cloud.sample.seata.order;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class Order implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 2496106774787135936L;
 
     private Long id;
 
