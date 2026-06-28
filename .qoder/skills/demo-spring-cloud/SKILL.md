@@ -714,26 +714,41 @@ curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"
 # 流式输出
 curl --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"
 # 结构化输出
-curl --get --data-urlencode "text=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"
+curl --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"
 # Tool Calling
-curl --get --data-urlencode "question=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"
+curl --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"
 # ReAct Agent
-curl --get --data-urlencode "question=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"
+curl --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"
 # MCP Server（SSE 端点）
 # 连接地址: http://localhost:8888/sse
 ```
 
 #### 多模态视觉识别
 
-**⚠️ 重要说明：**
-1. **默认模型 `qwen3.7-plus` 已支持视觉识别**，无需重启或切换模型。
-2. **必须使用 SKILL 中提供的真实图片 URL**，不要自行构造不存在的图片地址。
+**说明**：默认模型 `qwen3.7-plus` 已支持视觉识别，无需切换模型。
 
-**⚠️ 验证规范：**
-- ✅ **正确做法**：严格按照下方示例中的 URL 进行测试，这些 URL 已验证可稳定访问。
-- ❌ **错误做法**：自行构造图片 URL（如 `https://example.com/image.jpg`），会导致请求失败。
+**🔍 验证前预检查图片 URL 可用性：**
 
-**🔴 必须逐一演示以下全部 6 个视觉识别接口，不可跳过任何一个：**
+调用视觉接口前，**必须先检查图片 URL 是否可访问**，避免验证失败浪费时间：
+```bash
+echo "=== 图片 URL 可用性预检查 ==="
+for url in \
+  "https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg" \
+  "https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg" \
+  "https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%27Q1%27%2C%27Q2%27%2C%27Q3%27%2C%27Q4%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Revenue%27%2Cdata%3A%5B100%2C200%2C150%2C300%5D%7D%5D%7D%7D" \
+  "https://i-blog.csdnimg.cn/blog_migrate/486ded85cb954f0da650e7f9c306900e.png"; do
+  status=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 10 "$url" 2>/dev/null)
+  if [ "$status" = "200" ]; then
+    echo "✓ [$status] $url"
+  else
+    echo "✗ [$status] $url — 不可用，需寻找替代图片"
+  fi
+done
+```
+- 全部返回 200 → 直接开始验证
+- 某 URL 不可用 → **必须先找到替代图片**，要求：公开可访问、不拒绝 Java `UrlResource` 请求（避免百度图片等限制性 CDN）
+
+**🔴 必须逐一演示全部 6 个视觉识别接口，不可跳过：**
 
 | 序号 | 接口 | 说明 |
 |------|------|------|
@@ -743,8 +758,6 @@ curl --get --data-urlencode "question=北京天气怎么样？适合出门吗？
 | 4 | `/ai/vision/chart-analysis` | 图表分析 |
 | 5 | `/ai/vision/code-from-image` | 代码截图转代码 |
 | 6 | `/ai/vision/compare` | 多图片对比 |
-
-> **每个接口都必须实际调用并展示返回结果**，演示完成后在汇总结果中标注全部 6 个接口的通过/失败状态。
 
 ```bash
 # 1/6 URL 图片分析（神舟十号海报）
@@ -773,32 +786,11 @@ curl -X POST "http://localhost:8888/ai/vision/compare" \
   -d "imageUrl2=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
 ```
 
-> **⚠️ 再次强调：**
-> - 以上所有 URL 都是**真实存在且已验证可访问**的图片地址，请直接使用。
-> - **不要自行构造图片 URL**（如 `https://example.com/image.jpg`），这些地址不存在，会导致请求失败。
-> - 如果视觉识别返回 500 错误，请检查：
->   1. 图片 URL 是否正确（必须使用上方示例中的 URL）
->   2. AI 模块是否正常运行（检查 `http://localhost:8888/actuator/health`）
-> 
-> **🔄 图片 URL 不可用时的处理：**
-> - 如果上述示例中的图片 URL 因 CDN 限制、链接失效或其他原因无法访问，**请自行寻找合适的替代图片**。
-> - 建议使用的稳定图片源：
->   - 澎湃新闻（`imagecloud.thepaper.cn`）- 新闻类图片
->   - QuickChart.io - 图表生成
->   - CSDN 博客图片（`i-blog.csdnimg.cn`）- 代码截图
->   - GitHub raw content - 开源项目图片
-> - 避免使用会拒绝 Java `UrlResource` 请求的 CDN（如百度图片、网易云部分 CDN）。
-> - 如需使用其他图片，请确保 URL 可被服务端直接下载（可通过 `curl -I <URL>` 测试）。
->
-> **💡 查看完整中文输出的方法：**
-> - 视觉识别接口返回的 JSON 中包含大量中文内容，默认情况下可能会被转义为 Unicode 编码（如 `\u56fe2`）。
-> - 如需正确显示中文，请使用以下命令：
->   ```bash
->   curl -s -X POST "http://localhost:8888/ai/vision/compare" \
->     -d "imageUrl1=..." \
->     -d "imageUrl2=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
->   ```
-> - 该命令会将 JSON 中的 Unicode 编码转换为可读的中文字符。
+> **💡 中文输出**：视觉接口返回的 JSON 中文可能被 Unicode 转义，用以下命令正确显示：
+> ```bash
+> curl -s -X POST "http://localhost:8888/ai/vision/analyze-url" \
+>   -d "imageUrl=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
+> ```
 
 ## 常见问题
 
@@ -812,7 +804,3 @@ curl -X POST "http://localhost:8888/ai/vision/compare" \
 | AI 视觉识别 500 | 图片 URL 不可访问（百度图片会拒绝 Java UrlResource 请求），使用稳定可访问的 URL |
 | AI 接口 400 | 中文参数需 URL 编码，使用 `--get --data-urlencode` |
 
-## 分支说明
-
-- `springboot3`：基于 Spring Boot 3.5.0+ 的示例
-- `eureka`：使用 Eureka 作为注册中心的初始版本

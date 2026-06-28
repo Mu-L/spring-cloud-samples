@@ -1,15 +1,19 @@
 package org.hongxi.cloud.sample.ai.controller;
 
-import org.hongxi.cloud.sample.ai.service.AdvancedChatService;
+import org.hongxi.cloud.sample.ai.vo.AiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * ChatClient 高级用法
+ * ChatClient 高级用法控制器
  * <p>
  * 演示 System Message、Few-shot Prompting、多轮对话等高级特性
  * </p>
@@ -22,10 +26,10 @@ public class AdvancedChatController {
 
     private static final Logger log = LoggerFactory.getLogger(AdvancedChatController.class);
 
-    private final AdvancedChatService advancedChatService;
+    private final ChatClient chatClient;
 
-    public AdvancedChatController(AdvancedChatService advancedChatService) {
-        this.advancedChatService = advancedChatService;
+    public AdvancedChatController(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
     }
 
     /**
@@ -35,8 +39,15 @@ public class AdvancedChatController {
      * @return AI 回复
      */
     @PostMapping("/system-message")
-    public Map<String, String> chatWithSystemMessage(@RequestParam String message) {
-        return advancedChatService.chatWithSystemMessage(message);
+    public AiResponse chatWithSystemMessage(@RequestParam String message) {
+        log.info("System Message 对话: {}", message);
+        String response = chatClient.prompt()
+                .system("你是一个资深的 Java 架构师，擅长设计高并发、高可用的分布式系统。回答要专业、深入。")
+                .user(message)
+                .call()
+                .content();
+        log.info("AI 回复: {}", response);
+        return new AiResponse(message, response);
     }
 
     /**
@@ -46,22 +57,56 @@ public class AdvancedChatController {
      * @return AI 回复
      */
     @PostMapping("/few-shot")
-    public Map<String, String> fewShotPrompting(@RequestParam String message) {
-        return advancedChatService.fewShotPrompting(message);
+    public AiResponse fewShotPrompting(@RequestParam String message) {
+        log.info("Few-shot 提示: {}", message);
+        String response = chatClient.prompt()
+                .system("""
+                        你是一个代码翻译助手，请将用户的自然语言转换为 Java 代码。
+                        
+                        示例 1:
+                        用户: 创建一个字符串变量 name，值为 "Hello"
+                        AI: String name = "Hello";
+                        
+                        示例 2:
+                        用户: 创建一个列表，包含 1, 2, 3
+                        AI: List<Integer> list = Arrays.asList(1, 2, 3);
+                        
+                        现在请处理用户的请求：
+                        """)
+                .user(message)
+                .call()
+                .content();
+        log.info("AI 回复: {}", response);
+        return new AiResponse(message, response);
     }
 
     /**
      * 多轮对话（手动维护上下文）
      *
-     * @param messages 消息历史（交替的用户和 AI 消息）
-     * @param currentMessage 当前用户消息
+     * @param message 当前用户消息
+     * @param history 历史消息（可选）
      * @return AI 回复
      */
     @PostMapping("/conversation")
-    public Map<String, Object> conversation(
-            @RequestBody(required = false) List<Map<String, String>> messages,
-            @RequestParam String currentMessage) {
-        return advancedChatService.conversation(messages, currentMessage);
+    public AiResponse conversation(
+            @RequestParam String message,
+            @RequestBody(required = false) List<String> history) {
+        log.info("多轮对话 - 当前消息: {}", message);
+        List<Message> messages = new ArrayList<>();
+        messages.add(UserMessage.builder().text("你好").build());
+        messages.add(AssistantMessage.builder().content("你好！有什么可以帮助你的？").build());
+        if (history != null) {
+            for (String h : history) {
+                messages.add(UserMessage.builder().text(h).build());
+            }
+        }
+        String response = chatClient.prompt()
+                .messages(messages)
+                .user(message)
+                .call()
+                .content();
+        log.info("AI 回复: {}", response);
+        return new AiResponse(message, response);
     }
 
     /**
@@ -71,7 +116,14 @@ public class AdvancedChatController {
      * @return AI 回复
      */
     @PostMapping("/creative")
-    public Map<String, String> creativeChat(@RequestParam String message) {
-        return advancedChatService.creativeChat(message);
+    public AiResponse creativeChat(@RequestParam String message) {
+        log.info("创意性对话: {}", message);
+        String response = chatClient.prompt()
+                .system("你是一个富有创造力的作家，擅长写故事和诗歌。")
+                .user(message)
+                .call()
+                .content();
+        log.info("AI 回复: {}", response);
+        return new AiResponse(message, response);
     }
 }

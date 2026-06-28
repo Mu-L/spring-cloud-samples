@@ -1,7 +1,7 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ToolCallingService;
-import org.hongxi.cloud.sample.ai.vo.QaResult;
+import org.hongxi.cloud.sample.ai.vo.AiResponse;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -34,12 +34,12 @@ public class ToolCallingController {
      * 测试示例: "北京今天的天气怎么样？"
      * </p>
      *
-     * @param question 用户问题
+     * @param message 用户问题
      * @return AI 回复
      */
     @GetMapping("/weather")
-    public QaResult getWeather(@RequestParam String question) {
-        return toolCallingService.getWeather(question);
+    public AiResponse getWeather(@RequestParam String message) {
+        return toolCallingService.getWeather(message);
     }
 
     /**
@@ -48,12 +48,12 @@ public class ToolCallingController {
      * 测试示例: "现在几点了？" / "今天星期几？" / "距离国庆节还有多少天？"
      * </p>
      *
-     * @param question 用户问题
+     * @param message 用户问题
      * @return AI 回复
      */
     @GetMapping("/time")
-    public QaResult getTime(@RequestParam String question) {
-        return toolCallingService.getTime(question);
+    public AiResponse getTime(@RequestParam String message) {
+        return toolCallingService.getTime(message);
     }
 
     /**
@@ -65,11 +65,11 @@ public class ToolCallingController {
      * - "什么是 Spring AI？" → 调用 SearchTools
      * </p>
      *
-     * @param question 用户问题
+     * @param message 用户问题
      * @return AI 回复
      */
     @GetMapping("/ask")
-    public QaResult smartAssistant(@RequestParam String question) {
-        return toolCallingService.smartAssistant(question);
+    public AiResponse smartAssistant(@RequestParam String message) {
+        return toolCallingService.smartAssistant(message);
     }
 }

@@ -1,11 +1,7 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import org.hongxi.cloud.sample.ai.vo.ChartAnalysisResult;
-import org.hongxi.cloud.sample.ai.vo.CodeExtractionResult;
-import org.hongxi.cloud.sample.ai.vo.ImageAnalysisResult;
 import org.hongxi.cloud.sample.ai.vo.ImageComparisonResult;
-import org.hongxi.cloud.sample.ai.vo.OcrResult;
-import org.hongxi.cloud.sample.ai.vo.UploadImageAnalysisResult;
+import org.hongxi.cloud.sample.ai.vo.VisionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -18,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * 多模态图像处理服务
@@ -46,7 +43,7 @@ public class VisionService {
      * @param prompt   提示词
      * @return 图片描述
      */
-    public ImageAnalysisResult analyzeImageByUrl(String imageUrl, String prompt) {
+    public VisionResult analyzeImageByUrl(String imageUrl, String prompt) {
         log.info("分析图片 URL: {}", imageUrl);
 
         try {
@@ -61,7 +58,7 @@ public class VisionService {
 
             log.info("图片描述: {}", description);
 
-            return new ImageAnalysisResult(imageUrl, description);
+            return new VisionResult(imageUrl, description);
         } catch (Exception e) {
             log.error("分析图片失败", e);
             throw new RuntimeException("分析图片失败: " + e.getMessage(), e);
@@ -75,7 +72,7 @@ public class VisionService {
      * @param prompt 提示词
      * @return 图片描述
      */
-    public UploadImageAnalysisResult analyzeUploadedImage(MultipartFile file, String prompt) {
+    public VisionResult analyzeUploadedImage(MultipartFile file, String prompt) {
         log.info("上传并分析图片: {}", file.getOriginalFilename());
 
         try {
@@ -95,7 +92,7 @@ public class VisionService {
 
             log.info("图片描述: {}", description);
 
-            return new UploadImageAnalysisResult(file.getOriginalFilename(), file.getSize(), description);
+            return new VisionResult(file.getOriginalFilename(), description);
         } catch (IOException e) {
             log.error("处理上传文件失败", e);
             throw new RuntimeException("处理上传文件失败: " + e.getMessage(), e);
@@ -108,7 +105,7 @@ public class VisionService {
      * @param imageUrl 图片 URL
      * @return 识别的文字
      */
-    public OcrResult ocrTextRecognition(String imageUrl) {
+    public VisionResult ocrTextRecognition(String imageUrl) {
         log.info("OCR 文字识别: {}", imageUrl);
 
         try {
@@ -123,7 +120,7 @@ public class VisionService {
 
             log.info("识别结果: {}", text);
 
-            return new OcrResult(imageUrl, text);
+            return new VisionResult(imageUrl, text);
         } catch (Exception e) {
             log.error("OCR 识别失败", e);
             throw new RuntimeException("OCR 识别失败: " + e.getMessage(), e);
@@ -136,7 +133,7 @@ public class VisionService {
      * @param imageUrl 图表 URL
      * @return 图表分析结果
      */
-    public ChartAnalysisResult analyzeChart(String imageUrl) {
+    public VisionResult analyzeChart(String imageUrl) {
         log.info("分析图表: {}", imageUrl);
 
         try {
@@ -155,7 +152,7 @@ public class VisionService {
 
             log.info("图表分析: {}", analysis);
 
-            return new ChartAnalysisResult(imageUrl, analysis);
+            return new VisionResult(imageUrl, analysis);
         } catch (Exception e) {
             log.error("图表分析失败", e);
             throw new RuntimeException("图表分析失败: " + e.getMessage(), e);
@@ -168,7 +165,7 @@ public class VisionService {
      * @param imageUrl 代码截图 URL
      * @return 转换后的代码
      */
-    public CodeExtractionResult codeFromImage(String imageUrl) {
+    public VisionResult codeFromImage(String imageUrl) {
         log.info("代码截图转换: {}", imageUrl);
 
         try {
@@ -183,7 +180,7 @@ public class VisionService {
 
             log.info("提取的代码: {}", code);
 
-            return new CodeExtractionResult(imageUrl, code);
+            return new VisionResult(imageUrl, code);
         } catch (Exception e) {
             log.error("代码提取失败", e);
             throw new RuntimeException("代码提取失败: " + e.getMessage(), e);
@@ -214,7 +211,7 @@ public class VisionService {
 
             log.info("对比结果: {}", comparison);
 
-            return new ImageComparisonResult(imageUrl1, imageUrl2, comparison);
+            return new ImageComparisonResult(List.of(imageUrl1, imageUrl2), comparison);
         } catch (Exception e) {
             log.error("图片对比失败", e);
             throw new RuntimeException("图片对比失败: " + e.getMessage(), e);

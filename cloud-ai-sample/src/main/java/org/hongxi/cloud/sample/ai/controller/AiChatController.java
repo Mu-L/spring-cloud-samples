@@ -1,20 +1,29 @@
 package org.hongxi.cloud.sample.ai.controller;
 
-import org.hongxi.cloud.sample.ai.service.AiChatService;
-import org.hongxi.cloud.sample.ai.vo.PersonInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+/**
+ * AI 基础聊天控制器
+ *
+ * @author hongxi
+ */
 @RestController
 @RequestMapping("/ai")
 public class AiChatController {
 
-    private final AiChatService aiChatService;
+    private static final Logger log = LoggerFactory.getLogger(AiChatController.class);
 
-    public AiChatController(AiChatService aiChatService) {
-        this.aiChatService = aiChatService;
+    private final ChatClient chatClient;
+
+    public AiChatController(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
     }
 
     /**
@@ -22,7 +31,11 @@ public class AiChatController {
      */
     @GetMapping("/chat")
     public String chat(@RequestParam String message) {
-        return aiChatService.chat(message);
+        log.info("收到聊天请求: {}", message);
+        return chatClient.prompt()
+                .user(message)
+                .call()
+                .content();
     }
 
     /**
@@ -30,17 +43,38 @@ public class AiChatController {
      */
     @GetMapping("/chat/stream")
     public ResponseEntity<Flux<String>> chatStream(@RequestParam String message) {
+        log.info("开始流式对话: {}", message);
+        Flux<String> flux = chatClient.prompt()
+                .user(message)
+                .stream()
+                .content()
+                .doOnNext(chunk -> log.debug("收到 chunk: {}", chunk))
+                .doOnComplete(() -> log.info("流式对话完成"));
         return ResponseEntity.ok()
                 .contentType(MediaType.valueOf("text/event-stream;charset=UTF-8"))
                 .header("Cache-Control", "no-cache")
-                .body(aiChatService.chatStream(message));
+                .body(flux);
     }
 
     /**
      * 结构化输出示例 - 返回 JSON 对象
+     * <p>
+     * eg. 我叫张三，今年25岁，是一名软件工程师，喜欢编程和打篮球，邮箱是zhangsan@example.com
+     * </p>
      */
     @GetMapping("/extract")
-    public PersonInfo extractPersonInfo(@RequestParam String text) {
-        return aiChatService.extractPersonInfo(text);
+    public Object extractPersonInfo(@RequestParam String message) {
+        record PersonInfo(String name, Integer age, String email, String occupation) {}
+        log.info("提取人员信息: {}", message);
+        String prompt = """
+                从以下文本中提取人员信息，并以 JSON 格式返回：
+                %s
+                
+                需要提取的字段：name(姓名), age(年龄), email(邮箱), occupation(职业)
+                如果某个字段无法提取，请设置为 null。
+                """.formatted(message);
+        return chatClient.prompt(new Prompt(prompt))
+                .call()
+                .entity(PersonInfo.class);
     }
 }

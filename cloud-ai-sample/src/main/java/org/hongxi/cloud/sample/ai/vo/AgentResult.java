@@ -1,12 +1,12 @@
 package org.hongxi.cloud.sample.ai.vo;
 
 /**
- * Agent 问答结果
+ * Agent 响应结果
  *
- * @param question 用户问题
- * @param answer   Agent 回答
- * @param type     类型标识
+ * @param message  用户消息
+ * @param response AI 回复
+ * @param type     Agent 类型标识
  * @author hongxi
  */
-public record AgentResult(String question, String answer, String type) {
+public record AgentResult(String message, String response, String type) {
 }

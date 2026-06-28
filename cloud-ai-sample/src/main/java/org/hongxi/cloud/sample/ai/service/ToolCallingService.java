@@ -3,7 +3,7 @@ package org.hongxi.cloud.sample.ai.service;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
-import org.hongxi.cloud.sample.ai.vo.QaResult;
+import org.hongxi.cloud.sample.ai.vo.AiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -50,21 +50,21 @@ public class ToolCallingService {
      * 测试示例: "北京今天的天气怎么样？"
      * </p>
      *
-     * @param question 用户问题
+     * @param message 用户问题
      * @return AI 回复
      */
-    public QaResult getWeather(String question) {
-        log.info("天气查询: {}", question);
+    public AiResponse getWeather(String message) {
+        log.info("天气查询: {}", message);
 
         String response = chatClient.prompt()
-                .user(question)
+                .user(message)
                 .tools(weatherTools)
                 .call()
                 .content();
 
         log.info("AI 回复: {}", response);
 
-        return new QaResult(question, response);
+        return new AiResponse(message, response);
     }
 
     /**
@@ -73,21 +73,21 @@ public class ToolCallingService {
      * 测试示例: "现在几点了？" / "今天星期几？" / "距离国庆节还有多少天？"
      * </p>
      *
-     * @param question 用户问题
+     * @param message 用户问题
      * @return AI 回复
      */
-    public QaResult getTime(String question) {
-        log.info("时间查询: {}", question);
+    public AiResponse getTime(String message) {
+        log.info("时间查询: {}", message);
 
         String response = chatClient.prompt()
-                .user(question)
+                .user(message)
                 .tools(timeTools)
                 .call()
                 .content();
 
         log.info("AI 回复: {}", response);
 
-        return new QaResult(question, response);
+        return new AiResponse(message, response);
     }
 
     /**
@@ -99,21 +99,21 @@ public class ToolCallingService {
      * - "什么是 Spring AI？" → 调用 SearchTools
      * </p>
      *
-     * @param question 用户问题
+     * @param message 用户问题
      * @return AI 回复
      */
-    public QaResult smartAssistant(String question) {
-        log.info("智能助手收到问题: {}", question);
+    public AiResponse smartAssistant(String message) {
+        log.info("智能助手收到问题: {}", message);
 
         String response = chatClient.prompt()
                 .system("你是一个智能助手，可以根据用户的问题自动调用合适的工具来获取信息。请用中文回答。")
-                .user(question)
+                .user(message)
                 .tools(weatherTools, timeTools, searchTools)
                 .call()
                 .content();
 
         log.info("AI 回复: {}", response);
 
-        return new QaResult(question, response);
+        return new AiResponse(message, response);
     }
 }
