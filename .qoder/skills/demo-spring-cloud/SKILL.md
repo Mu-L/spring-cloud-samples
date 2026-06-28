@@ -735,8 +735,10 @@ echo "=== 图片 URL 可用性预检查 ==="
 for url in \
   "https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg" \
   "https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg" \
-  "https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%27Q1%27%2C%27Q2%27%2C%27Q3%27%2C%27Q4%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Revenue%27%2Cdata%3A%5B100%2C200%2C150%2C300%5D%7D%5D%7D%7D" \
-  "https://i-blog.csdnimg.cn/blog_migrate/486ded85cb954f0da650e7f9c306900e.png"; do
+  "https://p3-search.byteimg.com/obj/pgc-image/94e63ee2f0f840b0813e3746d2a9590b" \
+  "https://p3-search.byteimg.com/obj/labis/624fb344cca59ed91d6ada99b45f41ca" \
+  "https://p3-search.byteimg.com/obj/labis/9c78113c22823e91536fb63f8f599e13" \
+  "https://p3-search.byteimg.com/obj/labis/a7dd04c539c4515b6018e9a39a32be36"; do
   status=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 10 "$url" 2>/dev/null)
   if [ "$status" = "200" ]; then
     echo "✓ [$status] $url"
@@ -746,7 +748,7 @@ for url in \
 done
 ```
 - 全部返回 200 → 直接开始验证
-- 某 URL 不可用 → **必须先找到替代图片**，要求：公开可访问、不拒绝 Java `UrlResource` 请求（避免百度图片等限制性 CDN）
+- 某 URL 不可用 → **必须先找到替代图片**，建议从今日头条、澎湃新闻等网站找图片。要求：公开可访问、不拒绝 Java `UrlResource` 请求（避免百度图片等限制性 CDN）
 
 **🔴 必须逐一演示全部 6 个视觉识别接口，不可跳过：**
 
@@ -760,7 +762,7 @@ done
 | 6 | `/ai/vision/compare` | 多图片对比 |
 
 ```bash
-# 1/6 URL 图片分析（神舟十号海报）
+# 1/6 URL 图片分析（澎湃新闻：神舟十号海报）
 curl -X POST "http://localhost:8888/ai/vision/analyze-url" \
   -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg"
 
@@ -768,22 +770,22 @@ curl -X POST "http://localhost:8888/ai/vision/analyze-url" \
 curl -X POST "http://localhost:8888/ai/vision/analyze-upload" \
   -F "file=@arch.png"
 
-# 3/6 OCR 文字识别
+# 3/6 OCR 文字识别（澎湃新闻：北京申奥成功）
 curl -X POST "http://localhost:8888/ai/vision/ocr" \
   -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
 
-# 4/6 图表分析（QuickChart.io 生成的柱状图）
+# 4/6 图表分析（今日头条：武汉市历年生产总值）
 curl -X POST "http://localhost:8888/ai/vision/chart-analysis" \
-  -d "imageUrl=https://quickchart.io/chart?c=%7Btype%3A%27bar%27%2Cdata%3A%7Blabels%3A%5B%27Q1%27%2C%27Q2%27%2C%27Q3%27%2C%27Q4%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Revenue%27%2Cdata%3A%5B100%2C200%2C150%2C300%5D%7D%5D%7D%7D"
+  -d "imageUrl=https://p3-search.byteimg.com/obj/pgc-image/94e63ee2f0f840b0813e3746d2a9590b"
 
-# 5/6 代码截图转代码（CSDN C语言代码图片）
+# 5/6 代码截图转代码（今日头条：Java代码图片）
 curl -X POST "http://localhost:8888/ai/vision/code-from-image" \
-  -d "imageUrl=https://i-blog.csdnimg.cn/blog_migrate/486ded85cb954f0da650e7f9c306900e.png"
+  -d "imageUrl=https://p3-search.byteimg.com/obj/labis/624fb344cca59ed91d6ada99b45f41ca"
 
-# 6/6 多图片对比分析（神舟十号海报 vs 北京申奥号外）
+# 6/6 多图片对比分析（今日头条：鞠婧祎 vs 陈都灵）
 curl -X POST "http://localhost:8888/ai/vision/compare" \
-  -d "imageUrl1=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg" \
-  -d "imageUrl2=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
+  -d "imageUrl1=https://p3-search.byteimg.com/obj/labis/9c78113c22823e91536fb63f8f599e13" \
+  -d "imageUrl2=https://p3-search.byteimg.com/obj/labis/a7dd04c539c4515b6018e9a39a32be36"
 ```
 
 > **💡 中文输出**：视觉接口返回的 JSON 中文可能被 Unicode 转义，用以下命令正确显示：
