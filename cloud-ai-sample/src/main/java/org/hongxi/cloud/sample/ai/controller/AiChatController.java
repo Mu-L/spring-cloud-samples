@@ -57,7 +57,7 @@ public class AiChatController {
     }
 
     /**
-     * 结构化输出示例 - 返回 JSON 对象
+     * 结构化输出示例
      * <p>
      * eg. 我叫张三，今年25岁，是一名软件工程师，喜欢编程和打篮球，邮箱是zhangsan@example.com
      * </p>

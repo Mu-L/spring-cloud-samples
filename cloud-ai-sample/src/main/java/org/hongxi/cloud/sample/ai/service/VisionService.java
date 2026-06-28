@@ -1,7 +1,5 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import org.hongxi.cloud.sample.ai.vo.ImageComparisonResult;
-import org.hongxi.cloud.sample.ai.vo.VisionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -14,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * 多模态图像处理服务
@@ -43,7 +40,7 @@ public class VisionService {
      * @param prompt   提示词
      * @return 图片描述
      */
-    public VisionResult analyzeImageByUrl(String imageUrl, String prompt) {
+    public String analyzeImageByUrl(String imageUrl, String prompt) {
         log.info("分析图片 URL: {}", imageUrl);
 
         try {
@@ -58,7 +55,7 @@ public class VisionService {
 
             log.info("图片描述: {}", description);
 
-            return new VisionResult(imageUrl, description);
+            return description;
         } catch (Exception e) {
             log.error("分析图片失败", e);
             throw new RuntimeException("分析图片失败: " + e.getMessage(), e);
@@ -72,7 +69,7 @@ public class VisionService {
      * @param prompt 提示词
      * @return 图片描述
      */
-    public VisionResult analyzeUploadedImage(MultipartFile file, String prompt) {
+    public String analyzeUploadedImage(MultipartFile file, String prompt) {
         log.info("上传并分析图片: {}", file.getOriginalFilename());
 
         try {
@@ -92,7 +89,7 @@ public class VisionService {
 
             log.info("图片描述: {}", description);
 
-            return new VisionResult(file.getOriginalFilename(), description);
+            return description;
         } catch (IOException e) {
             log.error("处理上传文件失败", e);
             throw new RuntimeException("处理上传文件失败: " + e.getMessage(), e);
@@ -105,7 +102,7 @@ public class VisionService {
      * @param imageUrl 图片 URL
      * @return 识别的文字
      */
-    public VisionResult ocrTextRecognition(String imageUrl) {
+    public String ocrTextRecognition(String imageUrl) {
         log.info("OCR 文字识别: {}", imageUrl);
 
         try {
@@ -120,7 +117,7 @@ public class VisionService {
 
             log.info("识别结果: {}", text);
 
-            return new VisionResult(imageUrl, text);
+            return text;
         } catch (Exception e) {
             log.error("OCR 识别失败", e);
             throw new RuntimeException("OCR 识别失败: " + e.getMessage(), e);
@@ -133,7 +130,7 @@ public class VisionService {
      * @param imageUrl 图表 URL
      * @return 图表分析结果
      */
-    public VisionResult analyzeChart(String imageUrl) {
+    public String analyzeChart(String imageUrl) {
         log.info("分析图表: {}", imageUrl);
 
         try {
@@ -152,7 +149,7 @@ public class VisionService {
 
             log.info("图表分析: {}", analysis);
 
-            return new VisionResult(imageUrl, analysis);
+            return analysis;
         } catch (Exception e) {
             log.error("图表分析失败", e);
             throw new RuntimeException("图表分析失败: " + e.getMessage(), e);
@@ -165,7 +162,7 @@ public class VisionService {
      * @param imageUrl 代码截图 URL
      * @return 转换后的代码
      */
-    public VisionResult codeFromImage(String imageUrl) {
+    public String codeFromImage(String imageUrl) {
         log.info("代码截图转换: {}", imageUrl);
 
         try {
@@ -180,7 +177,7 @@ public class VisionService {
 
             log.info("提取的代码: {}", code);
 
-            return new VisionResult(imageUrl, code);
+            return code;
         } catch (Exception e) {
             log.error("代码提取失败", e);
             throw new RuntimeException("代码提取失败: " + e.getMessage(), e);
@@ -194,7 +191,7 @@ public class VisionService {
      * @param imageUrl2 第二张图片 URL
      * @return 对比分析结果
      */
-    public ImageComparisonResult compareImages(String imageUrl1, String imageUrl2) {
+    public String compareImages(String imageUrl1, String imageUrl2) {
         log.info("对比图片: {} vs {}", imageUrl1, imageUrl2);
 
         try {
@@ -211,7 +208,7 @@ public class VisionService {
 
             log.info("对比结果: {}", comparison);
 
-            return new ImageComparisonResult(List.of(imageUrl1, imageUrl2), comparison);
+            return comparison;
         } catch (Exception e) {
             log.error("图片对比失败", e);
             throw new RuntimeException("图片对比失败: " + e.getMessage(), e);

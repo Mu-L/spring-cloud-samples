@@ -1,7 +1,6 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ToolCallingService;
-import org.hongxi.cloud.sample.ai.vo.AiResponse;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -38,7 +37,7 @@ public class ToolCallingController {
      * @return AI 回复
      */
     @GetMapping("/weather")
-    public AiResponse getWeather(@RequestParam String message) {
+    public String getWeather(@RequestParam String message) {
         return toolCallingService.getWeather(message);
     }
 
@@ -52,7 +51,7 @@ public class ToolCallingController {
      * @return AI 回复
      */
     @GetMapping("/time")
-    public AiResponse getTime(@RequestParam String message) {
+    public String getTime(@RequestParam String message) {
         return toolCallingService.getTime(message);
     }
 
@@ -69,7 +68,7 @@ public class ToolCallingController {
      * @return AI 回复
      */
     @GetMapping("/ask")
-    public AiResponse smartAssistant(@RequestParam String message) {
+    public String smartAssistant(@RequestParam String message) {
         return toolCallingService.smartAssistant(message);
     }
 }

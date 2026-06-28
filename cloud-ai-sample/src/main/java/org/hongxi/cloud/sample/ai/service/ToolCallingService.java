@@ -3,7 +3,6 @@ package org.hongxi.cloud.sample.ai.service;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
-import org.hongxi.cloud.sample.ai.vo.AiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -53,7 +52,7 @@ public class ToolCallingService {
      * @param message 用户问题
      * @return AI 回复
      */
-    public AiResponse getWeather(String message) {
+    public String getWeather(String message) {
         log.info("天气查询: {}", message);
 
         String response = chatClient.prompt()
@@ -64,7 +63,7 @@ public class ToolCallingService {
 
         log.info("AI 回复: {}", response);
 
-        return new AiResponse(message, response);
+        return response;
     }
 
     /**
@@ -76,7 +75,7 @@ public class ToolCallingService {
      * @param message 用户问题
      * @return AI 回复
      */
-    public AiResponse getTime(String message) {
+    public String getTime(String message) {
         log.info("时间查询: {}", message);
 
         String response = chatClient.prompt()
@@ -87,7 +86,7 @@ public class ToolCallingService {
 
         log.info("AI 回复: {}", response);
 
-        return new AiResponse(message, response);
+        return response;
     }
 
     /**
@@ -102,7 +101,7 @@ public class ToolCallingService {
      * @param message 用户问题
      * @return AI 回复
      */
-    public AiResponse smartAssistant(String message) {
+    public String smartAssistant(String message) {
         log.info("智能助手收到问题: {}", message);
 
         String response = chatClient.prompt()
@@ -114,6 +113,6 @@ public class ToolCallingService {
 
         log.info("AI 回复: {}", response);
 
-        return new AiResponse(message, response);
+        return response;
     }
 }

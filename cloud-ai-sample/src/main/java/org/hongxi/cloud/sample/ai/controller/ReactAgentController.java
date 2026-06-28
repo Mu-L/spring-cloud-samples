@@ -3,7 +3,6 @@ package org.hongxi.cloud.sample.ai.controller;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
-import org.hongxi.cloud.sample.ai.vo.AgentResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -56,7 +55,7 @@ public class ReactAgentController {
      * @return Agent 的回答
      */
     @GetMapping("/chat")
-    public AgentResult agentChat(@RequestParam String message) {
+    public String agentChat(@RequestParam String message) {
         log.info("Agent 收到问题: {}", message);
         String response = chatClient.prompt()
                 .system("""
@@ -79,7 +78,7 @@ public class ReactAgentController {
                 .call()
                 .content();
         log.info("Agent 回复: {}", response);
-        return new AgentResult(message, response, "react-agent");
+        return response;
     }
 
     /**
@@ -97,7 +96,7 @@ public class ReactAgentController {
      * @return 任务执行结果
      */
     @GetMapping("/complex-task")
-    public AgentResult handleComplexTask(@RequestParam String message) {
+    public String handleComplexTask(@RequestParam String message) {
         log.info("Agent 收到复杂任务: {}", message);
         String response = chatClient.prompt()
                 .system("""
@@ -118,6 +117,6 @@ public class ReactAgentController {
                 .call()
                 .content();
         log.info("Agent 完成复杂任务");
-        return new AgentResult(message, response, "complex-task-solving");
+        return response;
     }
 }
