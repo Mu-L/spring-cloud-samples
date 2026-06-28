@@ -1,10 +1,14 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.VisionService;
+import org.hongxi.cloud.sample.ai.vo.ChartAnalysisResult;
+import org.hongxi.cloud.sample.ai.vo.CodeExtractionResult;
+import org.hongxi.cloud.sample.ai.vo.ImageAnalysisResult;
+import org.hongxi.cloud.sample.ai.vo.ImageComparisonResult;
+import org.hongxi.cloud.sample.ai.vo.OcrResult;
+import org.hongxi.cloud.sample.ai.vo.UploadImageAnalysisResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
 
 /**
  * 多模态图像处理控制器
@@ -33,7 +37,7 @@ public class VisionController {
      * @return 图片描述
      */
     @PostMapping("/analyze-url")
-    public Map<String, Object> analyzeImageByUrl(@RequestParam String imageUrl,
+    public ImageAnalysisResult analyzeImageByUrl(@RequestParam String imageUrl,
                                                   @RequestParam(defaultValue = "请详细描述这张图片的内容") String prompt) {
         return visionService.analyzeImageByUrl(imageUrl, prompt);
     }
@@ -46,7 +50,7 @@ public class VisionController {
      * @return 图片描述
      */
     @PostMapping("/analyze-upload")
-    public Map<String, Object> analyzeUploadedFile(@RequestParam("file") MultipartFile file,
+    public UploadImageAnalysisResult analyzeUploadedFile(@RequestParam("file") MultipartFile file,
                                                     @RequestParam(defaultValue = "请详细描述这张图片的内容") String prompt) {
         return visionService.analyzeUploadedImage(file, prompt);
     }
@@ -58,7 +62,7 @@ public class VisionController {
      * @return 识别的文字
      */
     @PostMapping("/ocr")
-    public Map<String, Object> ocrTextRecognition(@RequestParam String imageUrl) {
+    public OcrResult ocrTextRecognition(@RequestParam String imageUrl) {
         return visionService.ocrTextRecognition(imageUrl);
     }
 
@@ -69,7 +73,7 @@ public class VisionController {
      * @return 图表分析结果
      */
     @PostMapping("/chart-analysis")
-    public Map<String, Object> analyzeChart(@RequestParam String imageUrl) {
+    public ChartAnalysisResult analyzeChart(@RequestParam String imageUrl) {
         return visionService.analyzeChart(imageUrl);
     }
 
@@ -80,7 +84,7 @@ public class VisionController {
      * @return 转换后的代码
      */
     @PostMapping("/code-from-image")
-    public Map<String, Object> codeFromImage(@RequestParam String imageUrl) {
+    public CodeExtractionResult codeFromImage(@RequestParam String imageUrl) {
         return visionService.codeFromImage(imageUrl);
     }
 
@@ -92,7 +96,7 @@ public class VisionController {
      * @return 对比分析结果
      */
     @PostMapping("/compare")
-    public Map<String, Object> compareImages(@RequestParam String imageUrl1,
+    public ImageComparisonResult compareImages(@RequestParam String imageUrl1,
                                               @RequestParam String imageUrl2) {
         return visionService.compareImages(imageUrl1, imageUrl2);
     }

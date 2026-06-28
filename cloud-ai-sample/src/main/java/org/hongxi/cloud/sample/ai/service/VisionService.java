@@ -1,5 +1,11 @@
 package org.hongxi.cloud.sample.ai.service;
 
+import org.hongxi.cloud.sample.ai.vo.ChartAnalysisResult;
+import org.hongxi.cloud.sample.ai.vo.CodeExtractionResult;
+import org.hongxi.cloud.sample.ai.vo.ImageAnalysisResult;
+import org.hongxi.cloud.sample.ai.vo.ImageComparisonResult;
+import org.hongxi.cloud.sample.ai.vo.OcrResult;
+import org.hongxi.cloud.sample.ai.vo.UploadImageAnalysisResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -12,8 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 多模态图像处理服务
@@ -42,7 +46,7 @@ public class VisionService {
      * @param prompt   提示词
      * @return 图片描述
      */
-    public Map<String, Object> analyzeImageByUrl(String imageUrl, String prompt) {
+    public ImageAnalysisResult analyzeImageByUrl(String imageUrl, String prompt) {
         log.info("分析图片 URL: {}", imageUrl);
 
         try {
@@ -57,10 +61,7 @@ public class VisionService {
 
             log.info("图片描述: {}", description);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("imageUrl", imageUrl);
-            result.put("description", description);
-            return result;
+            return new ImageAnalysisResult(imageUrl, description);
         } catch (Exception e) {
             log.error("分析图片失败", e);
             throw new RuntimeException("分析图片失败: " + e.getMessage(), e);
@@ -74,7 +75,7 @@ public class VisionService {
      * @param prompt 提示词
      * @return 图片描述
      */
-    public Map<String, Object> analyzeUploadedImage(MultipartFile file, String prompt) {
+    public UploadImageAnalysisResult analyzeUploadedImage(MultipartFile file, String prompt) {
         log.info("上传并分析图片: {}", file.getOriginalFilename());
 
         try {
@@ -94,11 +95,7 @@ public class VisionService {
 
             log.info("图片描述: {}", description);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("filename", file.getOriginalFilename());
-            result.put("size", file.getSize());
-            result.put("description", description);
-            return result;
+            return new UploadImageAnalysisResult(file.getOriginalFilename(), file.getSize(), description);
         } catch (IOException e) {
             log.error("处理上传文件失败", e);
             throw new RuntimeException("处理上传文件失败: " + e.getMessage(), e);
@@ -111,7 +108,7 @@ public class VisionService {
      * @param imageUrl 图片 URL
      * @return 识别的文字
      */
-    public Map<String, Object> ocrTextRecognition(String imageUrl) {
+    public OcrResult ocrTextRecognition(String imageUrl) {
         log.info("OCR 文字识别: {}", imageUrl);
 
         try {
@@ -126,10 +123,7 @@ public class VisionService {
 
             log.info("识别结果: {}", text);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("imageUrl", imageUrl);
-            result.put("recognizedText", text);
-            return result;
+            return new OcrResult(imageUrl, text);
         } catch (Exception e) {
             log.error("OCR 识别失败", e);
             throw new RuntimeException("OCR 识别失败: " + e.getMessage(), e);
@@ -142,7 +136,7 @@ public class VisionService {
      * @param imageUrl 图表 URL
      * @return 图表分析结果
      */
-    public Map<String, Object> analyzeChart(String imageUrl) {
+    public ChartAnalysisResult analyzeChart(String imageUrl) {
         log.info("分析图表: {}", imageUrl);
 
         try {
@@ -161,10 +155,7 @@ public class VisionService {
 
             log.info("图表分析: {}", analysis);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("imageUrl", imageUrl);
-            result.put("analysis", analysis);
-            return result;
+            return new ChartAnalysisResult(imageUrl, analysis);
         } catch (Exception e) {
             log.error("图表分析失败", e);
             throw new RuntimeException("图表分析失败: " + e.getMessage(), e);
@@ -177,7 +168,7 @@ public class VisionService {
      * @param imageUrl 代码截图 URL
      * @return 转换后的代码
      */
-    public Map<String, Object> codeFromImage(String imageUrl) {
+    public CodeExtractionResult codeFromImage(String imageUrl) {
         log.info("代码截图转换: {}", imageUrl);
 
         try {
@@ -192,10 +183,7 @@ public class VisionService {
 
             log.info("提取的代码: {}", code);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("imageUrl", imageUrl);
-            result.put("code", code);
-            return result;
+            return new CodeExtractionResult(imageUrl, code);
         } catch (Exception e) {
             log.error("代码提取失败", e);
             throw new RuntimeException("代码提取失败: " + e.getMessage(), e);
@@ -209,7 +197,7 @@ public class VisionService {
      * @param imageUrl2 第二张图片 URL
      * @return 对比分析结果
      */
-    public Map<String, Object> compareImages(String imageUrl1, String imageUrl2) {
+    public ImageComparisonResult compareImages(String imageUrl1, String imageUrl2) {
         log.info("对比图片: {} vs {}", imageUrl1, imageUrl2);
 
         try {
@@ -226,11 +214,7 @@ public class VisionService {
 
             log.info("对比结果: {}", comparison);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("image1", imageUrl1);
-            result.put("image2", imageUrl2);
-            result.put("comparison", comparison);
-            return result;
+            return new ImageComparisonResult(imageUrl1, imageUrl2, comparison);
         } catch (Exception e) {
             log.error("图片对比失败", e);
             throw new RuntimeException("图片对比失败: " + e.getMessage(), e);

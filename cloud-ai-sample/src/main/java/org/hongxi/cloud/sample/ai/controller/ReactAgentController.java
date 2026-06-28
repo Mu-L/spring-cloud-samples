@@ -1,9 +1,9 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ReactAgentService;
+import org.hongxi.cloud.sample.ai.vo.AgentResult;
+import org.hongxi.cloud.sample.ai.vo.TaskResult;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 /**
  * ReAct Agent 控制器
@@ -50,7 +50,7 @@ public class ReactAgentController {
      * @return Agent 的回答
      */
     @GetMapping("/chat")
-    public Map<String, Object> agentChat(@RequestParam String question) {
+    public AgentResult agentChat(@RequestParam String question) {
         return reactAgentService.agentChat(question);
     }
 
@@ -70,7 +70,7 @@ public class ReactAgentController {
      * @return 任务执行结果
      */
     @GetMapping("/complex-task")
-    public Map<String, Object> handleComplexTask(@RequestParam String task) {
+    public TaskResult handleComplexTask(@RequestParam String task) {
         return reactAgentService.handleComplexTask(task);
     }
 }

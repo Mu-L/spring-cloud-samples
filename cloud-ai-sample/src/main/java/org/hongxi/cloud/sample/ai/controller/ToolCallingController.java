@@ -1,9 +1,8 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ToolCallingService;
+import org.hongxi.cloud.sample.ai.vo.QaResult;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 /**
  * Tool Calling（工具调用）示例控制器
@@ -39,7 +38,7 @@ public class ToolCallingController {
      * @return AI 回复
      */
     @GetMapping("/weather")
-    public Map<String, Object> getWeather(@RequestParam String question) {
+    public QaResult getWeather(@RequestParam String question) {
         return toolCallingService.getWeather(question);
     }
 
@@ -53,7 +52,7 @@ public class ToolCallingController {
      * @return AI 回复
      */
     @GetMapping("/time")
-    public Map<String, Object> getTime(@RequestParam String question) {
+    public QaResult getTime(@RequestParam String question) {
         return toolCallingService.getTime(question);
     }
 
@@ -70,7 +69,7 @@ public class ToolCallingController {
      * @return AI 回复
      */
     @GetMapping("/ask")
-    public Map<String, Object> smartAssistant(@RequestParam String question) {
+    public QaResult smartAssistant(@RequestParam String question) {
         return toolCallingService.smartAssistant(question);
     }
 }

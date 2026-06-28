@@ -3,13 +3,11 @@ package org.hongxi.cloud.sample.ai.service;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
+import org.hongxi.cloud.sample.ai.vo.QaResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Tool Calling（工具调用）服务
@@ -55,7 +53,7 @@ public class ToolCallingService {
      * @param question 用户问题
      * @return AI 回复
      */
-    public Map<String, Object> getWeather(String question) {
+    public QaResult getWeather(String question) {
         log.info("天气查询: {}", question);
 
         String response = chatClient.prompt()
@@ -66,10 +64,7 @@ public class ToolCallingService {
 
         log.info("AI 回复: {}", response);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        return result;
+        return new QaResult(question, response);
     }
 
     /**
@@ -81,7 +76,7 @@ public class ToolCallingService {
      * @param question 用户问题
      * @return AI 回复
      */
-    public Map<String, Object> getTime(String question) {
+    public QaResult getTime(String question) {
         log.info("时间查询: {}", question);
 
         String response = chatClient.prompt()
@@ -92,10 +87,7 @@ public class ToolCallingService {
 
         log.info("AI 回复: {}", response);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        return result;
+        return new QaResult(question, response);
     }
 
     /**
@@ -110,7 +102,7 @@ public class ToolCallingService {
      * @param question 用户问题
      * @return AI 回复
      */
-    public Map<String, Object> smartAssistant(String question) {
+    public QaResult smartAssistant(String question) {
         log.info("智能助手收到问题: {}", question);
 
         String response = chatClient.prompt()
@@ -122,9 +114,6 @@ public class ToolCallingService {
 
         log.info("AI 回复: {}", response);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        return result;
+        return new QaResult(question, response);
     }
 }

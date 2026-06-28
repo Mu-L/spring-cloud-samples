@@ -3,13 +3,12 @@ package org.hongxi.cloud.sample.ai.service;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
+import org.hongxi.cloud.sample.ai.vo.AgentResult;
+import org.hongxi.cloud.sample.ai.vo.TaskResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * ReAct Agent 服务
@@ -65,7 +64,7 @@ public class ReactAgentService {
      * @param question 用户问题
      * @return Agent 的回答
      */
-    public Map<String, Object> agentChat(String question) {
+    public AgentResult agentChat(String question) {
         log.info("Agent 收到问题: {}", question);
 
         String response = chatClient.prompt()
@@ -91,11 +90,7 @@ public class ReactAgentService {
 
         log.info("Agent 回复: {}", response);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("question", question);
-        result.put("answer", response);
-        result.put("type", "react-agent");
-        return result;
+        return new AgentResult(question, response, "react-agent");
     }
 
     /**
@@ -113,7 +108,7 @@ public class ReactAgentService {
      * @param task 复杂任务描述
      * @return 任务执行结果
      */
-    public Map<String, Object> handleComplexTask(String task) {
+    public TaskResult handleComplexTask(String task) {
         log.info("Agent 收到复杂任务: {}", task);
 
         String response = chatClient.prompt()
@@ -137,10 +132,6 @@ public class ReactAgentService {
 
         log.info("Agent 完成复杂任务");
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("task", task);
-        result.put("solution", response);
-        result.put("type", "complex-task-solving");
-        return result;
+        return new TaskResult(task, response, "complex-task-solving");
     }
 }
