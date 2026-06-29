@@ -266,6 +266,61 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 
 启动 4 个微服务（business 18081、storage 18082、order 18083、account 18084），验证分布式事务的回滚与提交。
 
+### 🤖 Spring AI 演示
+
+基于 **Spring AI 2.0**，集成阿里云百炼（DashScope）兼容 OpenAI 协议。
+
+前置条件：配置 API Key
+```shell
+export OPENAI_API_KEY=your-api-key-here
+```
+
+启动 AI 模块（端口 8888），默认使用 `qwen-plus` 纯文本模型，视觉识别接口自动切换为 `qwen3.7-plus` 多模态模型。
+
+#### 基础能力
+
+| 接口 | 说明 | 示例 |
+|------|------|------|
+| `/ai/chat` | 简单聊天 | `curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"` |
+| `/ai/chat/stream` | 流式输出（SSE） | `curl --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"` |
+| `/ai/extract` | 结构化输出 | `curl --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"` |
+
+#### 高级对话
+
+| 接口 | 说明 |
+|------|------|
+| `/ai/advanced/system-message` | System Message 设定 AI 角色 |
+| `/ai/advanced/few-shot` | Few-shot Prompting 示例引导 |
+| `/ai/advanced/conversation` | 多轮对话（连续发送，AI 记住上下文） |
+| `/ai/advanced/creative` | 带温度参数的创意性对话 |
+
+#### Tool Calling & Agent
+
+| 接口 | 说明 |
+|------|------|
+| `/ai/tool/weather` | 天气查询（AI 自动调用 WeatherTools） |
+| `/ai/tool/time` | 时间查询（AI 自动调用 TimeTools） |
+| `/ai/tool/smart-assistant` | 智能助手（自动选择合适的工具） |
+| `/ai/agent/chat` | ReAct Agent（多步推理 + 工具组合） |
+| `/ai/demo` | 项目演示 Agent（自主调用工具验证本项目） |
+
+#### MCP Server
+
+通过 SSE 端点 `http://localhost:8888/sse` 暴露工具，支持跨进程 Agent 通信。
+
+#### 多模态视觉识别
+
+| 接口 | 说明 |
+|------|------|
+| `/ai/vision/analyze-url` | URL 图片分析 |
+| `/ai/vision/analyze-upload` | 上传图片分析 |
+| `/ai/vision/ocr` | OCR 文字识别 |
+| `/ai/vision/chart-analysis` | 图表分析 |
+| `/ai/vision/code-from-image` | 代码截图转代码 |
+| `/ai/vision/compare` | 多图片对比 |
+
+> 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI 章节。
+
 ### 🌿 分支说明
 - 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例
 - 🌿 `eureka`: 初始版本，使用 Eureka 作为注册中心
