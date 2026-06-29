@@ -180,6 +180,18 @@ curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Ty
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
 
+### ⚙️ Nacos Config 动态配置
+
+启动 `cloud-nacos-config-sample`（端口 8761），通过模块提供的接口管理配置（避免直接调用 Nacos API 的鉴权问题）：
+```shell
+# 发布配置
+curl 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan'
+# 获取配置
+curl 'http://localhost:8761/nacos/getConfig?dataId=my.city'
+```
+
+模块还演示了 `@NacosConfig`、`@ConfigurationProperties`、`@Value` + `@RefreshScope` 三种配置绑定方式，详细演示步骤参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Nacos Config 章节。
+
 ### 🛡️ Sentinel Gateway 演示
 `cloud-gateway-sample`集成了sentinel，并采用nacos配置规则，规则示例如下 <br>
 group-id: SENTINEL_GROUP <br>
@@ -262,7 +274,7 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 
 ### 🔄 Seata 分布式事务演示
 
-前置条件：MySQL + Seata Server，请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的环境准备步骤。
+前置条件：MySQL + Seata Server，请参考 [seata-sample/README](cloud-seata-sample/README.md) 中的环境准备和运行示例。
 
 启动 4 个微服务（business 18081、storage 18082、order 18083、account 18084），验证分布式事务的回滚与提交。
 

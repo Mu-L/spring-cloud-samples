@@ -58,7 +58,7 @@ service.vgroupMapping.storage-service-tx-group=default
 #### 4. 启动 Seata Server
 > 可直接使用克隆版本 https://github.com/javahongxi/seata
 
-目前下载的二进制包里面依赖的`nacos-client`是1.4.6版本，版本太低，而本地的是3.2.1版本，只好使用源码构建来启动
+目前下载的二进制包里面依赖的`nacos-client`是1.4.6版本，版本太低，而本地的是3.2.2版本，只好使用源码构建来启动
 ```text
 git clone https://github.com/apache/incubator-seata
 修改 server 模块下的 application.yml，如下方yaml配置所示
