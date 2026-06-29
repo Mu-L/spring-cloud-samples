@@ -9,8 +9,10 @@ spring:
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
         options:
-          model: qwen-plus # 纯文本模型，对于多模态场景，请参考 VisionController
+          model: qwen-plus # 纯文本模型
           temperature: 0.7
+      vision:
+        model: qwen3.7-plus # 多模态视觉模型（需支持图像输入）
     mcp:
       server:
         name: spring-cloud-samples-mcp-server    # MCP 服务名称，Client 连接时使用

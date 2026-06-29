@@ -3,7 +3,6 @@ package org.hongxi.cloud.sample.ai.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
@@ -18,7 +17,7 @@ import java.nio.file.Path;
  * 多模态图像处理服务
  * <p>
  * 演示如何使用 AI 模型理解和描述图片内容。
- * 注意：请将 model 改为支持多模态的模型，如 qwen3.7-plus
+ * 注入预配置多模态模型的 visionChatClient，无需每次调用时覆盖模型。
  * </p>
  *
  * @author hongxi
@@ -28,13 +27,10 @@ public class VisionService {
 
     private static final Logger log = LoggerFactory.getLogger(VisionService.class);
 
-    // 支持视觉识别的多模态模型或专用模型
-    private static final String MODEL = System.getProperty("model", "qwen3.7-plus");
+    private final ChatClient visionChatClient;
 
-    private final ChatClient chatClient;
-
-    public VisionService(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
+    public VisionService(ChatClient visionChatClient) {
+        this.visionChatClient = visionChatClient;
     }
 
     /**
@@ -50,8 +46,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String description = chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(MODEL))
+            String description = visionChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text(prompt)
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -83,8 +78,7 @@ public class VisionService {
 
             Resource imageResource = new UrlResource(tempFile.toUri());
 
-            String description = chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(MODEL))
+            String description = visionChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text(prompt)
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -114,8 +108,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String text = chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(MODEL))
+            String text = visionChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请提取图片中的所有文字，保持原有格式")
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -143,8 +136,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String analysis = chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(MODEL))
+            String analysis = visionChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请分析这个图表，包括：\n" +
                                   "1. 图表类型\n" +
@@ -176,8 +168,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String code = chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(MODEL))
+            String code = visionChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请将这张图片中的代码完整提取出来，保持格式和缩进")
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -207,8 +198,7 @@ public class VisionService {
             Resource image1 = new UrlResource(imageUrl1);
             Resource image2 = new UrlResource(imageUrl2);
 
-            String comparison = chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(MODEL))
+            String comparison = visionChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请对比这两张图片，分析它们的相似点和不同点")
                             .media(MediaType.IMAGE_JPEG, image1)
