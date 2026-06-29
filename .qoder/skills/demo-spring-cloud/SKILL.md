@@ -681,6 +681,13 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
 
 ### 12. Spring AI 模块
 
+> ⏱️ **耗时提示**：AI 接口调用大模型 API，每次响应通常需 **5~30 秒**，完整演示所有 AI 功能约需 **5~10 分钟**。
+> 建议：
+> - 所有 AI curl 命令加 `--max-time 60` 防止无限等待
+> - 响应内容用 `| head -c 500` 截断，避免刷屏，加速演示
+> - 多轮对话演示 **2 轮**即可体现上下文记忆能力，无需执行 3 轮
+> - 视觉识别 6 个接口可并行发起（用 `&&` 串联），减少等待
+
 启动前配置 API Key：
 ```bash
 export OPENAI_API_KEY=your-api-key-here
@@ -712,28 +719,27 @@ done
 中文参数需 URL 编码，使用 `--get --data-urlencode`：
 ```bash
 # 简单聊天
-curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"
+curl --max-time 60 --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat" | head -c 500
 # 流式输出
-curl --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"
+curl --max-time 60 --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream" | head -c 500
 # 结构化输出
-curl --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"
+curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"
 # 高级用法 - 使用 System Message 设定 AI 角色
-curl --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"
+curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message" | head -c 500
 # 高级用法 - 提供示例引导 AI
-curl --get --data-urlencode "message=创建一个列表，包含 1, 2, 3" "http://localhost:8888/ai/advanced/few-shot"
+curl --max-time 60 --get --data-urlencode "message=创建一个列表，包含 1, 2, 3" "http://localhost:8888/ai/advanced/few-shot"
 # 高级用法 - 多轮对话（需连续发送，AI 会记住上下文）
+# 演示 2 轮即可体现上下文记忆，无需执行 3 轮
 # 第 1 轮：建立上下文
-curl --get --data-urlencode "message=我喜欢Java和Spring Boot" "http://localhost:8888/ai/advanced/conversation"
+curl --max-time 60 --get --data-urlencode "message=我喜欢Java和Spring Boot" "http://localhost:8888/ai/advanced/conversation" | head -c 500
 # 第 2 轮：基于上文追问（AI 会记住你喜欢 Java）
-curl --get --data-urlencode "message=那我应该用什么技术栈来做微服务" "http://localhost:8888/ai/advanced/conversation"
-# 第 3 轮：继续深入（AI 仍保留之前的对话记录）
-curl --get --data-urlencode "message=能详细说说Nacos吗" "http://localhost:8888/ai/advanced/conversation"
+curl --max-time 60 --get --data-urlencode "message=那我应该用什么技术栈来做微服务" "http://localhost:8888/ai/advanced/conversation" | head -c 500
 # 高级用法 - 带温度参数的创意性对话
-curl --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/ai/advanced/creative"
+curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/ai/advanced/creative" | head -c 500
 # Tool Calling
-curl --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"
+curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather" | head -c 500
 # ReAct Agent
-curl --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"
+curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat" | head -c 500
 # MCP Server（SSE 端点）
 # 连接地址: http://localhost:8888/sse
 ```
@@ -777,29 +783,29 @@ done
 
 ```bash
 # 1/6 URL 图片分析（澎湃新闻：神舟十号海报）
-curl -X POST "http://localhost:8888/ai/vision/analyze-url" \
-  -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg"
+curl --max-time 60 -X POST "http://localhost:8888/ai/vision/analyze-url" \
+  -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/150.jpg" | head -c 500
 
 # 2/6 图片上传分析（项目根目录下的架构图）
-curl -X POST "http://localhost:8888/ai/vision/analyze-upload" \
-  -F "file=@arch.png"
+curl --max-time 60 -X POST "http://localhost:8888/ai/vision/analyze-upload" \
+  -F "file=@arch.png" | head -c 500
 
 # 3/6 OCR 文字识别（澎湃新闻：北京申奥成功）
-curl -X POST "http://localhost:8888/ai/vision/ocr" \
-  -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg"
+curl --max-time 60 -X POST "http://localhost:8888/ai/vision/ocr" \
+  -d "imageUrl=https://imagecloud.thepaper.cn/thepaper/image/333/857/151.jpg" | head -c 500
 
 # 4/6 图表分析（今日头条：武汉市历年生产总值）
-curl -X POST "http://localhost:8888/ai/vision/chart-analysis" \
-  -d "imageUrl=https://p3-search.byteimg.com/obj/pgc-image/94e63ee2f0f840b0813e3746d2a9590b"
+curl --max-time 60 -X POST "http://localhost:8888/ai/vision/chart-analysis" \
+  -d "imageUrl=https://p3-search.byteimg.com/obj/pgc-image/94e63ee2f0f840b0813e3746d2a9590b" | head -c 500
 
 # 5/6 代码截图转代码（今日头条：Java代码图片）
-curl -X POST "http://localhost:8888/ai/vision/code-from-image" \
-  -d "imageUrl=https://p3-search.byteimg.com/obj/labis/624fb344cca59ed91d6ada99b45f41ca"
+curl --max-time 60 -X POST "http://localhost:8888/ai/vision/code-from-image" \
+  -d "imageUrl=https://p3-search.byteimg.com/obj/labis/624fb344cca59ed91d6ada99b45f41ca" | head -c 500
 
 # 6/6 多图片对比分析（今日头条：鞠婧祎 vs 陈都灵）
-curl -X POST "http://localhost:8888/ai/vision/compare" \
+curl --max-time 60 -X POST "http://localhost:8888/ai/vision/compare" \
   -d "imageUrl1=https://p3-search.byteimg.com/obj/labis/9c78113c22823e91536fb63f8f599e13" \
-  -d "imageUrl2=https://p3-search.byteimg.com/obj/labis/a7dd04c539c4515b6018e9a39a32be36"
+  -d "imageUrl2=https://p3-search.byteimg.com/obj/labis/a7dd04c539c4515b6018e9a39a32be36" | head -c 500
 ```
 
 > **💡 中文输出**：视觉接口返回的 JSON 中文可能被 Unicode 转义，用以下命令正确显示：
@@ -814,15 +820,15 @@ curl -X POST "http://localhost:8888/ai/vision/compare" \
 
 ```shell
 # 简单聊天
-curl --get --data-urlencode "message=你好" "http://localhost:8888/deepseek/chat"
+curl --max-time 60 --get --data-urlencode "message=你好" "http://localhost:8888/deepseek/chat" | head -c 500
 # 流式输出
-curl --get --data-urlencode "message=武汉简介" "http://localhost:8888/deepseek/chat/stream"
+curl --max-time 60 --get --data-urlencode "message=武汉简介" "http://localhost:8888/deepseek/chat/stream" | head -c 500
 # 高级用法 - 使用 System Message 设定 AI 角色
-curl --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/deepseek/system-message"
+curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/deepseek/system-message" | head -c 500
 # 高级用法 - 带温度参数的创意性对话
-curl --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/deepseek/creative"
+curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/deepseek/creative" | head -c 500
 # ReAct Agent
-curl --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/deepseek/agent/chat"
+curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/deepseek/agent/chat" | head -c 500
 ```
 
 ## 常见问题
