@@ -29,7 +29,7 @@ public class AiChatController {
     /**
      * 简单聊天接口
      */
-    @GetMapping("/chat")
+    @RequestMapping("/chat")
     public String chat(@RequestParam String message) {
         log.info("收到聊天请求: {}", message);
         return chatClient.prompt()
@@ -41,7 +41,7 @@ public class AiChatController {
     /**
      * 流式聊天接口（SSE）
      */
-    @GetMapping("/chat/stream")
+    @RequestMapping("/chat/stream")
     public ResponseEntity<Flux<String>> chatStream(@RequestParam String message) {
         log.info("开始流式对话: {}", message);
         Flux<String> flux = chatClient.prompt()
@@ -62,7 +62,7 @@ public class AiChatController {
      * eg. 我叫张三，今年25岁，是一名软件工程师，喜欢编程和打篮球，邮箱是zhangsan@example.com
      * </p>
      */
-    @GetMapping("/extract")
+    @RequestMapping("/extract")
     public Object extractPersonInfo(@RequestParam String message) {
         record PersonInfo(String name, Integer age, String email, String occupation) {}
         log.info("提取人员信息: {}", message);

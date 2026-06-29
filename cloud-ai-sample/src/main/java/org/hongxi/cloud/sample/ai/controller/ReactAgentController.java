@@ -54,7 +54,7 @@ public class ReactAgentController {
      * @param message 用户消息
      * @return Agent 的回答
      */
-    @GetMapping("/chat")
+    @RequestMapping("/chat")
     public String agentChat(@RequestParam String message) {
         log.info("Agent 收到问题: {}", message);
         String response = chatClient.prompt()
@@ -95,7 +95,7 @@ public class ReactAgentController {
      * @param message 任务描述
      * @return 任务执行结果
      */
-    @GetMapping("/complex-task")
+    @RequestMapping("/complex-task")
     public String handleComplexTask(@RequestParam String message) {
         log.info("Agent 收到复杂任务: {}", message);
         String response = chatClient.prompt()

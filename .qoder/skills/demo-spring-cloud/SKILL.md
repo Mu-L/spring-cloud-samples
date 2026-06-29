@@ -715,6 +715,19 @@ curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"
 curl --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"
 # 结构化输出
 curl --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"
+# 高级用法 - 使用 System Message 设定 AI 角色
+curl --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"
+# 高级用法 - 提供示例引导 AI
+curl --get --data-urlencode "message=创建一个列表，包含 1, 2, 3" "http://localhost:8888/ai/advanced/few-shot"
+# 高级用法 - 多轮对话（需连续发送，AI 会记住上下文）
+# 第 1 轮：建立上下文
+curl --get --data-urlencode "message=我喜欢Java和Spring Boot" "http://localhost:8888/ai/advanced/conversation"
+# 第 2 轮：基于上文追问（AI 会记住你喜欢 Java）
+curl --get --data-urlencode "message=那我应该用什么技术栈来做微服务" "http://localhost:8888/ai/advanced/conversation"
+# 第 3 轮：继续深入（AI 仍保留之前的对话记录）
+curl --get --data-urlencode "message=能详细说说Nacos吗" "http://localhost:8888/ai/advanced/conversation"
+# 高级用法 - 带温度参数的创意性对话
+curl --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/ai/advanced/creative"
 # Tool Calling
 curl --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"
 # ReAct Agent
@@ -724,8 +737,6 @@ curl --get --data-urlencode "message=北京天气怎么样？适合出门吗？"
 ```
 
 #### 多模态视觉识别
-
-**说明**：默认模型 `qwen3.7-plus` 已支持视觉识别，无需切换模型。
 
 **🔍 验证前预检查图片 URL 可用性：**
 
@@ -748,7 +759,8 @@ for url in \
 done
 ```
 - 全部返回 200 → 直接开始验证
-- 某 URL 不可用 → **必须先找到替代图片**，建议从今日头条、澎湃新闻等网站找图片。要求：公开可访问、不拒绝 Java `UrlResource` 请求（避免百度图片等限制性 CDN）
+- 某 URL 不可用 → **必须先找到替代图片**，建议从今日头条、澎湃新闻等网站找图片。
+- 图片要求：公开可访问、不拒绝 Java `UrlResource` 请求（避免百度图片等限制性 CDN）
 
 **🔴 必须逐一演示全部 6 个视觉识别接口，不可跳过：**
 
