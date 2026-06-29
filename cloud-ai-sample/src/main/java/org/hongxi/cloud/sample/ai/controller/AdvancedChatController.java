@@ -112,7 +112,9 @@ public class AdvancedChatController {
             assistantMessages.remove(0);
         } else {
             userMessages.add(UserMessage.builder().text(message).build());
-            assistantMessages.add(AssistantMessage.builder().content(response).build());
+            String summary = response == null ? "" : response.length() > 100 ?
+                                                     response.substring(0, 100) + "..." : response;
+            assistantMessages.add(AssistantMessage.builder().content(summary).build());
         }
 
         return response;

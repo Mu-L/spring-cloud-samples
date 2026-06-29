@@ -319,6 +319,18 @@ export OPENAI_API_KEY=your-api-key-here
 | `/ai/vision/code-from-image` | 代码截图转代码 |
 | `/ai/vision/compare` | 多图片对比 |
 
+#### DeepSeek 多提供商集成
+
+同一模块内集成 DashScope + DeepSeek 两个提供商，验证 Spring AI 的多模型管理能力。需额外配置 `export DEEPSEEK_API_KEY=your-key`。
+
+| 接口 | 说明 |
+|------|------|
+| `/deepseek/chat` | 简单聊天 |
+| `/deepseek/chat/stream` | 流式输出 |
+| `/deepseek/system-message` | System Message 设定角色 |
+| `/deepseek/creative` | 创意性对话 |
+| `/deepseek/agent/chat` | ReAct Agent |
+
 > 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI 章节。
 
 ### 🌿 分支说明

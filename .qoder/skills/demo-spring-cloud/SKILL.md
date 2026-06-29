@@ -707,7 +707,9 @@ for i in $(seq 1 60); do
 done
 ```
 
-常用演示接口（中文参数需 URL 编码，使用 `--get --data-urlencode`）：
+#### 基础对话与 Agent
+
+中文参数需 URL 编码，使用 `--get --data-urlencode`：
 ```bash
 # 简单聊天
 curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"
@@ -805,6 +807,23 @@ curl -X POST "http://localhost:8888/ai/vision/compare" \
 > curl -s -X POST "http://localhost:8888/ai/vision/analyze-url" \
 >   -d "imageUrl=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
 > ```
+
+#### DeepSeek 演示接口
+
+> 用于验证同一模块内集成多个大模型提供商（DashScope + DeepSeek）。需额外配置 `export DEEPSEEK_API_KEY=your-key`，未配置时跳过此节。
+
+```shell
+# 简单聊天
+curl --get --data-urlencode "message=你好" "http://localhost:8888/deepseek/chat"
+# 流式输出
+curl --get --data-urlencode "message=武汉简介" "http://localhost:8888/deepseek/chat/stream"
+# 高级用法 - 使用 System Message 设定 AI 角色
+curl --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/deepseek/system-message"
+# 高级用法 - 带温度参数的创意性对话
+curl --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/deepseek/creative"
+# ReAct Agent
+curl --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/deepseek/agent/chat"
+```
 
 ## 常见问题
 
