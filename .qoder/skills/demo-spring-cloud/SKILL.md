@@ -520,10 +520,10 @@ sh start-all.sh clean    # 清理构建产物
 
 ### 独立模块（无启动顺序依赖）
 
-| 模块 | 端口 | 说明 |
-|------|------|------|
-| cloud-ai-sample | 8888 | Spring AI，需配置 OPENAI_API_KEY |
-| cloud-stream-sample | - | 需先安装并启动 RocketMQ |
+| 模块 | 端口          | 说明 |
+|------|-------------|------|
+| cloud-ai-sample | 8888        | Spring AI，需配置 OPENAI_API_KEY |
+| cloud-stream-sample | 8767        | 需先安装并启动 RocketMQ |
 | cloud-seata-sample | 18081-18084 | 需 MySQL + Seata Server |
 
 ## 演示与验证
