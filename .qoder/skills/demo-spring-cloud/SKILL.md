@@ -107,10 +107,17 @@ bin/startup.sh -m standalone
 ```bash
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 ```
-> 安装完成后会自动执行 `nacos-setup`，启动 Nacos 并创建默认账号（用户名：nacos）。
-> 安装完毕后跳到 [Step 4：设置环境变量](#step-4设置环境变量)。
 
-首次启动后，访问 http://127.0.0.1:8080/ ，使用刚才创建的账号登录
+安装完成后使用如下命令部署单机版
+```shell
+# 本地一键部署一个最新版本的单机 Nacos
+nacos-setup
+```
+
+> 部署完成后会自动创建 Nacos 账号（用户名：nacos），密码是无规律字符串。
+> 部署完成后跳到 [Step 4：设置环境变量](#step-4设置环境变量)。
+
+首次部署后，会自动打开浏览器访问 http://127.0.0.1:8080/ ，使用刚才创建的账号登录
 
 #### Nacos Console（Web 控制台）
 
