@@ -609,6 +609,7 @@ demo_urls() {
     echo "     • 聊天对话、流式输出、结构化提取"
     echo "     • Tool Calling、ReAct Agent"
     echo "     • 多模态视觉识别 (6种场景)"
+    echo "     • DeepSeek 多提供商集成 (需配置 DEEPSEEK_API_KEY)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
   else

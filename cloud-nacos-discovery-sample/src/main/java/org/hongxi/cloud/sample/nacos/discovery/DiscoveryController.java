@@ -3,8 +3,8 @@ package org.hongxi.cloud.sample.nacos.discovery;
 import com.alibaba.cloud.nacos.NacosServiceManager;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.pojo.Instance;
+import com.alibaba.nacos.api.naming.pojo.ListView;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,15 +13,12 @@ import java.util.List;
 @RequestMapping("/discovery")
 public class DiscoveryController {
 
-    @Value("${spring.application.name}")
-    private String serviceName;
-
     @Autowired
     private NacosServiceManager nacosServiceManager;
 
-    @GetMapping("/instances")
-    public List<Instance> allInstances() throws NacosException {
-        return nacosServiceManager.getNamingService().getAllInstances(serviceName);
+    @GetMapping("/services")
+    public ListView<String> allInstances() throws NacosException {
+        return nacosServiceManager.getNamingService().getServicesOfServer(0, 20);
     }
 
     @GetMapping("/instances/{serviceName}")

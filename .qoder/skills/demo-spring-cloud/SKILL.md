@@ -532,7 +532,7 @@ sh start-all.sh clean    # 清理构建产物
 ### 1. Nacos Discovery 服务发现
 
 ```bash
-curl http://localhost:8760/discovery/instances
+curl http://localhost:8760/discovery/services
 ```
 
 ### 2. 普通 Web 服务调用
