@@ -108,13 +108,12 @@ bin/startup.sh -m standalone
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 ```
 
-> 为什么使用 nacos-setup
-> 相比于手动下载、解压、配置 Nacos，nacos-setup 提供了更加便捷的自动化部署体验：
-
-> 自动下载并缓存 Nacos 安装包，避免重复下载。
-> 自动生成 JWT Token、Identity Key 等鉴权配置。
-> 智能检测端口冲突并分配可用端口。
-> 自动检测 Java 环境并验证版本兼容性。
+> 为什么使用 nacos-setup <br>
+> 相比于手动下载、解压、配置 Nacos，nacos-setup 提供了更加便捷的自动化部署体验： <br>
+> 自动下载并缓存 Nacos 安装包，避免重复下载。 <br>
+> 自动生成 JWT Token、Identity Key 等鉴权配置。 <br>
+> 智能检测端口冲突并分配可用端口。 <br>
+> 自动检测 Java 环境并验证版本兼容性。 <br>
 > 一条命令即可创建 Nacos 集群。
 
 安装完成后使用如下命令部署单机版
