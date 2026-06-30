@@ -122,7 +122,8 @@ DUBBO_LOG=""
 # 参数: $1=端口号
 find_log_by_port() {
   local port="$1"
-  local pid=$(lsof -i :"$port" -t 2>/dev/null | head -1)
+  # 仅匹配 LISTEN 状态的进程，避免 lsof -i 返回有连接的其他进程（如 Gateway）
+  local pid=$(lsof -i :"$port" -sTCP:LISTEN -t 2>/dev/null | head -1)
   if [ -z "$pid" ]; then return; fi
   local logfile=$(lsof -p "$pid" 2>/dev/null | grep "1w.*REG" | awk '{print $NF}' | head -1)
   if [ -n "$logfile" ] && [ -f "$logfile" ]; then
