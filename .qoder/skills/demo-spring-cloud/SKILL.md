@@ -103,10 +103,19 @@ bin/startup.sh -m standalone
 
 #### 场景 C：Nacos 未安装
 
-一键安装（自动处理下载、JDK 检查、Derby 初始化、鉴权配置和环境验证）：
+一键安装`nacos-setup`
 ```bash
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 ```
+
+> 为什么使用 nacos-setup
+> 相比于手动下载、解压、配置 Nacos，nacos-setup 提供了更加便捷的自动化部署体验：
+
+> 自动下载并缓存 Nacos 安装包，避免重复下载。
+> 自动生成 JWT Token、Identity Key 等鉴权配置。
+> 智能检测端口冲突并分配可用端口。
+> 自动检测 Java 环境并验证版本兼容性。
+> 一条命令即可创建 Nacos 集群。
 
 安装完成后使用如下命令部署单机版
 ```shell
@@ -117,7 +126,7 @@ nacos-setup
 > 部署完成后会自动创建 Nacos 账号（用户名：nacos），密码是无规律字符串。
 > 部署完成后跳到 [Step 4：设置环境变量](#step-4设置环境变量)。
 
-首次部署后，会自动打开浏览器访问 http://127.0.0.1:8080/ ，使用刚才创建的账号登录
+首次部署后，会自动打开浏览器访问控制台 http://127.0.0.1:8080/ ，使用刚才创建的账号登录
 
 #### Nacos Console（Web 控制台）
 
