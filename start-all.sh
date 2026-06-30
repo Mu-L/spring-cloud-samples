@@ -213,12 +213,15 @@ check_special_prerequisites() {
     echo "[Seata] 将启动 4 个微服务 (18081-18084)"
   fi
 
-  # AI: OPENAI_API_KEY
-  if [ -n "$OPENAI_API_KEY" ]; then
-    echo "[AI] ✓ OPENAI_API_KEY 已配置"
+  # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY
+  if [ -n "$OPENAI_API_KEY" ] || [ -n "$DEEPSEEK_API_KEY" ]; then
+    local keys=""
+    [ -n "$OPENAI_API_KEY" ] && keys="OPENAI_API_KEY"
+    [ -n "$DEEPSEEK_API_KEY" ] && keys="${keys:+$keys, }DEEPSEEK_API_KEY"
+    echo "[AI] ✓ 已配置: $keys"
     START_AI=true
   else
-    echo "[AI] ✗ OPENAI_API_KEY 未设置，跳过 AI 模块"
+    echo "[AI] ✗ OPENAI_API_KEY 和 DEEPSEEK_API_KEY 均未设置，跳过 AI 模块"
   fi
 
   echo "=================================="
@@ -516,14 +519,7 @@ demo_urls() {
   # Nacos Config 验证
   echo ""
   echo "========== Nacos Config 验证 =========="
-  local nacos_config_urls=(
-    "http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan|Nacos Config 发布配置"
-    "http://localhost:8761/nacos/getConfig?dataId=my.city|Nacos Config 获取配置"
-  )
-  for entry in "${nacos_config_urls[@]}"; do
-    IFS='|' read -r url desc <<< "$entry"
-    verify_url "$url" "$desc"
-  done
+  verify_url "http://localhost:8761/actuator/health" "Nacos Config 模块健康检查"
   echo "=================================="
 
   # AI 模块验证
@@ -575,28 +571,34 @@ demo_urls() {
     echo ""
     echo "📌 还可深入验证以下高级功能:"
     echo ""
-    echo "  1️⃣  Sentinel 限流规则:"
+    echo "  1️⃣  Nacos Config 动态配置 (端口 8761):"
+    echo "     • 配置发布/读取/删除"
+    echo "     • @NacosConfig 注解注入与动态刷新"
+    echo "     • @ConfigurationProperties + @Value + @RefreshScope"
+    echo "     → 使用 demo-spring-cloud skill 执行 verify-nacos-config.sh"
+    echo ""
+    echo "  2️⃣  Sentinel 限流规则:"
     echo "     • Nacos 配置限流规则"
     echo "     • 验证限流效果"
     echo "     → 使用 demo-spring-cloud skill 执行 verify-sentinel-gateway.sh"
     echo ""
-    echo "  2️⃣  Stream 消息消费 (RocketMQ):"
+    echo "  3️⃣  Stream 消息消费 (RocketMQ):"
     echo "     • 消息实际消费逻辑"
     echo "     • 多个 Topic 处理"
     echo "     • Consumer Group 行为"
     echo "     → 使用 demo-spring-cloud skill 执行 verify-stream.sh"
     echo ""
-    echo "  3️⃣  Seata 分布式事务 (端口 18081-18084):"
+    echo "  4️⃣  Seata 分布式事务 (端口 18081-18084):"
     echo "     • 全局事务回滚/提交场景"
     echo "     • Feign 调用链 Xid 传递"
     echo "     • 数据一致性验证"
     echo "     → 使用 demo-spring-cloud skill 执行 verify-seata.sh"
     echo ""
-    echo "  4️⃣  Spring AI 深度功能 (端口 8888):"
+    echo "  5️⃣  Spring AI 深度功能 (端口 8888):"
     echo "     • 聊天对话、流式输出、结构化提取"
     echo "     • Tool Calling、ReAct Agent"
     echo "     • 多模态视觉识别 (6种场景)"
-    echo "     → 使用 demo-spring-cloud skill 或查看 cloud-ai-sample/README.md"
+    echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
   else
     echo ""
@@ -610,29 +612,31 @@ demo_urls() {
 
 status_all() {
   echo "========== 服务状态 =========="
-  printf "%-22s %-8s %s\n" "模块" "状态" "PID"
-  printf "%-22s %-8s %s\n" "----" "----" "---"
-  for entry in "${MODULES[@]}"; do
-    IFS='|' read -r module_dir display_name port <<< "$entry"
+  printf "%-22s %-12s %s\n" "模块" "状态" "PID"
+  printf "%-22s %-12s %s\n" "----" "----" "---"
+  # 辅助函数: 检查单个模块状态
+  _check_status() {
+    local display_name="$1"
+    local port="$2"
     local pid_file="$PID_DIR/$display_name.pid"
     if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-      printf "%-22s %-8s %s\n" "$display_name" "运行中" "$(cat "$pid_file")"
+      printf "%-22s %-12s %s\n" "$display_name" "运行中" "$(cat "$pid_file")"
+    elif [ "$port" != "-" ] && curl -s -o /dev/null --connect-timeout 2 "http://localhost:$port" 2>/dev/null; then
+      printf "%-22s %-12s %s\n" "$display_name" "运行中(外部)" "-"
     else
-      printf "%-22s %-8s %s\n" "$display_name" "已停止" "-"
+      printf "%-22s %-12s %s\n" "$display_name" "已停止" "-"
       rm -f "$pid_file"
     fi
+  }
+  for entry in "${MODULES[@]}"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    _check_status "$display_name" "$port"
   done
   # 特殊模块
   local all_special=("${AI_MODULE[0]}" "${STREAM_MODULE[0]}" "${SEATA_MODULES[@]}")
   for entry in "${all_special[@]}"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
-    local pid_file="$PID_DIR/$display_name.pid"
-    if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-      printf "%-22s %-8s %s\n" "$display_name" "运行中" "$(cat "$pid_file")"
-    else
-      printf "%-22s %-8s %s\n" "$display_name" "已停止" "-"
-      rm -f "$pid_file"
-    fi
+    _check_status "$display_name" "$port"
   done
   echo "=============================="
 }
