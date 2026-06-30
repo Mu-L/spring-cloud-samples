@@ -180,6 +180,22 @@ curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Ty
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
 
+### 🔍 Trace 链路追踪
+
+项目内置 trace 传播验证脚本，覆盖五条跨服务链路，验证 Spring Boot Observation 与各框架的 trace context 自动/手动传播：
+
+| 链路 | 路径 | trace 传播 |
+|------|------|------------|
+| Web → Web | consumer → provider | RestTemplate / FeignClient 自动传播 |
+| Web → gRPC | consumer → grpc-server | gRPC Interceptor 自动传播 |
+| Web → Dubbo | consumer → provider-dubbo | Dubbo ObservationFilter 自动传播 |
+| Reactive → Reactive | consumer-reactive → provider-reactive | WebClient 手动传递 traceparent |
+| Reactive → Dubbo | consumer-reactive → provider-dubbo | Dubbo ObservationFilter 自动传播 |
+
+```shell
+bash .qoder/skills/demo-spring-cloud/verify-trace.sh
+```
+
 ### ⚙️ Nacos Config 动态配置
 
 启动 `cloud-nacos-config-sample`（端口 8761），通过模块提供的接口管理配置（避免直接调用 Nacos API 的鉴权问题）：
