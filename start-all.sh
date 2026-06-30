@@ -434,7 +434,7 @@ demo_urls() {
   # Nacos Discovery 服务发现验证
   echo ""
   echo "========== Nacos Discovery 验证 =========="
-  verify_url "http://localhost:8760/discovery/instances" "Nacos Discovery 获取服务实例列表"
+  verify_url "http://localhost:8760/discovery/services" "Nacos Discovery 获取服务实例列表"
   echo "=================================="
 
   # 普通 Web 服务注册与发现
