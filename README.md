@@ -1,18 +1,17 @@
 # ☁️ Spring Cloud Alibaba Samples
-> Spring Cloud 生态研究（Based on **Spring Boot 4.x** and **Spring Cloud Alibaba 2025.1.x**） <br>
-> 🎯 以生产环境可参考为目标，打造一个完整的 Spring Cloud 示例项目。
+> 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目 <br>
+> 涵盖 16 个模块，覆盖 HTTP / Dubbo / gRPC / Stream 多协议通信及 Spring AI 多模态集成，支持一键演示与验证
 
 ### 🤖 AI 一键演示
 
 > 本项目内置 Qoder Agent Skill，clone 后在 Qoder 中输入 `/demo-spring-cloud` 或告诉 AI "演示项目"，
-> 即可自动完成环境检查、服务启动、接口验证全流程。无需手动操作。
+> 即可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
 
 ```
 # 快速体验（仅需 Nacos）
 告诉 AI: "演示本项目"
 
 # 单独验证某个场景
-告诉 AI: "验证 gRPC 负载均衡"
 告诉 AI: "验证 Seata 分布式事务"
 告诉 AI: "验证 Stream 消息收发"
 告诉 AI: "演示 Spring AI"
