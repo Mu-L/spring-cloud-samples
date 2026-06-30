@@ -23,13 +23,23 @@ fail() { VERIFY_FAIL=$((VERIFY_FAIL + 1)); echo "  ✗ $1"; }
 # 从日志中提取指定 trace ID 的行（从尾部搜索，取最新一条）
 # 参数: $1=日志文件, $2=trace ID
 extract_trace() {
-  tac "$1" 2>/dev/null | grep -m1 "$2"
+  # macOS 没有 tac，使用 tail -r 替代
+  if command -v tac &>/dev/null; then
+    tac "$1" 2>/dev/null | grep -m1 "$2"
+  else
+    tail -r "$1" 2>/dev/null | grep -m1 "$2"
+  fi
+}
+
+# 生成符合 W3C 标准的 32 位十六进制 trace ID
+gen_trace_id() {
+  printf '%08x%08x%08x%08x' $RANDOM $RANDOM $RANDOM $RANDOM
 }
 
 # 从日志行中提取 trace ID（Spring Boot 日志格式: [traceId-spanId]）
 # 参数: $1=日志行
 get_trace_id() {
-  echo "$1" | grep -o '\[[a-f0-9]\{32\}-[a-f0-9]*\]' | head -1 | tr -d '[]' | cut -d'-' -f1
+  echo "$1" | grep -o '\[[a-f0-9]\{8,\}-[a-f0-9]*\]' | head -1 | tr -d '[]' | cut -d'-' -f1
 }
 
 echo "=========================================="
@@ -83,7 +93,8 @@ else
 fi
 
 # provider-dubbo-sample — 链路 3/5 目标（无 HTTP 端口，通过 Nacos 注册验证）
-if curl -s "http://localhost:8848/nacos/v1/ns/service/list?pageSize=100" 2>/dev/null | grep -q "provider-dubbo-sample"; then
+# Nacos 3.x 不支持 v1 API，改用 nacos-discovery-sample 的 /discovery/services 端点
+if curl -s "http://localhost:8760/discovery/services" 2>/dev/null | grep -q "provider-dubbo-sample"; then
   pass "provider-dubbo-sample 已注册到 Nacos [链路 3/5 目标]"
 else
   fail "provider-dubbo-sample 未在 Nacos 中注册 [链路 3/5 需要]"
@@ -107,8 +118,43 @@ PROVIDER_REACTIVE_LOG=""
 GRPC_SERVER_LOG=""
 DUBBO_LOG=""
 
-# 优先查找 start-all.sh 的日志目录
-if [ -f "$LOG_DIR/consumer.log" ]; then
+# 动态发现日志文件: 通过 lsof 从运行中进程的 fd 获取实际日志路径
+# 参数: $1=端口号
+find_log_by_port() {
+  local port="$1"
+  local pid=$(lsof -i :"$port" -t 2>/dev/null | head -1)
+  if [ -z "$pid" ]; then return; fi
+  local logfile=$(lsof -p "$pid" 2>/dev/null | grep "1w.*REG" | awk '{print $NF}' | head -1)
+  if [ -n "$logfile" ] && [ -f "$logfile" ]; then
+    echo "$logfile"
+  fi
+}
+
+# 优先方案 1: 通过 lsof 动态发现（最可靠，适配日志文件被删除重建等场景）
+DYNAMIC_OK=true
+CONSUMER_LOG=$(find_log_by_port 8766)       || DYNAMIC_OK=false
+CONSUMER_REACTIVE_LOG=$(find_log_by_port 8763) || DYNAMIC_OK=false
+PROVIDER_LOG=$(find_log_by_port 8765)       || DYNAMIC_OK=false
+PROVIDER_REACTIVE_LOG=$(find_log_by_port 8762) || DYNAMIC_OK=false
+GRPC_SERVER_LOG=$(find_log_by_port 8090)    || DYNAMIC_OK=false
+
+# provider-dubbo 无 HTTP 端口，通过 start-all.sh 日志或 /tmp 查找
+if [ -f "$LOG_DIR/provider-dubbo.log" ]; then
+  DUBBO_LOG="$LOG_DIR/provider-dubbo.log"
+elif [ -f "/tmp/provider-dubbo.log" ]; then
+  DUBBO_LOG="/tmp/provider-dubbo.log"
+fi
+
+if [ "$DYNAMIC_OK" = true ] && [ -n "$CONSUMER_LOG" ]; then
+  echo "  ✓ 通过进程 fd 动态发现日志文件"
+  echo "    consumer-sample  → $CONSUMER_LOG"
+  echo "    consumer-reactive→ $CONSUMER_REACTIVE_LOG"
+  echo "    provider-sample  → $PROVIDER_LOG"
+  echo "    provider-reactive→ $PROVIDER_REACTIVE_LOG"
+  echo "    grpc-server      → $GRPC_SERVER_LOG"
+  [ -n "$DUBBO_LOG" ] && echo "    provider-dubbo   → $DUBBO_LOG"
+# 优先方案 2: start-all.sh 日志目录
+elif [ -f "$LOG_DIR/consumer.log" ]; then
   CONSUMER_LOG="$LOG_DIR/consumer.log"
   CONSUMER_REACTIVE_LOG="$LOG_DIR/consumer-reactive.log"
   PROVIDER_LOG="$LOG_DIR/provider.log"
@@ -116,6 +162,7 @@ if [ -f "$LOG_DIR/consumer.log" ]; then
   GRPC_SERVER_LOG="$LOG_DIR/grpc-server.log"
   DUBBO_LOG="$LOG_DIR/provider-dubbo.log"
   echo "  ✓ 找到 start-all.sh 日志目录: $LOG_DIR"
+# 优先方案 3: /tmp 日志文件
 elif [ -f "/tmp/consumer-sample.log" ]; then
   CONSUMER_LOG="/tmp/consumer-sample.log"
   CONSUMER_REACTIVE_LOG="/tmp/consumer-reactive-sample.log"
@@ -142,8 +189,7 @@ echo ">>> Step 2: 链路 1 — Web → Web (consumer-sample → provider-sample 
 echo ""
 echo "  [2a] RestTemplate (v1.0)..."
 
-TRACE_ID_WEB="aaaa${RANDOM}bbbb${RANDOM}cccc${RANDOM}"
-TRACE_ID_WEB="${TRACE_ID_WEB:0:32}"
+TRACE_ID_WEB=$(gen_trace_id)
 SPAN_ID_WEB="$(printf '%016x' $RANDOM)"
 
 RESP_WEB=$(curl -s -H "traceparent: 00-${TRACE_ID_WEB}-${SPAN_ID_WEB}-01" \
@@ -181,8 +227,7 @@ fi
 echo ""
 echo "  [2b] FeignClient (v2.0)..."
 
-TRACE_ID_FEIGN="bbbb${RANDOM}aaaa${RANDOM}dddd${RANDOM}"
-TRACE_ID_FEIGN="${TRACE_ID_FEIGN:0:32}"
+TRACE_ID_FEIGN=$(gen_trace_id)
 SPAN_ID_FEIGN="$(printf '%016x' $RANDOM)"
 
 RESP_FEIGN=$(curl -s -H "traceparent: 00-${TRACE_ID_FEIGN}-${SPAN_ID_FEIGN}-01" \
@@ -222,8 +267,7 @@ fi
 echo ""
 echo ">>> Step 3: 链路 2 — Web → gRPC (consumer-sample → grpc-server-sample via gRPC)..."
 
-TRACE_ID_GRPC="dddd${RANDOM}eeee${RANDOM}ffff${RANDOM}"
-TRACE_ID_GRPC="${TRACE_ID_GRPC:0:32}"
+TRACE_ID_GRPC=$(gen_trace_id)
 SPAN_ID_GRPC="$(printf '%016x' $RANDOM)"
 
 RESP_GRPC=$(curl -s -H "traceparent: 00-${TRACE_ID_GRPC}-${SPAN_ID_GRPC}-01" \
@@ -263,8 +307,7 @@ fi
 echo ""
 echo ">>> Step 4: 链路 3 — Web → Dubbo (consumer-sample → provider-dubbo-sample via Dubbo)..."
 
-TRACE_ID_DUBBO="1111${RANDOM}2222${RANDOM}3333${RANDOM}"
-TRACE_ID_DUBBO="${TRACE_ID_DUBBO:0:32}"
+TRACE_ID_DUBBO=$(gen_trace_id)
 SPAN_ID_DUBBO="$(printf '%016x' $RANDOM)"
 
 RESP_DUBBO=$(curl -s -H "traceparent: 00-${TRACE_ID_DUBBO}-${SPAN_ID_DUBBO}-01" \
@@ -306,8 +349,7 @@ fi
 echo ""
 echo ">>> Step 5: 链路 4 — Reactive Web → Reactive Web (consumer-reactive → provider-reactive via WebClient)..."
 
-TRACE_ID_RWEB="5555${RANDOM}6666${RANDOM}7777${RANDOM}"
-TRACE_ID_RWEB="${TRACE_ID_RWEB:0:32}"
+TRACE_ID_RWEB=$(gen_trace_id)
 SPAN_ID_RWEB="$(printf '%016x' $RANDOM)"
 
 RESP_RWEB=$(curl -s -H "traceparent: 00-${TRACE_ID_RWEB}-${SPAN_ID_RWEB}-01" \
@@ -348,8 +390,7 @@ fi
 echo ""
 echo ">>> Step 6: 链路 5 — Reactive Web → Dubbo (consumer-reactive → provider-dubbo via Dubbo)..."
 
-TRACE_ID_RDUBBO="8888${RANDOM}9999${RANDOM}aaaa${RANDOM}"
-TRACE_ID_RDUBBO="${TRACE_ID_RDUBBO:0:32}"
+TRACE_ID_RDUBBO=$(gen_trace_id)
 SPAN_ID_RDUBBO="$(printf '%016x' $RANDOM)"
 
 RESP_RDUBBO=$(curl -s -H "traceparent: 00-${TRACE_ID_RDUBBO}-${SPAN_ID_RDUBBO}-01" \
