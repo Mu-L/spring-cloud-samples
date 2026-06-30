@@ -12,6 +12,7 @@
 告诉 AI: "演示本项目"
 
 # 单独验证某个场景
+告诉 AI: "验证 gRPC 负载均衡"
 告诉 AI: "验证 Seata 分布式事务"
 告诉 AI: "验证 Stream 消息收发"
 告诉 AI: "演示 Spring AI"
