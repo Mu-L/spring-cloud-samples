@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ValueConfigController {
 
-    @Value("${cloud.agent.name}")
+    @Value("${cloud.agent.name:Qoder CN}")
     private String agentName;
-    @Value("${cloud.agent.credits}")
+    @Value("${cloud.agent.credits:2000}")
     private int agentCredits;
-    @Value("${cloud.agent.enabled}")
+    @Value("${cloud.agent.enabled:true}")
     private boolean agentEnabled;
-    @Value("${cloud.agent.provider.model}")
+    @Value("${cloud.agent.provider.model:Qwen3.7-Plus}")
     private String model;
 
     @GetMapping("/config/value")
