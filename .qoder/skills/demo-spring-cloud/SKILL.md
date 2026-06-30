@@ -22,6 +22,8 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 3. **端口规范**：项目已统一端口分配，AI 模块使用 8888 端口，禁止使用 8080 端口。
 
+4. **脚本输出规范**：执行任何项目脚本（`start-all.sh`、`verify-*.sh`）时，**必须完整输出脚本的全部日志**，禁止使用 `tail -n`、`tail -f`、`head -n` 等方式截断输出。脚本的完整输出是验证结果的依据，截断会导致无法确认每一步是否通过。
+
 ---
 
 ## 30 秒快速体验
