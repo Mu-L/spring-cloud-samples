@@ -35,6 +35,8 @@ target/
 Thumbs.db
 logs/
 .pids
+output/
+java
 
 # vscode ignore
 .vscode
