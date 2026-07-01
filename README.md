@@ -301,6 +301,7 @@ bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-transfo
 # 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
 # 日志观察: 消息转换: hello spring cloud -> [PROCESSED] HELLO SPRING CLOUD
+# 日志观察: 收到消息: [PROCESSED] HELLO SPRING CLOUD STREAM
 ```
 
 查看消费组的消费进度：
