@@ -5,11 +5,16 @@ spring:
     name: stream-sample
   cloud:
     function:
-      definition: input;input2;output2;transform;transformPublish;delay;fifo
+      definition: input;input2;output2;transform;transformPublish;delay;fifo;tx
     stream:
       rocketmq:
         binder:
           name-server: 127.0.0.1:9876
+        bindings:
+          txPublish-out-0:
+            producer:
+              producerType: Trans
+              transactionListener: demoTransactionListener
       bindings:
         # 场景1: 基础消费 - stream-demo-topic
         input-in-0:
@@ -51,4 +56,12 @@ spring:
           destination: stream-fifo-topic
           producer:
             orderly: true
+            # 需与 Topic 队列数一致，否则 rocketmq binder 懒初始化时 partitioningInterceptor 为 null 导致 NPE
+            partitionCount: 8
             partitionKeyExpression: headers['ORDER_KEY']
+        # 场景6: 事务消息 - stream-tx-topic
+        tx-in-0:
+          destination: stream-tx-topic
+          group: stream-tx-group
+        txPublish-out-0:
+          destination: stream-tx-topic

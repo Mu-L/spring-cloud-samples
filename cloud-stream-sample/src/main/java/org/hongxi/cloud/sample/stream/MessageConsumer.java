@@ -83,6 +83,16 @@ public class MessageConsumer {
     }
 
     /**
+     * 事务消息消费者 - 消费 demo-tx-topic 的事务消息
+     * <p>
+     * 场景：REST API 发送事务消息，本地事务提交后消息才被消费
+     */
+    @Bean
+    public Consumer<String> tx() {
+        return message -> log.info("[事务消息] 收到: {} (时间: {})", message, java.time.LocalTime.now());
+    }
+
+    /**
      * Transform 管道发布器 - 为 REST API 提供 output binding 以通过 binder 发送消息
      * <p>
      * 该 Supplier 本身不产生消息（返回 null），仅用于创建 transformPublish-out-0 output binding，
@@ -113,6 +123,17 @@ public class MessageConsumer {
      */
     @Bean
     public Supplier<String> fifoPublish() {
+        return () -> null;
+    }
+
+    /**
+     * 事务消息发布器 - 创建 txPublish-out-0 output binding
+     * <p>
+     * 事务消息通过 StreamBridge 发送，由 DemoTransactionListener 随机决定提交或回滚，
+     * 模拟本地事务成功/失败两种场景。
+     */
+    @Bean
+    public Supplier<String> txPublish() {
         return () -> null;
     }
 

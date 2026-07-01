@@ -90,6 +90,40 @@ public class StreamController {
     }
 
     /**
+     * 发送事务消息到 stream-tx-topic
+     * <p>
+     * 事务消息流程：
+     * <ol>
+     *   <li>发送半消息（Half Message）到 Broker，此时消费者不可见</li>
+     *   <li>执行本地事务（由 DemoTransactionListener 根据 arg 决定提交或回滚）</li>
+     *   <li>根据事务结果 Commit/Rollback 消息</li>
+     * </ol>
+     * <p>
+     * 通过 arg 参数控制事务结果：
+     * <ul>
+     *   <li>commit - 本地事务成功，提交消息，消费者可收到</li>
+     *   <li>rollback - 本地事务失败，回滚消息，消费者不可收到</li>
+     *   <li>不传 arg - 随机决定事务结果，模拟两种场景</li>
+     * </ul>
+     * 观察日志中消息是否被消费者接收，验证事务消息的两阶段提交机制。
+     *
+     * @param message 消息内容
+     * @param arg     事务控制参数：commit / rollback（不传则随机）
+     */
+    @PostMapping("/tx")
+    public SendResult sendTx(
+            @RequestParam(defaultValue = "transactional message") String message,
+            @RequestParam(required = false) String arg) {
+        MessageBuilder<String> builder = MessageBuilder.withPayload(message);
+        if (arg != null) {
+            builder.setHeader("TX_ARG", arg);
+        }
+        boolean result = streamBridge.send("txPublish-out-0", builder.build());
+        log.info("发送事务消息: {}, arg={}, 结果: {}", message, arg, result);
+        return new SendResult("stream-tx-topic", message + (arg != null ? " (arg=" + arg + ")" : ""), result);
+    }
+
+    /**
      * 将 RocketMQ 延迟级别转换为近似秒数（用于日志提示）
      */
     private int delayLevelToSeconds(int level) {

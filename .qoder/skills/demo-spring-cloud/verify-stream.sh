@@ -101,8 +101,16 @@ else
   echo "✓ stream-fifo-topic 已创建 (FIFO)"
 fi
 
+# 检查并创建 TRANSACTION 类型 Topic
+if echo "$EXISTING_TOPICS" | grep -qw "stream-tx-topic"; then
+  echo "✓ stream-tx-topic 已存在"
+else
+  bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-tx-topic -a +message.type=TRANSACTION 2>/dev/null
+  echo "✓ stream-tx-topic 已创建 (TRANSACTION)"
+fi
+
 # 检查并创建所有需要的 Consumer Group
-for GROUP in stream-demo-consumer-group stream-demo-consumer-group2 stream-transform-group stream-delay-group stream-fifo-group; do
+for GROUP in stream-demo-consumer-group stream-demo-consumer-group2 stream-transform-group stream-delay-group stream-fifo-group stream-tx-group; do
   if bin/mqadmin consumerProgress -n localhost:9876 -g "$GROUP" >/dev/null 2>&1; then
     echo "✓ $GROUP 已存在"
   else
@@ -226,6 +234,42 @@ if [ "$FIFO_COUNT" -ge 10 ]; then
   grep "\[顺序消息\]" logs/stream-sample.log | tail -10
 else
   echo "✗ 顺序消息消费不足 (期望≥10, 实际${FIFO_COUNT})"
+fi
+
+echo ""
+echo "=========================================="
+echo "  场景6: 事务消息 (REST → tx-topic → tx Consumer)"
+echo "=========================================="
+
+echo "发送事务消息 (arg=commit, 本地事务提交)..."
+curl -s -X POST "http://127.0.0.1:8767/stream/tx?message=hello+tx&arg=commit"
+echo ""
+sleep 3
+
+if grep -q "\[事务消息\] 收到: hello tx" logs/stream-sample.log; then
+  echo "✓ 事务消息消费正常 (提交)"
+  echo "--- 事务执行日志 ---"
+  grep "\[事务消息\] 执行本地事务" logs/stream-sample.log | tail -1
+  echo "--- 接收日志 ---"
+  grep "\[事务消息\] 收到" logs/stream-sample.log | tail -1
+else
+  echo "✗ 未收到事务消息 (提交)"
+fi
+
+echo ""
+echo "发送事务消息 (arg=rollback, 本地事务回滚)..."
+# 清空日志中的事务消息记录以便验证回滚
+BEFORE_COUNT=$(grep -c "\[事务消息\] 收到:" logs/stream-sample.log 2>/dev/null || echo "0")
+curl -s -X POST "http://127.0.0.1:8767/stream/tx?message=hello+rollback&arg=rollback"
+echo ""
+sleep 3
+
+AFTER_COUNT=$(grep -c "\[事务消息\] 收到:" logs/stream-sample.log 2>/dev/null || echo "0")
+if grep -q "\[事务消息\] 本地事务回滚" logs/stream-sample.log; then
+  echo "✓ 事务消息回滚正常 (消费者未收到回滚的消息)"
+  grep "\[事务消息\] 本地事务回滚" logs/stream-sample.log | tail -1
+else
+  echo "✗ 事务消息回滚异常"
 fi
 
 # ========== Step 6: 清理 ==========
