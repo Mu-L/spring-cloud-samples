@@ -557,6 +557,9 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
 ```bash
 # 启动 Stream 模块后，通过 REST API 交互式验证
 
+# 场景2 验证后停止 Supplier 定时消息源，避免后续场景日志刷屏
+curl -s -X POST "http://localhost:8767/actuator/bindings/output2-out-0" -H "Content-Type: application/json" -d '{"state":"STOPPED"}'
+
 # 场景3: 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
 # 预期返回: {"topic":"transformPublish-out-0","message":"hello spring cloud","success":true}

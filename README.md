@@ -309,7 +309,12 @@ bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-tx-grou
 #### 🏃 Run Demo
 启动`stream`，观察日志（基础消费 + 定时消息源自动触发）
 
-通过 REST API 交互式验证各场景：
+场景1、2 启动后自动触发，观察日志即可。场景2 验证后通过 Actuator 端点停止定时消息源，避免后续场景日志刷屏：
+```shell
+curl -s -X POST "http://localhost:8767/actuator/bindings/output2-out-0" -H "Content-Type: application/json" -d '{"state":"STOPPED"}'
+```
+
+继续通过 REST API 交互式验证各场景：
 ```shell
 # 场景3: 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"

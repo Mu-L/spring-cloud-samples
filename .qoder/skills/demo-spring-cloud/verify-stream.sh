@@ -166,12 +166,16 @@ echo ""
 echo "=========================================="
 echo "  场景2: 定时消息源 (Supplier → input2)"
 echo "=========================================="
-# 等待至少一个定时周期（10s），确保 Supplier 已发送消息
-sleep 10
+# 等待至少一个定时周期（1s），确保 Supplier 已发送消息
+sleep 3
 
 if grep -q "收到消息: 你好" logs/stream-sample.log; then
   echo "✓ stream-demo-topic2 定时消息消费正常"
   grep "收到消息: 你好" logs/stream-sample.log | tail -3
+  # 停止 Supplier 定时消息源，避免后续场景日志刷屏
+  echo "停止 Supplier (output2-out-0)..."
+  curl -s -X POST "http://127.0.0.1:8767/actuator/bindings/output2-out-0" -H "Content-Type: application/json" -d '{"state":"STOPPED"}' > /dev/null
+  echo "✓ Supplier 已停止"
 else
   echo "✗ 未收到 你好 消息"
 fi

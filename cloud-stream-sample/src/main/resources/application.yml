@@ -1,5 +1,10 @@
 server:
   port: 8767
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,bindings
 spring:
   application:
     name: stream-sample
@@ -30,7 +35,7 @@ spring:
           destination: stream-demo-topic2
           producer:
             poller:
-              fixed-delay: 10000
+              fixed-delay: 1000
         # 场景3: 消息处理管道 - transform 函数
         transform-in-0:
           destination: stream-transform-topic
