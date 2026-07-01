@@ -28,8 +28,7 @@ MODULES=(
   # 5. Consumers
   "cloud-consumer-sample|consumer|8766"
   "cloud-consumer-reactive-sample|consumer-reactive|8763"
-  # 6. 纯 Dubbo/gRPC Client
-  "cloud-consumer-dubbo-sample|consumer-dubbo|-"
+  # 6. gRPC Client
   "cloud-grpc-client-sample|grpc-client|-"
   # 7. Nacos Config
   "cloud-nacos-config-sample|nacos-config|8761"
@@ -520,12 +519,6 @@ demo_urls() {
   done
   echo "=================================="
 
-  # 纯 dubbo provider/consumer 演示验证
-  echo ""
-  echo "========== 纯 Dubbo provider/consumer 验证 =========="
-  verify_log "$LOG_DIR/consumer-dubbo.log" "Hello, lily" "consumer-dubbo 调用 provider-dubbo"
-  echo "=================================="
-
   # 纯 grpc server/client 演示验证
   echo ""
   echo "========== 纯 gRPC server/client 验证 =========="
@@ -868,7 +861,7 @@ logs_all() {
     echo ""
     echo "可用模块:"
     echo "  核心模块: nacos-discovery, gateway, provider, provider-reactive, provider-dubbo,"
-    echo "            grpc-server, consumer, consumer-reactive, consumer-dubbo, grpc-client, nacos-config"
+    echo "            grpc-server, consumer, consumer-reactive, grpc-client, nacos-config"
     echo "  特殊模块: ai, stream, seata-business, seata-storage, seata-order, seata-account,"
     echo "            seata-storage-dubbo, seata-order-dubbo, seata-account-dubbo"
     echo "  基础设施: rocketmq-namesrv, rocketmq-broker, seata-server"

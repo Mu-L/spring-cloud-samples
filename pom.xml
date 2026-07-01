@@ -26,7 +26,6 @@
         <module>cloud-sample-api</module>
         <module>cloud-nacos-config-sample</module>
         <module>cloud-stream-sample</module>
-        <module>cloud-consumer-dubbo-sample</module>
         <module>cloud-grpc-server-sample</module>
         <module>cloud-grpc-client-sample</module>
         <module>cloud-ai-sample</module>

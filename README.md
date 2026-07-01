@@ -1,6 +1,6 @@
 # ☁️ Spring Cloud Alibaba Samples
 > 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目 <br>
-> 涵盖 17 个模块，覆盖 HTTP / Dubbo / gRPC / Stream 多协议通信及 Spring AI 多模态集成，支持一键演示与验证
+> 涵盖 16 个模块，覆盖 HTTP / Dubbo / gRPC / Stream 多协议通信及 Spring AI 多模态集成，支持一键演示与验证
 
 ![poster](poster.png)
 
@@ -31,7 +31,6 @@
 | ⚡ cloud-consumer-reactive-sample | consumer-reactive | 8763         | Reactive Web Consumer       |
 | ⚡ cloud-provider-reactive-sample | provider-reactive | 8762         | Reactive Web Provider       |
 | 🔗 cloud-provider-dubbo-sample   | provider-dubbo    | 50051        | Dubbo Provider              |
-| 🔗 cloud-consumer-dubbo-sample   | consumer-dubbo    | -            | Dubbo Consumer              |
 | 📋 cloud-sample-api              | api               | -            | Interface & Proto           |
 | ⚙️ cloud-nacos-config-sample     | config            | 8761         | Nacos Config                |
 | 🔍 cloud-nacos-discovery-sample  | discovery         | 8760         | Nacos Discovery             |
@@ -158,9 +157,6 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 ```shell
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
-
-#### 🎯 纯 Dubbo Provider/Consumer 演示
-启动provider-dubbo,consumer-dubbo，观察日志
 
 #### 🎯 纯 gRPC Server/Client 演示
 启动grpc-server,grpc-client，观察日志

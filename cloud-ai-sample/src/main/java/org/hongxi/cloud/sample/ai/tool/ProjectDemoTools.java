@@ -259,7 +259,6 @@ public class ProjectDemoTools {
                 
                 【RPC 服务】
                   - cloud-provider-dubbo-sample (50051)  Dubbo Provider
-                  - cloud-consumer-dubbo-sample          Dubbo Consumer
                   - cloud-grpc-server-sample (8090/9090) gRPC Server
                   - cloud-grpc-client-sample             gRPC Client
                 
