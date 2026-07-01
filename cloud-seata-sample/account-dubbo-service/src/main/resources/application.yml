@@ -1,15 +1,36 @@
-server:
-  port: 18081
-
 spring:
   application:
-    name: business-service
+    name: account-dubbo-service
   cloud:
     nacos:
       username: nacos
       password: 7fDJZBbiLzO2
       discovery:
         server-addr: 127.0.0.1:8848
+  datasource:
+    name: accountDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/seata?useSSL=false&serverTimezone=UTC
+    username: root
+    password: root1234
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-port: 22227
+  protocol:
+    name: tri
+    port: 50071
+  registry:
+    id: nacos-registry
+    address: nacos://127.0.0.1:8848
+    username: ${spring.cloud.nacos.username:nacos}
+    password: ${spring.cloud.nacos.password:7fDJZBbiLzO2}
+    register-mode: instance
+    parameters:
+      group: DEFAULT_GROUP
+  tracing:
+    enabled: true
 
 management:
   otlp:
@@ -23,20 +44,6 @@ management:
     web:
       exposure:
         include: health,info
-
-dubbo:
-  application:
-    name: ${spring.application.name}
-    qos-port: 22230
-  registry:
-    id: nacos-registry
-    address: nacos://127.0.0.1:8848
-    username: ${spring.cloud.nacos.username:nacos}
-    password: ${spring.cloud.nacos.password:7fDJZBbiLzO2}
-    parameters:
-      group: DEFAULT_GROUP
-  tracing:
-    enabled: true
 
 seata:
   enabled: true
@@ -53,9 +60,9 @@ seata:
   registry:
     type: nacos
     nacos:
-      cluster: default
-      group: SEATA_GROUP
       application: seata-server
       server-addr: 127.0.0.1:8848
+      cluster: default
+      group: SEATA_GROUP
       username: ${spring.cloud.nacos.username}
       password: ${spring.cloud.nacos.password}

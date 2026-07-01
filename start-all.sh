@@ -43,6 +43,9 @@ SEATA_MODULES=(
   "cloud-seata-sample/storage-service|seata-storage|18082"
   "cloud-seata-sample/order-service|seata-order|18083"
   "cloud-seata-sample/account-service|seata-account|18084"
+  "cloud-seata-sample/storage-dubbo-service|seata-storage-dubbo|50072"
+  "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073"
+  "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071"
 )
 
 # 特殊模块启动标记
@@ -210,7 +213,7 @@ check_special_prerequisites() {
   fi
   if $mysql_ok && $seata_server_ok; then
     START_SEATA=true
-    echo "[Seata] 将启动 4 个微服务 (18081-18084)"
+    echo "[Seata] 将启动 7 个微服务 (18081-18084 + 3 Dubbo)"
   fi
 
   # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY
@@ -302,10 +305,36 @@ start_stream_module() {
 }
 
 start_seata_services() {
-  for entry in "${SEATA_MODULES[@]}"; do
+  # 按依赖顺序启动：account-dubbo/account → storage-dubbo/order-dubbo → storage/order → business
+  echo "[Seata] 按依赖顺序启动 7 个微服务..."
+
+  # 第一层：account-dubbo-service + account-service（account-dubbo 被 order-dubbo 依赖）
+  for entry in \
+    "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071" \
+    "cloud-seata-sample/account-service|seata-account|18084"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     start_module "$module_dir" "$display_name" "$port"
   done
+
+  # 第二层：storage-dubbo + order-dubbo（order-dubbo 依赖 account-dubbo）
+  for entry in \
+    "cloud-seata-sample/storage-dubbo-service|seata-storage-dubbo|50072" \
+    "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    start_module "$module_dir" "$display_name" "$port"
+  done
+
+  # 第三层：storage-service + order-service
+  for entry in \
+    "cloud-seata-sample/storage-service|seata-storage|18082" \
+    "cloud-seata-sample/order-service|seata-order|18083"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    start_module "$module_dir" "$display_name" "$port"
+  done
+
+  # 第四层：business-service（依赖 storage-dubbo + order-dubbo）
+  IFS='|' read -r module_dir display_name port <<< "cloud-seata-sample/business-service|seata-business|18081"
+  start_module "$module_dir" "$display_name" "$port"
 }
 
 stop_all() {
@@ -559,6 +588,10 @@ demo_urls() {
       IFS='|' read -r url desc <<< "$entry"
       verify_url "$url" "$desc"
     done
+    # Dubbo 服务通过日志验证
+    verify_log "$LOG_DIR/seata-storage-dubbo.log" "Started" "storage-dubbo-service 启动验证"
+    verify_log "$LOG_DIR/seata-order-dubbo.log" "Started" "order-dubbo-service 启动验证"
+    verify_log "$LOG_DIR/seata-account-dubbo.log" "Started" "account-dubbo-service 启动验证"
     echo "=================================="
   fi
 
@@ -602,10 +635,10 @@ demo_urls() {
     echo "     • 事务消息: StreamBridge + TransactionListener 两阶段提交"
     echo "     → 使用 demo-spring-cloud skill 执行 verify-stream.sh"
     echo ""
-    echo "  5️⃣  Seata 分布式事务 (端口 18081-18084):"
+    echo "  5️⃣  Seata 分布式事务 (7 个子模块, 端口 18081-18084 + 3 Dubbo):"
     echo "     • 全局事务回滚/提交场景"
-    echo "     • Feign 调用链 Xid 传递"
-    echo "     • 数据一致性验证"
+    echo "     • Feign / RestTemplate / Dubbo 三种调用链路"
+    echo "     • Xid 传递与数据一致性验证"
     echo "     → 使用 demo-spring-cloud skill 执行 verify-seata.sh"
     echo ""
     echo "  6️⃣  Spring AI 深度功能 (端口 8888):"
@@ -836,7 +869,8 @@ logs_all() {
     echo "可用模块:"
     echo "  核心模块: nacos-discovery, gateway, provider, provider-reactive, provider-dubbo,"
     echo "            grpc-server, consumer, consumer-reactive, consumer-dubbo, grpc-client, nacos-config"
-    echo "  特殊模块: ai, stream, seata-business, seata-storage, seata-order, seata-account"
+    echo "  特殊模块: ai, stream, seata-business, seata-storage, seata-order, seata-account,"
+    echo "            seata-storage-dubbo, seata-order-dubbo, seata-account-dubbo"
     echo "  基础设施: rocketmq-namesrv, rocketmq-broker, seata-server"
     return
   fi

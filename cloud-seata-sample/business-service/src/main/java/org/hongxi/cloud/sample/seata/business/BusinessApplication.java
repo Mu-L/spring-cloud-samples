@@ -3,6 +3,7 @@ package org.hongxi.cloud.sample.seata.business;
 import feign.RequestInterceptor;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
+import org.hongxi.cloud.sample.api.CloudConstants;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -16,11 +17,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
-@SpringBootApplication
+import static org.apache.dubbo.common.constants.CommonConstants.DubboProperty.DUBBO_PREFER_JSON_FRAMEWORK_NAME;
+
+@SpringBootApplication(exclude = {
+        org.apache.dubbo.spring.boot.autoconfigure.observability.otel.OpenTelemetryAutoConfiguration.class
+})
 @EnableFeignClients
 public class BusinessApplication {
 
     public static void main(String[] args) {
+        System.setProperty(DUBBO_PREFER_JSON_FRAMEWORK_NAME, CloudConstants.FASTJSON2);
         SpringApplication.run(BusinessApplication.class, args);
     }
 

@@ -13,10 +13,13 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>account-service</module>
         <module>business-service</module>
-        <module>order-service</module>
         <module>storage-service</module>
+        <module>order-service</module>
+        <module>account-service</module>
+        <module>storage-dubbo-service</module>
+        <module>order-dubbo-service</module>
+        <module>account-dubbo-service</module>
     </modules>
 
 

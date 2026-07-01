@@ -10,6 +10,9 @@
 | storage-service | 18082 | 库存服务，负责扣减商品库存 |
 | order-service | 18083 | 订单服务，负责创建订单并调用账户服务 |
 | account-service | 18084 | 账户服务，负责扣减用户余额 |
+| account-dubbo-service | 50071 | 账户服务 Dubbo 实现（Triple 协议） |
+| storage-dubbo-service | 50072 | 库存服务 Dubbo 实现（Triple 协议） |
+| order-dubbo-service | 50073 | 订单服务 Dubbo 实现（Triple 协议） |
 
 ### 准备工作
 
@@ -53,6 +56,10 @@ service.vgroupMapping.order-service-tx-group=default
 service.vgroupMapping.account-service-tx-group=default
 service.vgroupMapping.business-service-tx-group=default
 service.vgroupMapping.storage-service-tx-group=default
+service.vgroupMapping.order-dubbo-service-tx-group=default
+service.vgroupMapping.account-dubbo-service-tx-group=default
+service.vgroupMapping.business-dubbo-service-tx-group=default
+service.vgroupMapping.storage-dubbo-service-tx-group=default
 ```
 
 #### 4. 启动 Seata Server
@@ -92,10 +99,13 @@ seata:
 
 依次启动以下四个应用的主类：
 
-1. `StorageApplication`（storage-service）
+1. `AccountDubboApplication`（account-dubbo-service）
 2. `AccountApplication`（account-service）
-3. `OrderApplication`（order-service）
-4. `BusinessApplication`（business-service）
+3. `StorageDubboApplication`（storage-dubbo-service）
+4. `OrderDubboApplication`（order-dubbo-service）
+5. `StorageApplication`（storage-service）
+6. `OrderApplication`（order-service）
+7. `BusinessApplication`（business-service）
 
 启动完成后，通过 GET 请求访问以下接口：
 
@@ -106,6 +116,10 @@ curl http://127.0.0.1:18081/seata/rest
 通过 FeignClient 调用
 ```shell
 curl http://127.0.0.1:18081/seata/feign
+```
+通过 DubboReference 调用
+```shell
+curl http://127.0.0.1:18081/seata/dubbo
 ```
 
 返回结果说明：

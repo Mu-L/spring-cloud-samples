@@ -1,6 +1,6 @@
 # ☁️ Spring Cloud Alibaba Samples
 > 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目 <br>
-> 涵盖 16 个模块，覆盖 HTTP / Dubbo / gRPC / Stream 多协议通信及 Spring AI 多模态集成，支持一键演示与验证
+> 涵盖 17 个模块，覆盖 HTTP / Dubbo / gRPC / Stream 多协议通信及 Spring AI 多模态集成，支持一键演示与验证
 
 ![poster](poster.png)
 
@@ -39,7 +39,7 @@
 | 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
 | 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
 | 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
-| 🔄 cloud-seata-sample            | seata             | -            | Apache Seata                |
+| 🔄 cloud-seata-sample            | seata             | -            | Apache Seata (含 7 个子模块) |
 | 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
 
 <picture>
@@ -345,7 +345,19 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 
 前置条件：MySQL + Seata Server，请参考 [seata-sample/README](cloud-seata-sample/README.md) 中的环境准备和运行示例。
 
-启动 4 个微服务（business 18081、storage 18082、order 18083、account 18084），验证分布式事务的回滚与提交。
+包含 7 个子模块，按依赖关系分四层启动：
+
+| 层级 | 服务 | 端口 | 说明 |
+|------|------|------|------|
+| 1 | account-dubbo-service | 50071 | 账户服务 Dubbo 实现（基础层） |
+| 1 | account-service | 18084 | 账户服务 REST 实现 |
+| 2 | storage-dubbo-service | 50072 | 库存服务 Dubbo 实现 |
+| 2 | order-dubbo-service | 50073 | 订单服务 Dubbo 实现（依赖 account-dubbo-service） |
+| 3 | storage-service | 18082 | 库存服务 REST 实现 |
+| 3 | order-service | 18083 | 订单服务 REST 实现 |
+| 4 | business-service | 18081 | 业务入口（依赖 storage-dubbo + order-dubbo） |
+
+验证分布式事务的回滚与提交，支持三种调用链路：RestTemplate / FeignClient / DubboReference。
 
 ### 🤖 Spring AI 演示
 

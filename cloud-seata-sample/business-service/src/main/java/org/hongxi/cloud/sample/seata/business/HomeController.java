@@ -2,7 +2,10 @@ package org.hongxi.cloud.sample.seata.business;
 
 import org.hongxi.cloud.sample.seata.business.BusinessApplication.OrderService;
 import org.hongxi.cloud.sample.seata.business.BusinessApplication.StorageService;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.seata.spring.annotation.GlobalTransactional;
+import org.hongxi.cloud.sample.api.seata.SeataOrderService;
+import org.hongxi.cloud.sample.api.seata.SeataStorageService;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +35,12 @@ public class HomeController {
     private final OrderService orderService;
 
     private final StorageService storageService;
+
+    @DubboReference
+    private SeataStorageService seataStorageService;
+
+    @DubboReference
+    private SeataOrderService seataOrderService;
 
     public HomeController(RestTemplate restTemplate, OrderService orderService,
             StorageService storageService) {
@@ -88,6 +97,23 @@ public class HomeController {
         }
 
         result = orderService.order(USER_ID, COMMODITY_CODE, ORDER_COUNT);
+
+        if (!SUCCESS.equals(result)) {
+            throw new RuntimeException();
+        }
+        return SUCCESS;
+    }
+
+    @GlobalTransactional(timeoutMills = 300000, name = "spring-cloud-demo-dubbo-tx")
+    @GetMapping("/seata/dubbo")
+    public String dubbo() {
+        String result = seataStorageService.deduct(COMMODITY_CODE, ORDER_COUNT);
+
+        if (!SUCCESS.equals(result)) {
+            throw new RuntimeException();
+        }
+
+        result = seataOrderService.create(USER_ID, COMMODITY_CODE, ORDER_COUNT);
 
         if (!SUCCESS.equals(result)) {
             throw new RuntimeException();

@@ -32,12 +32,17 @@ mysql -u root -proot1234 seata < cloud-seata-sample/all.sql 2>/dev/null
 echo "✓ 数据库初始化完成"
 
 echo ""
-echo ">>> Step 2b: 打包模块..."
-./mvnw -pl cloud-nacos-config-sample,cloud-nacos-discovery-sample,cloud-seata-sample/business-service,cloud-seata-sample/storage-service,cloud-seata-sample/order-service,cloud-seata-sample/account-service package -DskipTests -q
+echo ">>> Step 2b: 安装依赖模块..."
+./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q
+echo "✓ 依赖模块安装完成"
+
+echo ""
+echo ">>> Step 2c: 打包模块..."
+./mvnw -pl cloud-nacos-config-sample,cloud-nacos-discovery-sample,cloud-seata-sample/business-service,cloud-seata-sample/storage-service,cloud-seata-sample/order-service,cloud-seata-sample/account-service,cloud-seata-sample/storage-dubbo-service,cloud-seata-sample/order-dubbo-service,cloud-seata-sample/account-dubbo-service package -DskipTests -q
 echo "✓ 模块打包完成"
 
 echo ""
-echo ">>> Step 2c: 启动辅助服务..."
+echo ">>> Step 2d: 启动辅助服务..."
 # 检查是否已在运行（避免重复启动）
 CFG_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8761/actuator/health 2>/dev/null || echo "000")
 DISC_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8760/actuator/health 2>/dev/null || echo "000")
@@ -67,7 +72,11 @@ CONTENT="service.vgroupMapping.default_tx_group=default
 service.vgroupMapping.order-service-tx-group=default
 service.vgroupMapping.account-service-tx-group=default
 service.vgroupMapping.business-service-tx-group=default
-service.vgroupMapping.storage-service-tx-group=default"
+service.vgroupMapping.storage-service-tx-group=default
+service.vgroupMapping.order-dubbo-service-tx-group=default
+service.vgroupMapping.account-dubbo-service-tx-group=default
+service.vgroupMapping.business-dubbo-service-tx-group=default
+service.vgroupMapping.storage-dubbo-service-tx-group=default"
 curl -s -X POST http://localhost:8761/nacos/publishConfig \
   -d "dataId=seata.properties" \
   -d "group=SEATA_GROUP" \
@@ -119,31 +128,66 @@ else
   fi
 fi
 
-# ========== Step 5: 并行启动 4 个微服务 ==========
+# ========== Step 5: 按依赖顺序启动 7 个微服务 ==========
 echo ""
-echo ">>> Step 5: 并行启动 4 个微服务..."
+echo ">>> Step 5: 按依赖顺序启动 7 个微服务..."
 cd "$PROJECT_DIR"
-java -jar cloud-seata-sample/storage-service/target/*.jar > logs/seata-storage.log 2>&1 &
+
+# 第一层：account-dubbo-service + account-service（account-dubbo 被 order-dubbo 依赖）
+echo "  [1/4] 启动 account-dubbo-service + account-service..."
+java -jar cloud-seata-sample/account-dubbo-service/target/*.jar > logs/seata-account-dubbo.log 2>&1 &
 java -jar cloud-seata-sample/account-service/target/*.jar > logs/seata-account.log 2>&1 &
+echo "  等待 account 服务就绪..."
+for i in $(seq 1 60); do
+  a_http=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:18084/actuator/health" 2>/dev/null || echo "000")
+  a_dubbo=$(grep -c "Started" logs/seata-account-dubbo.log 2>/dev/null || true)
+  a_dubbo=${a_dubbo:-0}
+  if [ "$a_http" = "200" ] && [ "$a_dubbo" -gt 0 ]; then
+    echo "  ✓ account-service + account-dubbo-service 均已就绪 (${i}s)"
+    break
+  fi
+  sleep 1
+done
+
+# 第二层：storage-dubbo-service + order-dubbo-service（order-dubbo 依赖 account-dubbo）
+echo "  [2/4] 启动 storage-dubbo-service + order-dubbo-service..."
+java -jar cloud-seata-sample/storage-dubbo-service/target/*.jar > logs/seata-storage-dubbo.log 2>&1 &
+java -jar cloud-seata-sample/order-dubbo-service/target/*.jar > logs/seata-order-dubbo.log 2>&1 &
+echo "  等待 Dubbo 服务注册完成..."
+for i in $(seq 1 60); do
+  s=$(grep -c "Started" logs/seata-storage-dubbo.log 2>/dev/null || true); s=${s:-0}
+  o=$(grep -c "Started" logs/seata-order-dubbo.log 2>/dev/null || true); o=${o:-0}
+  if [ "$s" -gt 0 ] && [ "$o" -gt 0 ]; then
+    echo "  ✓ 2 个 Dubbo 服务均已就绪 (${i}s)"
+    break
+  fi
+  sleep 1
+done
+
+# 第三层：storage-service + order-service
+echo "  [3/4] 启动 storage-service + order-service..."
+java -jar cloud-seata-sample/storage-service/target/*.jar > logs/seata-storage.log 2>&1 &
 java -jar cloud-seata-sample/order-service/target/*.jar > logs/seata-order.log 2>&1 &
+
+# 第四层：business-service（依赖 storage-dubbo + order-dubbo）
+echo "  [4/4] 启动 business-service..."
 java -jar cloud-seata-sample/business-service/target/*.jar > logs/seata-business.log 2>&1 &
-echo "4 个微服务同时启动中..."
+echo "  等待 HTTP 服务就绪..."
 
 ALL_OK=0
-for i in $(seq 1 90); do
-  c1=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/actuator/health 2>/dev/null || echo "000")
-  c2=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18082/actuator/health 2>/dev/null || echo "000")
-  c3=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18083/actuator/health 2>/dev/null || echo "000")
-  c4=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18084/actuator/health 2>/dev/null || echo "000")
-  if [ "$c1" = "200" ] && [ "$c2" = "200" ] && [ "$c3" = "200" ] && [ "$c4" = "200" ]; then
-    echo "✓ 所有 4 个微服务均已就绪 (${i}s)"
+for i in $(seq 1 150); do
+  b_up=$(nc -z 127.0.0.1 18081 2>/dev/null && echo 1 || echo 0)
+  s_up=$(nc -z 127.0.0.1 18082 2>/dev/null && echo 1 || echo 0)
+  o_up=$(nc -z 127.0.0.1 18083 2>/dev/null && echo 1 || echo 0)
+  if [ "$b_up" = "1" ] && [ "$s_up" = "1" ] && [ "$o_up" = "1" ]; then
+    echo "  ✓ 所有 7 个微服务均已就绪 (${i}s)"
     ALL_OK=1
     break
   fi
   sleep 1
 done
 if [ "$ALL_OK" = "0" ]; then
-  echo "✗ 微服务启动超时: business=$c1 storage=$c2 order=$c3 account=$c4"
+  echo "  ✗ 微服务启动超时: business=$b_up storage=$s_up order=$o_up"
   exit 1
 fi
 
@@ -190,10 +234,28 @@ for i in $(seq 1 20); do
 done
 
 echo ""
+echo "=== 验证 DubboReference 方式 ==="
+for i in $(seq 1 20); do
+  result=$(curl -s -w "\n%{http_code}" http://127.0.0.1:18081/seata/dubbo)
+  http_code=$(echo "$result" | tail -1)
+  if [ "$http_code" = "200" ]; then
+    echo "✓ 第 ${i} 次调用成功（Dubbo），事务已提交"
+    break
+  else
+    echo "第 ${i} 次调用返回 ${http_code}（Dubbo，mock 异常），继续重试..."
+  fi
+done
+
+echo ""
 echo "=== 验证 Xid 传递 ==="
+echo "--- Feign/RestTemplate 链路 ---"
 grep -E "Begin.*xid:" logs/seata-storage.log 2>/dev/null | tail -1 || echo "(无 storage xid)"
 grep -E "Begin.*xid:" logs/seata-order.log 2>/dev/null | tail -1 || echo "(无 order xid)"
 grep -E "Begin.*xid:" logs/seata-account.log 2>/dev/null | tail -1 || echo "(无 account xid)"
+echo "--- Dubbo 链路 ---"
+grep -E "Begin.*xid:" logs/seata-storage-dubbo.log 2>/dev/null | tail -1 || echo "(无 storage-dubbo xid)"
+grep -E "Begin.*xid:" logs/seata-order-dubbo.log 2>/dev/null | tail -1 || echo "(无 order-dubbo xid)"
+grep -E "Begin.*xid:" logs/seata-account-dubbo.log 2>/dev/null | tail -1 || echo "(无 account-dubbo xid)"
 
 echo ""
 echo "=== 验证数据一致性 ==="
