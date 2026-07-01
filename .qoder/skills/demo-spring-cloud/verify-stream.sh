@@ -166,6 +166,8 @@ echo ""
 echo "=========================================="
 echo "  场景2: 定时消息源 (Supplier → input2)"
 echo "=========================================="
+# 等待至少一个定时周期（10s），确保 Supplier 已发送消息
+sleep 10
 
 if grep -q "收到消息: 你好" logs/stream-sample.log; then
   echo "✓ stream-demo-topic2 定时消息消费正常"

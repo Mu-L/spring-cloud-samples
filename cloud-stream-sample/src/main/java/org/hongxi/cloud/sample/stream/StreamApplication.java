@@ -46,7 +46,7 @@ public class StreamApplication {
     }
 
     /**
-     * 定时消息源 - 每隔1秒自动发送消息到 stream-demo-topic2
+     * 定时消息源 - 每隔10秒自动发送消息到 stream-demo-topic2
      * <p>
      * 演示 Supplier 函数式消息源，Spring Cloud Stream 会自动以固定间隔调用该 Supplier
      */

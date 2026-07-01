@@ -30,7 +30,7 @@ spring:
           destination: stream-demo-topic2
           producer:
             poller:
-              fixed-delay: 2000 # default 1000
+              fixed-delay: 10000
         # 场景3: 消息处理管道 - transform 函数
         transform-in-0:
           destination: stream-transform-topic
