@@ -556,7 +556,7 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
 
 # 场景3: 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
-# 预期返回: {"topic":"transform-in-0","message":"hello spring cloud","success":true}
+# 预期返回: {"topic":"transformPublish-out-0","message":"hello spring cloud","success":true}
 # 日志中观察: 消息转换: hello spring cloud -> [PROCESSED] HELLO SPRING CLOUD
 ```
 

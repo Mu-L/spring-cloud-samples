@@ -2,6 +2,7 @@ package org.hongxi.cloud.sample.stream;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,18 @@ public class MessageConsumer {
             log.info("消息转换: {} -> {}", message, result);
             return result;
         };
+    }
+
+    /**
+     * Transform 管道发布器 - 为 REST API 提供 output binding 以通过 binder 发送消息
+     * <p>
+     * 该 Supplier 本身不产生消息（返回 null），仅用于创建 transformPublish-out-0 output binding，
+     * 使 StreamController 可以通过 StreamBridge 经 binder（RocketMQ）发送消息到 stream-transform-topic，
+     * 再由 transform 函数的 input binding 消费，避免直接向 input binding 发送导致的 WARN。
+     */
+    @Bean
+    public Supplier<String> transformPublish() {
+        return () -> null;
     }
 
 }

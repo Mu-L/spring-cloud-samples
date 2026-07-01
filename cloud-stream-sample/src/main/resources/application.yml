@@ -5,7 +5,7 @@ spring:
     name: stream-sample
   cloud:
     function:
-      definition: input;input2;output2;transform
+      definition: input;input2;output2;transform;transformPublish
     stream:
       rocketmq:
         binder:
@@ -29,3 +29,6 @@ spring:
           group: stream-transform-group
         transform-out-0:
           destination: stream-demo-topic2
+        # 场景3辅助: REST API 通过 binder 发布到 transform 输入 topic
+        transformPublish-out-0:
+          destination: stream-transform-topic
