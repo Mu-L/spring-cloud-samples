@@ -296,7 +296,7 @@ bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-transfo
 #### 🏃 Run Demo
 启动`stream`，观察日志（基础消费 + 定时消息源自动触发）
 
-通过 REST API 交互式验证消息处理管道和聚合消费：
+通过 REST API 交互式验证消息处理管道：
 ```shell
 # 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
