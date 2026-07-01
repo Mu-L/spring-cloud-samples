@@ -268,6 +268,14 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 
 ### 📨 Stream 演示
 
+演示 Spring Cloud Stream 的三大核心场景：
+
+| 场景 | 函数类型 | 消息流 | 说明 |
+|------|----------|--------|------|
+| 基础消费 | Consumer | StreamBridge → topic → input | 启动时自动发送 "Hello" 并消费 |
+| 定时消息源 | Supplier | output2 → topic2 → input2 | 每隔1秒自动发送 "你好" |
+| 消息处理管道 | Function | REST → transform → [toUpperCase] → topic2 | 消息转换后输出 |
+
 #### 🏃 Run RocketMQ locally
 download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
 ```shell
@@ -281,11 +289,21 @@ bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic2 -a +message.type=NORMAL
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group2
+bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-transform-topic -a +message.type=NORMAL
+bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-transform-group
 ```
 
 #### 🏃 Run Demo
-启动`stream`，观察日志 <br>
-命令查看消费组的消费进度
+启动`stream`，观察日志（基础消费 + 定时消息源自动触发）
+
+通过 REST API 交互式验证消息处理管道和聚合消费：
+```shell
+# 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
+curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
+# 日志观察: 消息转换: hello spring cloud -> [PROCESSED] HELLO SPRING CLOUD
+```
+
+查看消费组的消费进度：
 ```shell
 bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 ```

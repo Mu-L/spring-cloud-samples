@@ -75,24 +75,18 @@ cd "$ROCKETMQ_HOME"
 # 获取当前 topic 列表
 EXISTING_TOPICS=$(bin/mqadmin topicList -n localhost:9876 2>/dev/null)
 
-# 检查并创建 stream-demo-topic
-if echo "$EXISTING_TOPICS" | grep -qw "stream-demo-topic"; then
-  echo "✓ stream-demo-topic 已存在"
-else
-  bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL 2>/dev/null
-  echo "✓ stream-demo-topic 已创建"
-fi
+# 检查并创建所有需要的 Topic
+for TOPIC in stream-demo-topic stream-demo-topic2 stream-transform-topic; do
+  if echo "$EXISTING_TOPICS" | grep -qw "$TOPIC"; then
+    echo "✓ $TOPIC 已存在"
+  else
+    bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t "$TOPIC" -a +message.type=NORMAL 2>/dev/null
+    echo "✓ $TOPIC 已创建"
+  fi
+done
 
-# 检查并创建 stream-demo-topic2
-if echo "$EXISTING_TOPICS" | grep -qw "stream-demo-topic2"; then
-  echo "✓ stream-demo-topic2 已存在"
-else
-  bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic2 -a +message.type=NORMAL 2>/dev/null
-  echo "✓ stream-demo-topic2 已创建"
-fi
-
-# 检查并创建 consumer group（通过 consumerProgress 判断）
-for GROUP in stream-demo-consumer-group stream-demo-consumer-group2; do
+# 检查并创建所有需要的 Consumer Group
+for GROUP in stream-demo-consumer-group stream-demo-consumer-group2 stream-transform-group; do
   if bin/mqadmin consumerProgress -n localhost:9876 -g "$GROUP" >/dev/null 2>&1; then
     echo "✓ $GROUP 已存在"
   else
@@ -106,12 +100,10 @@ echo ""
 echo ">>> Step 4: 打包并启动 Stream 模块..."
 cd "$PROJECT_DIR"
 
-# 打包（如果 jar 不存在）
-if [ ! -f cloud-stream-sample/target/cloud-stream-sample.jar ]; then
-  echo "打包 cloud-stream-sample..."
-  ./mvnw -pl cloud-stream-sample -am package -DskipTests -q
-  echo "✓ 打包完成"
-fi
+# 打包（如果 jar 不存在或代码有更新）
+echo "打包 cloud-stream-sample..."
+./mvnw -pl cloud-stream-sample -am package -DskipTests -q
+echo "✓ 打包完成"
 
 # 启动
 java -jar cloud-stream-sample/target/cloud-stream-sample.jar > logs/stream-sample.log 2>&1 &
@@ -135,30 +127,46 @@ done
 # ========== Step 5: 验证消息收发 ==========
 echo ""
 echo "=========================================="
-echo "  验证消息消费"
+echo "  场景1: 基础消费 (StreamBridge → input)"
 echo "=========================================="
-sleep 5
+sleep 3
 
-echo ""
-echo "=== stream-demo-topic ==="
 if grep -q "Received message: Hello" logs/stream-sample.log; then
   echo "✓ stream-demo-topic 消息消费正常"
-  grep "Received message: Hello" logs/stream-sample.log | tail -3
+  grep "Received message: Hello" logs/stream-sample.log | tail -1
 else
   echo "✗ 未收到 Hello 消息"
-  echo "最近日志:"
-  tail -20 logs/stream-sample.log
 fi
 
 echo ""
-echo "=== stream-demo-topic2 ==="
+echo "=========================================="
+echo "  场景2: 定时消息源 (Supplier → input2)"
+echo "=========================================="
+
 if grep -q "收到消息: 你好" logs/stream-sample.log; then
-  echo "✓ stream-demo-topic2 消息消费正常"
+  echo "✓ stream-demo-topic2 定时消息消费正常"
   grep "收到消息: 你好" logs/stream-sample.log | tail -3
 else
   echo "✗ 未收到 你好 消息"
-  echo "最近日志:"
-  tail -20 logs/stream-sample.log
+fi
+
+echo ""
+echo "=========================================="
+echo "  场景3: 消息处理管道 (REST → transform → input2)"
+echo "=========================================="
+
+# 通过 REST API 发送消息到 transform 管道
+echo "发送消息到 transform 管道..."
+curl -s -X POST "http://127.0.0.1:8767/stream/send?message=hello+pipeline"
+echo ""
+sleep 3
+
+# 检查 transform 函数是否执行了转换
+if grep -q "消息转换: hello pipeline -> \[PROCESSED\] HELLO PIPELINE" logs/stream-sample.log; then
+  echo "✓ 消息转换管道工作正常"
+  grep "消息转换:" logs/stream-sample.log | tail -1
+else
+  echo "✗ 消息转换未执行"
 fi
 
 # ========== Step 6: 清理 ==========

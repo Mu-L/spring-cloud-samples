@@ -5,19 +5,27 @@ spring:
     name: stream-sample
   cloud:
     function:
-      definition: input;input2;output2
+      definition: input;input2;output2;transform
     stream:
       rocketmq:
         binder:
           name-server: 127.0.0.1:9876
       bindings:
+        # 场景1: 基础消费 - stream-demo-topic
         input-in-0:
           destination: stream-demo-topic
           group: stream-demo-consumer-group
         output-out-0:
           destination: stream-demo-topic
+        # 场景2: 定时消息源 - stream-demo-topic2
         input2-in-0:
           destination: stream-demo-topic2
           group: stream-demo-consumer-group2
         output2-out-0:
+          destination: stream-demo-topic2
+        # 场景3: 消息处理管道 - transform 函数
+        transform-in-0:
+          destination: stream-transform-topic
+          group: stream-transform-group
+        transform-out-0:
           destination: stream-demo-topic2

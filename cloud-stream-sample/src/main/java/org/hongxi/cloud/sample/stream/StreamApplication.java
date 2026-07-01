@@ -11,16 +11,32 @@ import org.springframework.context.annotation.Bean;
 import java.util.function.Supplier;
 
 /**
- * Created by javahongxi on 2026/6/1.
+ * Spring Cloud Stream 示例应用
+ * <p>
+ * 演示以下核心场景：
+ * <ol>
+ *   <li>StreamBridge 编程式消息发布</li>
+ *   <li>Supplier 定时消息源</li>
+ *   <li>Function 消息处理管道（见 MessageConsumer#transform）</li>
+ *   <li>Consumer / Function / Supplier 三种函数式编程模型</li>
+ * </ol>
+ *
+ * @author hongxi
  */
 @SpringBootApplication
 public class StreamApplication {
 
     private static final Logger log = LoggerFactory.getLogger(StreamApplication.class);
+
     public static void main(String[] args) {
         SpringApplication.run(StreamApplication.class, args);
     }
 
+    /**
+     * 启动时通过 StreamBridge 发送一条消息到 stream-demo-topic
+     * <p>
+     * 演示 StreamBridge 的编程式消息发布能力
+     */
     @Bean
     CommandLineRunner runner(StreamBridge streamBridge) {
         return args -> {
@@ -30,8 +46,9 @@ public class StreamApplication {
     }
 
     /**
-     * 每隔1秒会自动发送消息
-     * @return
+     * 定时消息源 - 每隔1秒自动发送消息到 stream-demo-topic2
+     * <p>
+     * 演示 Supplier 函数式消息源，Spring Cloud Stream 会自动以固定间隔调用该 Supplier
      */
     @Bean
     Supplier<String> output2() {
