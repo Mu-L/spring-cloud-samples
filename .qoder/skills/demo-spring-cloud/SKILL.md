@@ -520,13 +520,15 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
 
 ### 11. Stream 消息收发（需 RocketMQ）
 
-> 本模块演示 Spring Cloud Stream 的三大核心场景：
+> 本模块演示 Spring Cloud Stream 的五大核心场景：
 >
 > | 场景 | 函数类型 | 消息流 | 说明 |
 > |------|----------|--------|------|
 > | 基础消费 | Consumer | StreamBridge → topic → input | 启动时自动发送 "Hello" 并消费 |
 > | 定时消息源 | Supplier | output2 → topic2 → input2 | 每隔1秒自动发送 "你好" |
 > | 消息处理管道 | Function | REST → transform → [toUpperCase] → topic2 | 消息转换后输出 |
+> | 延迟消息 | Consumer | StreamBridge → delay-topic → delay | 通过 DELAY header 指定延迟级别后延迟投递 |
+> | 顺序消息 | Consumer | StreamBridge → fifo-topic → fifo | 相同 orderKey 保证顺序消费 |
 
 **执行流程：**
 
@@ -545,7 +547,7 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
    ```bash
    bash .qoder/skills/demo-spring-cloud/verify-stream.sh
    ```
-   脚本会自动完成：清理环境 → 检查 Nacos → 启动 RocketMQ（如未运行）→ 创建 Topic/ConsumerGroup → 打包 → 启动 Stream 模块 → 验证三大场景（基础消费 / 定时消息源 / 消息处理管道）
+   脚本会自动完成：清理环境 → 检查 Nacos → 启动 RocketMQ（如未运行）→ 创建 Topic/ConsumerGroup → 打包 → 启动 Stream 模块 → 验证五大场景（基础消费 / 定时消息源 / 消息处理管道 / 延迟消息 / 顺序消息）
 
 ---
 
@@ -558,6 +560,16 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
 # 预期返回: {"topic":"transformPublish-out-0","message":"hello spring cloud","success":true}
 # 日志中观察: 消息转换: hello spring cloud -> [PROCESSED] HELLO SPRING CLOUD
+
+# 场景4: 延迟消息 - 发送延迟消息（delayLevel=2 即 5秒后投递）
+curl -X POST "http://localhost:8767/stream/delay?message=hello+delay&delayLevel=2"
+# 日志中观察: [延迟消息] 收到: hello delay (时间: ...) — 注意接收时间与发送时间的差值应为约5秒
+
+# 场景5: 顺序消息 - 发送带相同 orderKey 的消息（保证顺序消费）
+curl -X POST "http://localhost:8767/stream/fifo?message=order-1&orderKey=order-A"
+curl -X POST "http://localhost:8767/stream/fifo?message=order-2&orderKey=order-A"
+curl -X POST "http://localhost:8767/stream/fifo?message=order-3&orderKey=order-A"
+# 日志中观察: [顺序消息] 收到消息按发送顺序依次被消费
 ```
 
 ### 12. Seata 分布式事务（需 MySQL + Seata Server）

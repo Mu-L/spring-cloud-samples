@@ -75,7 +75,7 @@ cd "$ROCKETMQ_HOME"
 # 获取当前 topic 列表
 EXISTING_TOPICS=$(bin/mqadmin topicList -n localhost:9876 2>/dev/null)
 
-# 检查并创建所有需要的 Topic
+# 检查并创建所有需要的 Topic（NORMAL 类型）
 for TOPIC in stream-demo-topic stream-demo-topic2 stream-transform-topic; do
   if echo "$EXISTING_TOPICS" | grep -qw "$TOPIC"; then
     echo "✓ $TOPIC 已存在"
@@ -85,8 +85,24 @@ for TOPIC in stream-demo-topic stream-demo-topic2 stream-transform-topic; do
   fi
 done
 
+# 检查并创建 DELAY 类型 Topic
+if echo "$EXISTING_TOPICS" | grep -qw "stream-delay-topic"; then
+  echo "✓ stream-delay-topic 已存在"
+else
+  bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-delay-topic -a +message.type=DELAY 2>/dev/null
+  echo "✓ stream-delay-topic 已创建 (DELAY)"
+fi
+
+# 检查并创建 FIFO 类型 Topic
+if echo "$EXISTING_TOPICS" | grep -qw "stream-fifo-topic"; then
+  echo "✓ stream-fifo-topic 已存在"
+else
+  bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-fifo-topic -a +message.type=FIFO 2>/dev/null
+  echo "✓ stream-fifo-topic 已创建 (FIFO)"
+fi
+
 # 检查并创建所有需要的 Consumer Group
-for GROUP in stream-demo-consumer-group stream-demo-consumer-group2 stream-transform-group; do
+for GROUP in stream-demo-consumer-group stream-demo-consumer-group2 stream-transform-group stream-delay-group stream-fifo-group; do
   if bin/mqadmin consumerProgress -n localhost:9876 -g "$GROUP" >/dev/null 2>&1; then
     echo "✓ $GROUP 已存在"
   else
@@ -167,6 +183,49 @@ if grep -q "消息转换: hello pipeline -> \[PROCESSED\] HELLO PIPELINE" logs/s
   grep "消息转换:" logs/stream-sample.log | tail -1
 else
   echo "✗ 消息转换未执行"
+fi
+
+echo ""
+echo "=========================================="
+echo "  场景4: 延迟消息 (REST → delay-topic → delay Consumer)"
+echo "=========================================="
+
+echo "发送延迟消息 (delayLevel=2, 约5秒后投递)..."
+SEND_TIME=$(date +"%H:%M:%S.%N")
+echo "发送时间: $SEND_TIME"
+curl -s -X POST "http://127.0.0.1:8767/stream/delay?message=hello+delay&delayLevel=2"
+echo ""
+sleep 8
+
+if grep -q "\[延迟消息\] 收到: hello delay" logs/stream-sample.log; then
+  echo "✓ 延迟消息消费正常"
+  echo "--- 发送日志 ---"
+  grep "发送延迟消息: hello delay" logs/stream-sample.log | tail -1
+  echo "--- 接收日志 ---"
+  grep "\[延迟消息\]" logs/stream-sample.log | tail -1
+else
+  echo "✗ 未收到延迟消息"
+fi
+
+echo ""
+echo "=========================================="
+echo "  场景5: 顺序消息 (REST → fifo-topic → fifo Consumer)"
+echo "=========================================="
+
+echo "发送10条顺序消息 (相同 orderKey)..."
+for i in $(seq 1 10); do
+  curl -s -X POST "http://127.0.0.1:8767/stream/fifo?message=order-msg-${i}&orderKey=order-1"
+  echo ""
+done
+sleep 5
+
+FIFO_COUNT=$(grep -c "\[顺序消息\] 收到: order-msg-" logs/stream-sample.log 2>/dev/null || echo "0")
+if [ "$FIFO_COUNT" -ge 10 ]; then
+  echo "✓ 顺序消息消费正常 (${FIFO_COUNT} 条)"
+  echo "--- 接收顺序 ---"
+  grep "\[顺序消息\]" logs/stream-sample.log | tail -10
+else
+  echo "✗ 顺序消息消费不足 (期望≥10, 实际${FIFO_COUNT})"
 fi
 
 # ========== Step 6: 清理 ==========

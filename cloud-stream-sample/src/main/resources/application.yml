@@ -5,7 +5,7 @@ spring:
     name: stream-sample
   cloud:
     function:
-      definition: input;input2;output2;transform;transformPublish
+      definition: input;input2;output2;transform;transformPublish;delay;fifo
     stream:
       rocketmq:
         binder:
@@ -23,6 +23,9 @@ spring:
           group: stream-demo-consumer-group2
         output2-out-0:
           destination: stream-demo-topic2
+          producer:
+            poller:
+              fixed-delay: 5000 # default 1000
         # 场景3: 消息处理管道 - transform 函数
         transform-in-0:
           destination: stream-transform-topic
@@ -32,3 +35,20 @@ spring:
         # 场景3辅助: REST API 通过 binder 发布到 transform 输入 topic
         transformPublish-out-0:
           destination: stream-transform-topic
+        # 场景4: 延迟消息 - stream-delay-topic
+        delay-in-0:
+          destination: stream-delay-topic
+          group: stream-delay-group
+        delayPublish-out-0:
+          destination: stream-delay-topic
+        # 场景5: 顺序消息 - stream-fifo-topic
+        fifo-in-0:
+          destination: stream-fifo-topic
+          group: stream-fifo-group
+          consumer:
+            orderly: true
+        fifoPublish-out-0:
+          destination: stream-fifo-topic
+          producer:
+            orderly: true
+            partitionKeyExpression: headers['ORDER_KEY']

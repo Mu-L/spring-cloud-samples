@@ -268,13 +268,15 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 
 ### 📨 Stream 演示
 
-演示 Spring Cloud Stream 的三大核心场景：
+演示 Spring Cloud Stream 的五大核心场景：
 
 | 场景 | 函数类型 | 消息流 | 说明 |
 |------|----------|--------|------|
 | 基础消费 | Consumer | StreamBridge → topic → input | 启动时自动发送 "Hello" 并消费 |
 | 定时消息源 | Supplier | output2 → topic2 → input2 | 每隔1秒自动发送 "你好" |
 | 消息处理管道 | Function | REST → transform → [toUpperCase] → topic2 | 消息转换后输出 |
+| 延迟消息 | Consumer | StreamBridge → delay-topic → delay | 通过 DELAY header 指定延迟级别后延迟投递 |
+| 顺序消息 | Consumer | StreamBridge → fifo-topic → fifo | 相同 orderKey 保证顺序消费 |
 
 #### 🏃 Run RocketMQ locally
 download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
@@ -285,23 +287,39 @@ bin/mqbroker -n localhost:9876
 
 #### 📝 Create Topic and Consumer Group
 ```shell
+# 基础消息
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic2 -a +message.type=NORMAL
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-demo-consumer-group2
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-transform-topic -a +message.type=NORMAL
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-transform-group
+# 延迟消息（DELAY 类型）
+bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-delay-topic -a +message.type=DELAY
+bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-delay-group
+# 顺序消息（FIFO 类型）
+bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-fifo-topic -a +message.type=FIFO
+bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-fifo-group
 ```
 
 #### 🏃 Run Demo
 启动`stream`，观察日志（基础消费 + 定时消息源自动触发）
 
-通过 REST API 交互式验证消息处理管道：
+通过 REST API 交互式验证各场景：
 ```shell
-# 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
+# 场景3: 消息处理管道 - 发送消息到 transform 函数（观察大写转换）
 curl -X POST "http://localhost:8767/stream/send?message=hello+spring+cloud"
 # 日志观察: 消息转换: hello spring cloud -> [PROCESSED] HELLO SPRING CLOUD
-# 日志观察: 收到消息: [PROCESSED] HELLO SPRING CLOUD STREAM
+
+# 场景4: 延迟消息 - 发送延迟消息（delayLevel=2 即 5秒后投递）
+curl -X POST "http://localhost:8767/stream/delay?message=hello+delay&delayLevel=2"
+# 日志观察: [延迟消息] 收到: hello delay (时间: ...) — 注意接收时间与发送时间差约5秒
+
+# 场景5: 顺序消息 - 发送带相同 orderKey 的消息（保证顺序消费）
+curl -X POST "http://localhost:8767/stream/fifo?message=order-1&orderKey=order-A"
+curl -X POST "http://localhost:8767/stream/fifo?message=order-2&orderKey=order-A"
+curl -X POST "http://localhost:8767/stream/fifo?message=order-3&orderKey=order-A"
+# 日志观察: [顺序消息] 收到消息按发送顺序依次被消费
 ```
 
 查看消费组的消费进度：

@@ -597,6 +597,8 @@ demo_urls() {
     echo "     • 基础消费: StreamBridge → topic → Consumer"
     echo "     • 定时消息源: Supplier 每秒自动发送"
     echo "     • 消息处理管道: Function 转换管道 (REST → toUpperCase → output)"
+    echo "     • 延迟消息: StreamBridge + DELAY header 延迟投递"
+    echo "     • 顺序消息: StreamBridge + ORDER_KEY 顺序消费"
     echo "     → 使用 demo-spring-cloud skill 执行 verify-stream.sh"
     echo ""
     echo "  5️⃣  Seata 分布式事务 (端口 18081-18084):"
