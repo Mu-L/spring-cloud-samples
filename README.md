@@ -473,7 +473,7 @@ export OPENAI_API_KEY=your-api-key-here
 | `/ai/advanced/conversation`   | 多轮对话（连续发送，AI 记住上下文）     |
 | `/ai/advanced/creative`       | 带温度参数的创意性对话             |
 
-#### Tool Calling & Agent
+#### Tool Calling & MCP Server
 
 | 接口                         | 说明                         |
 |----------------------------|----------------------------|
@@ -482,8 +482,6 @@ export OPENAI_API_KEY=your-api-key-here
 | `/ai/tool/smart-assistant` | 智能助手（自动选择合适的工具）            |
 | `/ai/agent/chat`           | ReAct Agent（多步推理 + 工具组合）   |
 | `/ai/demo`                 | 项目演示 Agent（自主调用工具验证本项目）    |
-
-#### MCP Server
 
 通过 SSE 端点 `http://localhost:8888/sse` 暴露工具，支持跨进程 Agent 通信。
 
