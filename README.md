@@ -38,7 +38,7 @@
 | 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
 | 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
 | 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
-| 🔄 cloud-seata-sample            | seata             | -            | Apache Seata (含 7 个子模块) |
+| 🔄 cloud-seata-sample            | seata             | -            | Seata (含 7 个子模块)            |
 | 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
 
 <picture>
@@ -182,13 +182,13 @@ curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 
 项目内置 trace 传播验证脚本，覆盖五条跨服务链路，验证 Spring Boot Observation 与各框架的 trace context 自动/手动传播：
 
-| 链路 | 路径 | trace 传播 |
-|------|------|------------|
-| Web → Web | consumer → provider | RestTemplate / FeignClient 自动传播 |
-| Web → gRPC | consumer → grpc-server | gRPC Interceptor 自动传播 |
-| Web → Dubbo | consumer → provider-dubbo | Dubbo ObservationFilter 自动传播 |
-| Reactive → Reactive | consumer-reactive → provider-reactive | WebClient 手动传递 traceparent |
-| Reactive → Dubbo | consumer-reactive → provider-dubbo | Dubbo ObservationFilter 自动传播 |
+| 链路                  | 路径                                    | trace 传播                        |
+|---------------------|---------------------------------------|---------------------------------|
+| Web → Web           | consumer → provider                   | RestTemplate / FeignClient 自动传播 |
+| Web → gRPC          | consumer → grpc-server                | gRPC Interceptor 自动传播           |
+| Web → Dubbo         | consumer → provider-dubbo             | Dubbo ObservationFilter 自动传播    |
+| Reactive → Reactive | consumer-reactive → provider-reactive | WebClient 手动传递 traceparent      |
+| Reactive → Dubbo    | consumer-reactive → provider-dubbo    | Dubbo ObservationFilter 自动传播    |
 
 ```shell
 bash .qoder/skills/demo-spring-cloud/verify-trace.sh
@@ -266,14 +266,14 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 
 演示 Spring Cloud Stream 的六大核心场景：
 
-| 场景 | 函数类型 | 消息流 | 说明 |
-|------|----------|--------|------|
-| 基础消费 | Consumer | StreamBridge → topic → input | 启动时自动发送 "Hello" 并消费 |
-| 定时消息源 | Supplier | output2 → topic2 → input2 | 每隔1秒自动发送 "你好" |
-| 消息处理管道 | Function | REST → transform → [toUpperCase] → topic2 | 消息转换后输出 |
-| 延迟消息 | Consumer | StreamBridge → delay-topic → delay | 通过 DELAY header 指定延迟级别后延迟投递 |
-| 顺序消息 | Consumer | StreamBridge → fifo-topic → fifo | 相同 orderKey 保证顺序消费 |
-| 事务消息 | Consumer | StreamBridge → tx-topic → tx | 两阶段提交，随机模拟本地事务成功/失败 |
+| 场景     | 函数类型     | 消息流                                       | 说明                          |
+|--------|----------|-------------------------------------------|-----------------------------|
+| 基础消费   | Consumer | StreamBridge → topic → input              | 启动时自动发送 "Hello" 并消费         |
+| 定时消息源  | Supplier | output2 → topic2 → input2                 | 每隔1秒自动发送 "你好"               |
+| 消息处理管道 | Function | REST → transform → [toUpperCase] → topic2 | 消息转换后输出                     |
+| 延迟消息   | Consumer | StreamBridge → delay-topic → delay        | 通过 DELAY header 指定延迟级别后延迟投递 |
+| 顺序消息   | Consumer | StreamBridge → fifo-topic → fifo          | 相同 orderKey 保证顺序消费          |
+| 事务消息   | Consumer | StreamBridge → tx-topic → tx              | 两阶段提交，随机模拟本地事务成功/失败         |
 
 #### 🏃 Run RocketMQ locally
 download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
@@ -343,15 +343,15 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 
 包含 7 个子模块，按依赖关系分四层启动：
 
-| 层级 | 服务 | 端口 | 说明 |
-|------|------|------|------|
-| 1 | account-dubbo-service | 50071 | 账户服务 Dubbo 实现（基础层） |
-| 1 | account-service | 18084 | 账户服务 REST 实现 |
-| 2 | storage-dubbo-service | 50072 | 库存服务 Dubbo 实现 |
-| 2 | order-dubbo-service | 50073 | 订单服务 Dubbo 实现（依赖 account-dubbo-service） |
-| 3 | storage-service | 18082 | 库存服务 REST 实现 |
-| 3 | order-service | 18083 | 订单服务 REST 实现 |
-| 4 | business-service | 18081 | 业务入口（依赖 storage-dubbo + order-dubbo） |
+| 层级 | 服务                    | 端口    | 说明                                      |
+|----|-----------------------|-------|-----------------------------------------|
+| 1  | account-dubbo-service | 50071 | 账户服务 Dubbo 实现（基础层）                      |
+| 1  | account-service       | 18084 | 账户服务 REST 实现                            |
+| 2  | storage-dubbo-service | 50072 | 库存服务 Dubbo 实现                           |
+| 2  | order-dubbo-service   | 50073 | 订单服务 Dubbo 实现（依赖 account-dubbo-service） |
+| 3  | storage-service       | 18082 | 库存服务 REST 实现                            |
+| 3  | order-service         | 18083 | 订单服务 REST 实现                            |
+| 4  | business-service      | 18081 | 业务入口（依赖 storage-dubbo + order-dubbo）    |
 
 验证分布式事务的回滚与提交，支持三种调用链路：RestTemplate / FeignClient / DubboReference。
 
@@ -368,30 +368,30 @@ export OPENAI_API_KEY=your-api-key-here
 
 #### 基础能力
 
-| 接口 | 说明 | 示例 |
-|------|------|------|
-| `/ai/chat` | 简单聊天 | `curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"` |
-| `/ai/chat/stream` | 流式输出（SSE） | `curl --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"` |
-| `/ai/extract` | 结构化输出 | `curl --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"` |
+| 接口                | 说明        | 示例                                                                                        |
+|-------------------|-----------|-------------------------------------------------------------------------------------------|
+| `/ai/chat`        | 简单聊天      | `curl --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"`                |
+| `/ai/chat/stream` | 流式输出（SSE） | `curl --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"`      |
+| `/ai/extract`     | 结构化输出     | `curl --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"` |
 
 #### 高级对话
 
-| 接口 | 说明 |
-|------|------|
+| 接口                            | 说明                      |
+|-------------------------------|-------------------------|
 | `/ai/advanced/system-message` | System Message 设定 AI 角色 |
-| `/ai/advanced/few-shot` | Few-shot Prompting 示例引导 |
-| `/ai/advanced/conversation` | 多轮对话（连续发送，AI 记住上下文） |
-| `/ai/advanced/creative` | 带温度参数的创意性对话 |
+| `/ai/advanced/few-shot`       | Few-shot Prompting 示例引导 |
+| `/ai/advanced/conversation`   | 多轮对话（连续发送，AI 记住上下文）     |
+| `/ai/advanced/creative`       | 带温度参数的创意性对话             |
 
 #### Tool Calling & Agent
 
-| 接口 | 说明 |
-|------|------|
-| `/ai/tool/weather` | 天气查询（AI 自动调用 WeatherTools） |
-| `/ai/tool/time` | 时间查询（AI 自动调用 TimeTools） |
-| `/ai/tool/smart-assistant` | 智能助手（自动选择合适的工具） |
-| `/ai/agent/chat` | ReAct Agent（多步推理 + 工具组合） |
-| `/ai/demo` | 项目演示 Agent（自主调用工具验证本项目） |
+| 接口                         | 说明                         |
+|----------------------------|----------------------------|
+| `/ai/tool/weather`         | 天气查询（AI 自动调用 WeatherTools） |
+| `/ai/tool/time`            | 时间查询（AI 自动调用 TimeTools）    |
+| `/ai/tool/smart-assistant` | 智能助手（自动选择合适的工具）            |
+| `/ai/agent/chat`           | ReAct Agent（多步推理 + 工具组合）   |
+| `/ai/demo`                 | 项目演示 Agent（自主调用工具验证本项目）    |
 
 #### MCP Server
 
@@ -399,26 +399,26 @@ export OPENAI_API_KEY=your-api-key-here
 
 #### 多模态视觉识别
 
-| 接口 | 说明 |
-|------|------|
-| `/ai/vision/analyze-url` | URL 图片分析 |
-| `/ai/vision/analyze-upload` | 上传图片分析 |
-| `/ai/vision/ocr` | OCR 文字识别 |
-| `/ai/vision/chart-analysis` | 图表分析 |
-| `/ai/vision/code-from-image` | 代码截图转代码 |
-| `/ai/vision/compare` | 多图片对比 |
+| 接口                           | 说明       |
+|------------------------------|----------|
+| `/ai/vision/analyze-url`     | URL 图片分析 |
+| `/ai/vision/analyze-upload`  | 上传图片分析   |
+| `/ai/vision/ocr`             | OCR 文字识别 |
+| `/ai/vision/chart-analysis`  | 图表分析     |
+| `/ai/vision/code-from-image` | 代码截图转代码  |
+| `/ai/vision/compare`         | 多图片对比    |
 
 #### DeepSeek 多提供商集成
 
 同一模块内集成 DashScope + DeepSeek 两个提供商，验证 Spring AI 的多模型管理能力。需额外配置 `export DEEPSEEK_API_KEY=your-key`。
 
-| 接口 | 说明 |
-|------|------|
-| `/deepseek/chat` | 简单聊天 |
-| `/deepseek/chat/stream` | 流式输出 |
+| 接口                         | 说明                  |
+|----------------------------|---------------------|
+| `/deepseek/chat`           | 简单聊天                |
+| `/deepseek/chat/stream`    | 流式输出                |
 | `/deepseek/system-message` | System Message 设定角色 |
-| `/deepseek/creative` | 创意性对话 |
-| `/deepseek/agent/chat` | ReAct Agent |
+| `/deepseek/creative`       | 创意性对话               |
+| `/deepseek/agent/chat`     | ReAct Agent         |
 
 > 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI 章节。
 
