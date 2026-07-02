@@ -30,7 +30,7 @@
 | 📤 cloud-provider-sample         | provider          | 8765         | Web Provider                |
 | ⚡ cloud-consumer-reactive-sample | consumer-reactive | 8763         | Reactive Web Consumer       |
 | ⚡ cloud-provider-reactive-sample | provider-reactive | 8762         | Reactive Web Provider       |
-| 🔗 cloud-provider-dubbo-sample   | provider-dubbo    | 50051        | Dubbo Provider              |
+| 🚀 cloud-provider-dubbo-sample   | provider-dubbo    | 50051        | Dubbo Provider              |
 | 📋 cloud-sample-api              | api               | -            | Interface & Proto           |
 | ⚙️ cloud-nacos-config-sample     | config            | 8761         | Nacos Config                |
 | 🔍 cloud-nacos-discovery-sample  | discovery         | 8760         | Nacos Discovery             |
@@ -111,7 +111,7 @@ curl 'http://localhost:8763/hi?name=hongxi'
 curl 'http://localhost:8764/consumer-reactive-sample/hi?name=hongxi'
 ```
 
-#### 🔗 Dubbo 服务注册与发现
+#### 🚀 Dubbo 服务注册与发现
 接着启动provider-dubbo <br>
 直接访问(consumer → provider-dubbo)
 ```shell
