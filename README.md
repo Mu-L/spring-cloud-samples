@@ -40,6 +40,7 @@
 | 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
 | 🔄 cloud-seata-sample            | seata             | -            | Seata (含 7 个子模块)            |
 | 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
+| 🕒 cloud-scheduling-sample       | scheduling        | -            | Alibaba Schedulerx          |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
