@@ -64,6 +64,12 @@
         </dependency>
         <dependency>
             <groupId>org.hongxi</groupId>
+            <artifactId>cloud-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hongxi</groupId>
             <artifactId>cloud-sample-api</artifactId>
             <version>${project.version}</version>
         </dependency>

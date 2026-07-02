@@ -4,15 +4,15 @@
 
 本模块演示如何使用 Spring Cloud Alibaba Seata 完成分布式事务接入，包含以下四个微服务：
 
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| business-service | 18081 | 业务服务（入口），通过 RestTemplate / FeignClient 调用下游服务 |
-| storage-service | 18082 | 库存服务，负责扣减商品库存 |
-| order-service | 18083 | 订单服务，负责创建订单并调用账户服务 |
-| account-service | 18084 | 账户服务，负责扣减用户余额 |
-| account-dubbo-service | 50071 | 账户服务 Dubbo 实现（Triple 协议） |
-| storage-dubbo-service | 50072 | 库存服务 Dubbo 实现（Triple 协议） |
-| order-dubbo-service | 50073 | 订单服务 Dubbo 实现（Triple 协议） |
+| 服务                    | 端口    | 说明                                                             |
+|-----------------------|-------|----------------------------------------------------------------|
+| business-service      | 18081 | 业务服务（入口），通过 RestTemplate / FeignClient / DubboReference 调用下游服务 |
+| storage-service       | 18082 | 库存服务，负责扣减商品库存                                                  |
+| order-service         | 18083 | 订单服务，负责创建订单并调用账户服务                                             |
+| account-service       | 18084 | 账户服务，负责扣减用户余额                                                  |
+| account-dubbo-service | 50071 | 账户服务 Dubbo 实现（Triple 协议）                                       |
+| storage-dubbo-service | 50072 | 库存服务 Dubbo 实现（Triple 协议）                                       |
+| order-dubbo-service   | 50073 | 订单服务 Dubbo 实现（Triple 协议）                                       |
 
 ### 准备工作
 
