@@ -283,14 +283,14 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 | 顺序消息   | Consumer | StreamBridge → fifo-topic → fifo          | 相同 orderKey 保证顺序消费          |
 | 事务消息   | Consumer | StreamBridge → tx-topic → tx              | 两阶段提交，随机模拟本地事务成功/失败         |
 
-#### 🏃 Run RocketMQ locally
-download [rocketmq-all-5.5.0-bin-release.zip](https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip)
+前置条件：本地运行 RocketMQ
 ```shell
+# 下载并启动 RocketMQ
 bin/mqnamesrv
 bin/mqbroker -n localhost:9876
 ```
 
-#### 📝 Create Topic and Consumer Group
+创建 Topic 和 Consumer Group：
 ```shell
 # 基础消息
 bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-demo-topic -a +message.type=NORMAL
@@ -310,8 +310,7 @@ bin/mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-tx-topic -
 bin/mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-tx-group
 ```
 
-#### 🏃 Run Demo
-启动`stream`，观察日志（基础消费 + 定时消息源自动触发）
+启动 `stream`，观察日志（基础消费 + 定时消息源自动触发）
 
 场景1、2 启动后自动触发，观察日志即可。场景2 验证后通过 Actuator 端点停止定时消息源，避免后续场景日志刷屏：
 ```shell
