@@ -415,10 +415,16 @@ curl 'http://localhost:50051/api/greet/lily?lang=zh'
 curl http://localhost:8764/provider-dubbo-sample/api/hello/lily
 ```
 
-### 7. 纯 gRPC Server/Client 演示
+### 7. gRPC 全功能演示
 
-启动后观察日志即可：
-- `cloud-grpc-client-sample`：日志中出现 `Hello, lily` 表示调用成功
+启动 grpc-server、grpc-client，通过 `CommandLineRunner` 自动演示四种 gRPC 调用模式：
+
+| 模式 | 说明 | 日志预期 |
+|------|------|----------|
+| Unary | 客户端发送单个请求，服务端返回单个响应 | `Unary result: Hello, lily` |
+| Server Streaming | 客户端发送上限值，服务端流式返回斐波那契数列 | `Fibonacci numbers up to 100: 0, 1, 1, 2, 3, 5, 8 ...` |
+| Client Streaming | 客户端流式发送多个数字，服务端汇总返回总和与平均值 | `Accumulate result: count=5, sum=150.0, average=30.0` |
+| Bidirectional Streaming | 双向流式交互，客户端发送名称，服务端实时回复带序号的问候 | `Received: Hello, Alice! (msg #1)` |
 
 ### 8. Trace 链路追踪
 

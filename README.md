@@ -158,9 +158,6 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
-#### 🎯 纯 gRPC Server/Client 演示
-启动grpc-server,grpc-client，观察日志
-
 #### 🌐 Dubbo REST 演示
 启动provider-dubbo,gateway <br>
 直接访问`dubbo rest`接口
@@ -177,6 +174,17 @@ curl 'http://localhost:8764/provider-dubbo-sample/api/add?a=1&b=2'
 curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Type: application/json" -d '{"message":"hi"}'
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
+
+#### 🎯 gRPC 四种调用模式
+
+启动 grpc-server、grpc-client，通过 `CommandLineRunner` 自动演示四种 gRPC 调用模式：
+
+| 模式                      | 说明                           | 日志预期                                                   |
+|-------------------------|------------------------------|--------------------------------------------------------|
+| Unary                   | 客户端发送单个请求，服务端返回单个响应          | `Unary result: Hello, lily`                            |
+| Server Streaming        | 客户端发送上限值，服务端流式返回斐波那契数列       | `Fibonacci numbers up to 100: 0, 1, 1, 2, 3, 5, 8 ...` |
+| Client Streaming        | 客户端流式发送多个数字，服务端汇总返回总和与平均值    | `Accumulate result: count=5, sum=150.0, average=30.0`  |
+| Bidirectional Streaming | 双向流式交互，客户端发送名称，服务端实时回复带序号的问候 | `Received: Hello, Alice! (msg #1)`                     |
 
 ### 🔍 Trace 链路追踪
 
@@ -353,7 +361,18 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 | 3  | order-service         | 18083 | 订单服务 REST 实现                            |
 | 4  | business-service      | 18081 | 业务入口（依赖 storage-dubbo + order-dubbo）    |
 
-验证分布式事务的回滚与提交，支持三种调用链路：RestTemplate / FeignClient / DubboReference。
+验证分布式事务的回滚与提交，支持三种调用链路：
+```shell
+# RestTemplate 链路（business → storage-service → account-service）
+curl http://localhost:18081/seata/rest
+
+# FeignClient 链路（business → storage-service → account-service）
+curl http://localhost:18081/seata/feign
+
+# DubboReference 链路（business → storage-dubbo → account-dubbo）
+curl http://localhost:18081/seata/dubbo
+```
+> order-service 内置随机异常模拟，多次调用可观察到事务回滚（数据恢复）和提交（数据扣减）两种场景。
 
 ### 🤖 Spring AI 演示
 

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+package org.hongxi.cloud.sample.idl.stream;
+
+// ==================== Server Streaming ====================
+// 客户端发送一个上限数字，服务端流式返回该范围内的斐波那契数列
+message FibonacciRequest {
+  int32 limit = 1;
+}
+
+message FibonacciReply {
+  int64 value = 1;
+}
+
+// ==================== Client Streaming ====================
+// 客户端流式发送多个数字，服务端汇总后返回总和与平均值
+message AccumulateRequest {
+  double value = 1;
+}
+
+message AccumulateReply {
+  double sum = 1;
+  double average = 2;
+  int32 count = 3;
+}
+
+// ==================== Bidirectional Streaming ====================
+// 客户端流式发送多个名称，服务端对每个名称返回问候语（双向实时交互）
+message ChatRequest {
+  string name = 1;
+}
+
+message ChatReply {
+  string greeting = 1;
+  int64 sequence = 2;
+}
+
+// ==================== Streaming Service ====================
+service StreamingService {
+  // Server Streaming: 服务端流式返回斐波那契数列
+  rpc fibonacci(FibonacciRequest) returns (stream FibonacciReply);
+
+  // Client Streaming: 客户端流式发送数字，服务端汇总
+  rpc accumulate(stream AccumulateRequest) returns (AccumulateReply);
+
+  // Bidirectional Streaming: 双向流式聊天
+  rpc chat(stream ChatRequest) returns (stream ChatReply);
+}

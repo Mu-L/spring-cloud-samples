@@ -519,10 +519,13 @@ demo_urls() {
   done
   echo "=================================="
 
-  # 纯 grpc server/client 演示验证
+  # gRPC 全功能演示验证（Unary / 三种流式 / 服务发现）
   echo ""
-  echo "========== 纯 gRPC server/client 验证 =========="
-  verify_log "$LOG_DIR/grpc-client.log" "Hello, lily" "grpc-client 调用 grpc-server"
+  echo "========== gRPC 全功能演示验证 =========="
+  verify_log "$LOG_DIR/grpc-client.log" "Unary result" "gRPC Unary RPC"
+  verify_log "$LOG_DIR/grpc-client.log" "Fibonacci numbers" "gRPC Server Streaming (Fibonacci)"
+  verify_log "$LOG_DIR/grpc-client.log" "Accumulate result" "gRPC Client Streaming (Accumulate)"
+  verify_log "$LOG_DIR/grpc-client.log" "BiDi streaming completed" "gRPC Bidirectional Streaming (Chat)"
   echo "=================================="
 
   # Dubbo REST 接口验证
