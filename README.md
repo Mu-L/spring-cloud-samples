@@ -342,7 +342,7 @@ curl 'http://localhost:8766/hi?name=test&version=1.0'  # 第二次：Blocked by 
 
 > 规则通过 Nacos 动态生效，无需重启服务。恢复 provider 并等待熔断窗口过期后自动恢复正常。
 
-### 📨 Stream 演示
+### 📨 Stream 消息驱动演示
 
 演示 Spring Cloud Stream 的六大核心场景：
 
