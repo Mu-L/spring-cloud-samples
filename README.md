@@ -158,7 +158,7 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
-#### 🌐 Dubbo REST 演示
+#### 🌐 Dubbo REST 服务发现
 启动provider-dubbo,gateway <br>
 直接访问`dubbo rest`接口
 ```shell
@@ -175,7 +175,7 @@ curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Ty
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
 
-#### 🎯 gRPC 四种调用模式
+### 🎯 gRPC 四种调用模式
 
 启动 grpc-server、grpc-client，通过 `CommandLineRunner` 自动演示四种 gRPC 调用模式：
 
