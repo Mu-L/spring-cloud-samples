@@ -7,12 +7,14 @@
 #   3. Web         → Dubbo      : consumer-sample        → provider-dubbo-sample  (Dubbo)
 #   4. Reactive Web→ Reactive Web: consumer-reactive-sample → provider-reactive-sample (WebClient, 手动传递 traceparent)
 #   5. Reactive Web→ Dubbo      : consumer-reactive-sample → provider-dubbo-sample  (Dubbo)
-# 前提: provider-sample, provider-reactive, provider-dubbo, grpc-server, consumer-sample, consumer-reactive-sample 已启动
+# 自动启动: provider-sample, provider-reactive, provider-dubbo, grpc-server, consumer-sample, consumer-reactive-sample
 
 # 自动检测项目根目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 LOG_DIR="$PROJECT_ROOT/logs"
+PID_DIR="$PROJECT_ROOT/.pids"
+mkdir -p "$LOG_DIR" "$PID_DIR"
 
 VERIFY_PASS=0
 VERIFY_FAIL=0
@@ -46,65 +48,87 @@ echo "=========================================="
 echo "  Trace 链路追踪验证（五条链路）"
 echo "=========================================="
 
-# ========== Step 1: 检查前置服务 ==========
+# ========== Step 1: 检查/启动前置服务 ==========
 echo ""
-echo ">>> Step 1: 检查前置服务..."
+echo ">>> Step 1: 检查/启动前置服务..."
 
-ALL_OK=true
-
-# consumer-sample (8766) — 链路 1/2/3 的入口
-if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8766/actuator/health" 2>/dev/null | grep -q "200"; then
-  pass "consumer-sample (8766) 已运行 [链路 1/2/3 入口]"
+# 检查 Nacos
+if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+  echo "  ✓ Nacos 已运行"
 else
-  fail "consumer-sample (8766) 未就绪"
-  ALL_OK=false
+  echo "  ✗ Nacos 未运行，请先启动 Nacos"
+  exit 1
 fi
 
-# consumer-reactive-sample (8763) — 链路 4/5 的入口
-if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8763/actuator/health" 2>/dev/null | grep -q "200"; then
-  pass "consumer-reactive-sample (8763) 已运行 [链路 4/5 入口]"
-else
-  fail "consumer-reactive-sample (8763) 未就绪"
-  ALL_OK=false
-fi
+# 辅助函数: 检查/启动服务
+check_or_start() {
+  local name="$1" port="$2" module_dir="$3" jar_name="$4" log_name="$5" pid_name="$6"
+  if curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port/actuator/health" 2>/dev/null | grep -q "200"; then
+    pass "$name ($port) 已运行"
+  else
+    echo "  → $name ($port) 未运行，正在启动..."
+    if [ ! -f "$module_dir/target/$jar_name" ]; then
+      echo "  打包 $module_dir..."
+      ./mvnw -pl "$module_dir" -am package -DskipTests -q
+    fi
+    java -jar "$module_dir/target/$jar_name" > "$LOG_DIR/$log_name.log" 2>&1 &
+    echo $! > "$PID_DIR/$pid_name.pid"
+    echo "  $name 启动中 (PID: $!)..."
+    for i in $(seq 1 60); do
+      if curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port/actuator/health" 2>/dev/null | grep -q "200"; then
+        pass "$name ($port) 已就绪 (${i}s)"
+        return
+      fi
+      if [ $i -eq 60 ]; then
+        fail "$name 启动超时，请查看 $LOG_DIR/$log_name.log"
+        exit 1
+      fi
+      sleep 1
+    done
+  fi
+}
 
+# 按依赖顺序启动: provider → grpc-server → consumer → consumer-reactive
 # provider-sample (8765) — 链路 1 目标
-if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8765/actuator/health" 2>/dev/null | grep -q "200"; then
-  pass "provider-sample (8765) 已运行 [链路 1 目标]"
-else
-  fail "provider-sample (8765) 未就绪 [链路 1 需要]"
-  ALL_OK=false
-fi
+check_or_start "provider-sample" 8765 "cloud-provider-sample" "cloud-provider-sample.jar" "provider" "provider"
 
 # provider-reactive-sample (8762) — 链路 4 目标
-if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8762/actuator/health" 2>/dev/null | grep -q "200"; then
-  pass "provider-reactive-sample (8762) 已运行 [链路 4 目标]"
-else
-  fail "provider-reactive-sample (8762) 未就绪 [链路 4 需要]"
-  ALL_OK=false
-fi
+check_or_start "provider-reactive-sample" 8762 "cloud-provider-reactive-sample" "cloud-provider-reactive-sample.jar" "provider-reactive" "provider-reactive"
 
 # grpc-server-sample (8090) — 链路 2 目标
-if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8090/actuator/health" 2>/dev/null | grep -q "200"; then
-  pass "grpc-server-sample (8090) 已运行 [链路 2 目标]"
-else
-  fail "grpc-server-sample (8090) 未就绪 [链路 2 需要]"
-  ALL_OK=false
-fi
+check_or_start "grpc-server-sample" 8090 "cloud-grpc-server-sample" "cloud-grpc-server-sample.jar" "grpc-server" "grpc-server"
 
-# provider-dubbo-sample — 链路 3/5 目标（无 HTTP 端口，通过 Nacos 注册验证）
-# Nacos 3.x 不支持 v1 API，改用 nacos-discovery-sample 的 /discovery/services 端点
-if curl -s "http://localhost:8760/discovery/services" 2>/dev/null | grep -q "provider-dubbo-sample"; then
+# consumer-sample (8766) — 链路 1/2/3 的入口
+check_or_start "consumer-sample" 8766 "cloud-consumer-sample" "cloud-consumer-sample.jar" "consumer" "consumer"
+
+# consumer-reactive-sample (8763) — 链路 4/5 的入口
+check_or_start "consumer-reactive-sample" 8763 "cloud-consumer-reactive-sample" "cloud-consumer-reactive-sample.jar" "consumer-reactive" "consumer-reactive"
+
+# provider-dubbo-sample — 链路 3/5 目标（无 HTTP 端口，通过 Dubbo 端口 50051 或 Nacos 注册验证）
+if lsof -ti :50051 -sTCP:LISTEN >/dev/null 2>&1; then
+  pass "provider-dubbo-sample 已运行 (Dubbo 端口 50051) [链路 3/5 目标]"
+elif curl -s "http://localhost:8760/discovery/services" 2>/dev/null | grep -q "provider-dubbo-sample"; then
   pass "provider-dubbo-sample 已注册到 Nacos [链路 3/5 目标]"
 else
-  fail "provider-dubbo-sample 未在 Nacos 中注册 [链路 3/5 需要]"
-  ALL_OK=false
-fi
-
-if [ "$ALL_OK" = false ]; then
-  echo ""
-  echo "✗ 请先启动相关服务: sh start-all.sh 或 ./mvnw -pl <模块> spring-boot:run"
-  exit 1
+  echo "  → provider-dubbo-sample 未注册，正在启动..."
+  if [ ! -f cloud-provider-dubbo-sample/target/cloud-provider-dubbo-sample.jar ]; then
+    echo "  打包 cloud-provider-dubbo-sample..."
+    ./mvnw -pl cloud-provider-dubbo-sample -am package -DskipTests -q
+  fi
+  java -jar cloud-provider-dubbo-sample/target/cloud-provider-dubbo-sample.jar > "$LOG_DIR/provider-dubbo.log" 2>&1 &
+  echo $! > "$PID_DIR/provider-dubbo.pid"
+  echo "  provider-dubbo-sample 启动中 (PID: $!)..."
+  for i in $(seq 1 60); do
+    if curl -s "http://localhost:8760/discovery/services" 2>/dev/null | grep -q "provider-dubbo-sample"; then
+      pass "provider-dubbo-sample 已注册到 Nacos (${i}s)"
+      break
+    fi
+    if [ $i -eq 60 ]; then
+      fail "provider-dubbo-sample 注册超时，请查看 $LOG_DIR/provider-dubbo.log"
+      exit 1
+    fi
+    sleep 1
+  done
 fi
 
 # ========== 检查日志文件可用性 ==========

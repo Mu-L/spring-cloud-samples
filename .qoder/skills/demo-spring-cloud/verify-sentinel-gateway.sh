@@ -1,8 +1,12 @@
 #!/bin/bash
 # Sentinel 网关限流验证脚本
 # 用法: bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
-# 前提: cloud-gateway-sample(8764), cloud-consumer-sample(8766),
-#        cloud-provider-sample(8765), cloud-nacos-config-sample(8761) 已启动
+# 自动启动: cloud-gateway-sample(8764), cloud-consumer-sample(8766),
+#           cloud-provider-sample(8765), cloud-nacos-config-sample(8761)
+
+cd "$(dirname "$0")/../../.."
+PROJECT_DIR=$(pwd)
+mkdir -p logs .pids
 
 NACOS_CONFIG_URL="http://localhost:8761/nacos"
 GATEWAY_URL="http://localhost:8764"
@@ -11,29 +15,51 @@ echo "=========================================="
 echo "  Sentinel 网关限流验证"
 echo "=========================================="
 
-# ========== Step 1: 检查前置服务 ==========
+# ========== Step 1: 检查/启动前置服务 ==========
 echo ""
-echo ">>> Step 1: 检查前置服务..."
+echo ">>> Step 1: 检查/启动前置服务..."
 
-SERVICES="Gateway:8764 Consumer:8766 Provider:8765 NacosConfig:8761"
+# 1a: 检查 Nacos
+if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+  echo "  ✓ Nacos 已运行"
+else
+  echo "  ✗ Nacos 未运行，请先启动 Nacos"
+  exit 1
+fi
 
-ALL_OK=true
-for entry in $SERVICES; do
-  name=${entry%%:*}
-  port=${entry##*:}
+# 辅助函数: 检查/启动服务
+check_or_start() {
+  local name="$1" port="$2" module_dir="$3" jar_name="$4" log_name="$5" pid_name="$6"
   if curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port/actuator/health" 2>/dev/null | grep -q "200"; then
     echo "  ✓ $name ($port) 已运行"
   else
-    echo "  ✗ $name ($port) 未就绪"
-    ALL_OK=false
+    echo "  → $name ($port) 未运行，正在启动..."
+    if [ ! -f "$module_dir/target/$jar_name" ]; then
+      echo "  打包 $module_dir..."
+      ./mvnw -pl "$module_dir" -am package -DskipTests -q
+    fi
+    java -jar "$module_dir/target/$jar_name" > "logs/$log_name.log" 2>&1 &
+    echo $! > ".pids/$pid_name.pid"
+    echo "  $name 启动中 (PID: $!)..."
+    for i in $(seq 1 60); do
+      if curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port/actuator/health" 2>/dev/null | grep -q "200"; then
+        echo "  ✓ $name ($port) 已就绪 (${i}s)"
+        return
+      fi
+      if [ $i -eq 60 ]; then
+        echo "  ✗ $name 启动超时，请查看 logs/$log_name.log"
+        exit 1
+      fi
+      sleep 1
+    done
   fi
-done
+}
 
-if [ "$ALL_OK" = false ]; then
-  echo ""
-  echo "✗ 请先启动所有前置服务（gateway, consumer, provider, nacos-config）"
-  exit 1
-fi
+# 按依赖顺序启动: nacos-config → provider → consumer → gateway
+check_or_start "NacosConfig" 8761 "cloud-nacos-config-sample" "cloud-nacos-config-sample.jar" "nacos-config" "nacos-config"
+check_or_start "Provider"     8765 "cloud-provider-sample"      "cloud-provider-sample.jar"      "provider"     "provider"
+check_or_start "Consumer"     8766 "cloud-consumer-sample"       "cloud-consumer-sample.jar"       "consumer"     "consumer"
+check_or_start "Gateway"      8764 "cloud-gateway-sample"        "cloud-gateway-sample.jar"        "gateway"      "gateway"
 
 # ========== Step 2: 发布 Sentinel 配置 ==========
 echo ""

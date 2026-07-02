@@ -1,7 +1,11 @@
 #!/bin/bash
 # Nacos Config 动态配置验证脚本
 # 用法: bash .qoder/skills/demo-spring-cloud/verify-nacos-config.sh
-# 前提: cloud-nacos-config-sample(8761) 已启动
+# 自动启动: cloud-nacos-config-sample(8761)
+
+cd "$(dirname "$0")/../../.."
+PROJECT_DIR=$(pwd)
+mkdir -p logs .pids
 
 NACOS_CONFIG_URL="http://localhost:8761/nacos"
 APP_URL="http://localhost:8761"
@@ -16,17 +20,40 @@ echo "=========================================="
 echo "  Nacos Config 动态配置验证"
 echo "=========================================="
 
-# ========== Step 1: 检查前置服务 ==========
+# ========== Step 1: 检查/启动 nacos-config 模块 ==========
 echo ""
-echo ">>> Step 1: 检查 nacos-config 模块..."
+echo ">>> Step 1: 检查/启动 nacos-config 模块..."
+
+# 检查 Nacos
+if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
+  echo "  ✓ Nacos 已运行"
+else
+  echo "  ✗ Nacos 未运行，请先启动 Nacos"
+  exit 1
+fi
 
 if curl -s -o /dev/null -w "%{http_code}" "$APP_URL/actuator/health" 2>/dev/null | grep -q "200"; then
   pass "nacos-config (8761) 已运行"
 else
-  fail "nacos-config (8761) 未就绪"
-  echo ""
-  echo "✗ 请先启动 nacos-config 模块: ./mvnw -pl cloud-nacos-config-sample spring-boot:run"
-  exit 1
+  echo "  → nacos-config (8761) 未运行，正在启动..."
+  if [ ! -f cloud-nacos-config-sample/target/cloud-nacos-config-sample.jar ]; then
+    echo "  打包 cloud-nacos-config-sample..."
+    ./mvnw -pl cloud-nacos-config-sample -am package -DskipTests -q
+  fi
+  java -jar cloud-nacos-config-sample/target/cloud-nacos-config-sample.jar > logs/nacos-config.log 2>&1 &
+  echo $! > .pids/nacos-config.pid
+  echo "  nacos-config 启动中 (PID: $!)..."
+  for i in $(seq 1 60); do
+    if curl -s -o /dev/null -w "%{http_code}" "$APP_URL/actuator/health" 2>/dev/null | grep -q "200"; then
+      pass "nacos-config (8761) 已就绪 (${i}s)"
+      break
+    fi
+    if [ $i -eq 60 ]; then
+      fail "nacos-config 启动超时，请查看 logs/nacos-config.log"
+      exit 1
+    fi
+    sleep 1
+  done
 fi
 
 # ========== Step 2: 基础配置管理 (发布/读取/删除) ==========
