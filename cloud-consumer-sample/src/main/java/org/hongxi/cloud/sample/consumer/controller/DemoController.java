@@ -1,5 +1,7 @@
 package org.hongxi.cloud.sample.consumer.controller;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.hongxi.cloud.sample.api.DemoService;
 import org.hongxi.cloud.sample.consumer.client.ProviderClient;
@@ -41,19 +43,31 @@ public class DemoController {
     @Autowired
     private GreeterGrpc.GreeterBlockingStub greeterBlockingStub;
 
+    @Autowired
+    private Counter httpRequestsTotal;
+
+    @Autowired
+    private Timer httpResponseTime;
+
     @RequestMapping(value = "/hi", version = "1.0")
     public String hi(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
-        log.info("traceparent: {}", traceparent);
-        log.info("Consumer calling provider via RestTemplate, name: {}", name);
-        return restTemplate.getForObject(
-                "http://provider-sample/hello?name=" + name, String.class);
+        httpRequestsTotal.increment();
+        return httpResponseTime.record(() -> {
+            log.info("traceparent: {}", traceparent);
+            log.info("Consumer calling provider via RestTemplate, name: {}", name);
+            return restTemplate.getForObject(
+                    "http://provider-sample/hello?name=" + name, String.class);
+        });
     }
 
     @RequestMapping(value = "/hi", version = "2.0")
     public String hiFeign(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
-        log.info("traceparent: {}", traceparent);
-        log.info("Consumer calling provider via Feign, name: {}", name);
-        return providerClient.hello(name);
+        httpRequestsTotal.increment();
+        return httpResponseTime.record(() -> {
+            log.info("traceparent: {}", traceparent);
+            log.info("Consumer calling provider via Feign, name: {}", name);
+            return providerClient.hello(name);
+        });
     }
 
     @GetMapping("/services/{service}")
@@ -68,16 +82,22 @@ public class DemoController {
 
     @RequestMapping("/dubbo")
     public String sayHello(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
-        log.info("traceparent: {}", traceparent);
-        log.info("Calling dubbo service, name: {}", name);
-        return demoService.sayHello(name);
+        httpRequestsTotal.increment();
+        return httpResponseTime.record(() -> {
+            log.info("traceparent: {}", traceparent);
+            log.info("Calling dubbo service, name: {}", name);
+            return demoService.sayHello(name);
+        });
     }
 
     @RequestMapping("/grpc")
     public String hello(String name, @RequestHeader(value = "traceparent", required = false) String traceparent) {
-        log.info("traceparent: {}", traceparent);
-        log.info("Calling gRPC service, {}", name);
-        GreeterRequest request = GreeterRequest.newBuilder().setName(name).build();
-        return greeterBlockingStub.greet(request).getMessage();
+        httpRequestsTotal.increment();
+        return httpResponseTime.record(() -> {
+            log.info("traceparent: {}", traceparent);
+            log.info("Calling gRPC service, {}", name);
+            GreeterRequest request = GreeterRequest.newBuilder().setName(name).build();
+            return greeterBlockingStub.greet(request).getMessage();
+        });
     }
 }

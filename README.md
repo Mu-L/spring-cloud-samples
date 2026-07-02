@@ -202,6 +202,13 @@ curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 bash .qoder/skills/demo-spring-cloud/verify-trace.sh
 ```
 
+此外，gateway、consumer-sample、business-service 三个模块集成了 `micrometer-registry-prometheus`，可直接访问 `/actuator/prometheus` 查看 Prometheus 格式的指标数据：
+```shell
+curl http://localhost:8764/actuator/prometheus   # gateway
+curl http://localhost:8766/actuator/prometheus   # consumer-sample
+curl http://localhost:18081/actuator/prometheus  # business-service (Seata)
+```
+
 ### ⚙️ Nacos Config 动态配置
 
 启动 `cloud-nacos-config-sample`（端口 8761），通过模块提供的接口管理配置（避免直接调用 Nacos API 的鉴权问题）：
