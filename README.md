@@ -298,7 +298,7 @@ http://localhost:8764/consumer-sample/hi?name=hongxi
 
 前置条件：启动 `cloud-nacos-config-sample`（端口 8761），通过其 `/nacos/publishConfig` 接口推送规则。
 
-#### 演示限流（consumer 自身接口）
+**演示限流（consumer 自身接口）**
 
 1. 推送限流规则，资源名 `/hi`，QPS 阈值 = 1：
 ```shell
@@ -312,7 +312,7 @@ curl 'http://localhost:8766/hi?name=test&version=2.0'
 # 第二次返回: Blocked by Sentinel
 ```
 
-#### 演示熔断降级（Feign + RestTemplate 出站调用）
+**演示熔断降级（Feign + RestTemplate 出站调用）**
 
 `SentinelProtectInterceptor` 为 RestTemplate 创建两个资源：`hostResource`（不含路径）和 `hostWithPathResource`（含路径），`urlCleaner` 会去除端口号使资源名与 Feign 保持一致。降级规则需同时覆盖两个资源名。
 
