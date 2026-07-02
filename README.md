@@ -38,6 +38,7 @@
 | 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
 | 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
 | 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
+| 🤖 cloud-ai-rag-sample           | rag               | 8889         | Spring AI · RAG             |
 | 🔄 cloud-seata-sample            | seata             | -            | Seata (含 7 个子模块)            |
 | 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
 | 🕒 cloud-scheduling-sample       | scheduling        | -            | Alibaba Schedulerx          |

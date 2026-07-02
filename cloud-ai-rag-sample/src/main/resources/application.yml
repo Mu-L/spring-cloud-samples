@@ -1,0 +1,29 @@
+server:
+  port: 8889
+spring:
+  application:
+    name: ai-rag-sample
+  datasource:
+    url: jdbc:postgresql://${PGVECTOR_HOST:localhost}:${PGVECTOR_PORT:5432}/${PGVECTOR_DATABASE:ai_demo}
+    username: ${PGVECTOR_USERNAME:postgres}
+    password: ${PGVECTOR_PASSWORD:postgres}
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      chat:
+        options:
+          model: qwen-plus
+          temperature: 0.7
+      embedding:
+        model: text-embedding-v3            # Embedding 模型（用于 RAG 向量化）
+    vectorstore:
+      pgvector:
+        dimensions: 1024                     # text-embedding-v3 向量维度
+        initialize-schema: true              # 自动创建 vector 扩展和向量表（需超级用户权限）
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
