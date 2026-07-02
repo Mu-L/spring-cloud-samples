@@ -519,9 +519,9 @@ demo_urls() {
   done
   echo "=================================="
 
-  # gRPC 全功能演示验证（Unary / 三种流式 / 服务发现）
+  # gRPC 四种调用模式验证（Unary / 三种流式 / 服务发现）
   echo ""
-  echo "========== gRPC 全功能演示验证 =========="
+  echo "========== gRPC 四种调用模式验证 =========="
   verify_log "$LOG_DIR/grpc-client.log" "Unary result" "gRPC Unary RPC"
   verify_log "$LOG_DIR/grpc-client.log" "Fibonacci numbers" "gRPC Server Streaming (Fibonacci)"
   verify_log "$LOG_DIR/grpc-client.log" "Accumulate result" "gRPC Client Streaming (Accumulate)"
