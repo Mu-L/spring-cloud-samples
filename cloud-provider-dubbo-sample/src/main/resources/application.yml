@@ -8,7 +8,7 @@ dubbo:
     qos-port: 22222
   protocol:
     name: tri
-    port: -1
+    port: 50051
   registry:
     id: nacos-registry
     address: nacos://127.0.0.1:8848
