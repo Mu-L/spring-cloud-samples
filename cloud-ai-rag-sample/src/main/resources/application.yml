@@ -4,9 +4,9 @@ spring:
   application:
     name: ai-rag-sample
   datasource:
-    url: jdbc:postgresql://${PGVECTOR_HOST:localhost}:${PGVECTOR_PORT:5432}/${PGVECTOR_DATABASE:ai_demo}
-    username: ${PGVECTOR_USERNAME:postgres}
-    password: ${PGVECTOR_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5432/ai_demo
+    username: ai_user
+    password: ai_user
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
@@ -16,11 +16,11 @@ spring:
           model: qwen-plus
           temperature: 0.7
       embedding:
-        model: text-embedding-v3            # Embedding 模型（用于 RAG 向量化）
+        model: text-embedding-v3   # Embedding 模型（用于 RAG 向量化）
     vectorstore:
       pgvector:
-        dimensions: 1024                     # text-embedding-v3 向量维度
-        initialize-schema: true              # 自动创建 vector 扩展和向量表（需超级用户权限）
+        dimensions: 1024           # text-embedding-v3 向量维度
+        initialize-schema: false   # 设为false，手动执行 psql -U postgres -f init_ai_demo.sql
 
 management:
   endpoints:
