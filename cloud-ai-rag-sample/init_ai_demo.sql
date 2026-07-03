@@ -17,7 +17,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- 5. 初始化 vector_store 表
 -- 维度根据你使用的模型调整，Qwen text-embedding-v3 为 1024
 CREATE TABLE IF NOT EXISTS vector_store (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         content TEXT NOT NULL,
         embedding VECTOR(1024),
         metadata JSONB,
