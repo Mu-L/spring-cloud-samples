@@ -512,7 +512,7 @@ export OPENAI_API_KEY=your-api-key-here
 
 > 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI 章节。
 
-#### ChatMemory 多轮对话记忆（JDBC 持久化）
+#### ChatMemory 多轮对话记忆
 
 基于 `spring-ai-starter-model-chat-memory-repository-jdbc`，对话历史持久化到 PostgreSQL，支持会话隔离。需前置 PostgreSQL（同 RAG 模块）。
 
