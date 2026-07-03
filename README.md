@@ -512,6 +512,101 @@ export OPENAI_API_KEY=your-api-key-here
 
 > 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI 章节。
 
+#### ChatMemory 多轮对话记忆（JDBC 持久化）
+
+基于 `spring-ai-starter-model-chat-memory-repository-jdbc`，对话历史持久化到 PostgreSQL，支持会话隔离。需前置 PostgreSQL（同 RAG 模块）。
+
+| 接口                          | 说明              |
+|-----------------------------|------------------|
+| `POST /ai/memory/chat`      | 带记忆的多轮对话      |
+| `DELETE /ai/memory/{conversationId}` | 清除会话记忆 |
+
+```shell
+# 第 1 轮：告诉 AI 你的名字
+curl -X POST http://localhost:8888/ai/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"session-001","message":"你好，我叫小明"}'
+
+# 第 2 轮：追问，AI 会记住上下文
+curl -X POST http://localhost:8888/ai/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"session-001","message":"我叫什么名字？"}'
+
+# 不同会话完全隔离
+curl -X POST http://localhost:8888/ai/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"session-002","message":"我叫什么名字？"}'
+
+# 清除会话记忆
+curl -X DELETE http://localhost:8888/ai/memory/session-001
+```
+
+#### PromptTemplate 提示词模板
+
+使用 Spring AI 的 `PromptTemplate` 进行 `{variable}` 占位符替换，演示三种模板场景。
+
+| 接口                     | 说明           |
+|------------------------|--------------|
+| `POST /ai/prompt/product` | 产品描述生成    |
+| `POST /ai/prompt/code`    | 代码解释       |
+| `POST /ai/prompt/custom`  | 自定义模板（通用入口）|
+
+```shell
+# 产品描述生成
+curl -X POST http://localhost:8888/ai/prompt/product \
+  -H "Content-Type: application/json" \
+  -d '{"product":"Spring AI 实战手册","category":"技术书籍","tone":"专业且幽默"}'
+
+# 代码解释
+curl -X POST http://localhost:8888/ai/prompt/code \
+  -H "Content-Type: application/json" \
+  -d '{"code":"public record Point(int x, int y) {}","language":"Java","level":"初学者"}'
+
+# 自定义模板
+curl -X POST http://localhost:8888/ai/prompt/custom \
+  -H "Content-Type: application/json" \
+  -d '{"template":"请用{language}写一个{function}的示例代码","variables":{"language":"Python","function":"快速排序"}}'
+```
+
+### 🤖 Spring AI RAG 演示
+
+基于 **Spring AI 2.0** + **PgVector** 的检索增强生成模块。
+
+前置条件：PostgreSQL + pgvector
+```shell
+brew install postgresql
+brew install pgvector
+# 初始化数据库（创建用户、数据库、启用 pgvector 扩展、建表）
+psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
+```
+
+启动 RAG 模块（端口 8889），同样需要配置 `OPENAI_API_KEY`。
+
+#### RAG 检索增强生成
+
+| 接口                    | 说明             |
+|-----------------------|----------------|
+| `POST /ai/rag/ingest` | 摄入文档到向量数据库   |
+| `GET /ai/rag/query`   | 基于知识库的 RAG 问答 |
+| `DELETE /ai/rag/documents` | 删除指定来源的文档  |
+
+```shell
+# 摄入文档
+curl -X POST http://localhost:8889/ai/rag/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Spring AI is a framework for building AI-native applications...","source":"spring-ai-docs"}'
+
+# RAG 查询（topK 控制检索文档数量，默认 3）
+curl --get --data-urlencode "question=What is Spring AI?" "http://localhost:8889/ai/rag/query?topK=3"
+
+# 删除指定来源文档
+curl -X DELETE "http://localhost:8889/ai/rag/documents?source=spring-ai-docs"
+```
+
+> 完整 RAG 流程：文档摄入 → TokenTextSplitter 自动分块 → PgVector 向量化存储 → 相似性检索 → 上下文增强 Prompt → LLM 生成。当知识库无相关文档时自动降级为纯 LLM 回答。
+
+> 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI RAG 章节。
+
 ### 🌿 分支说明
 - 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例
 - 🌿 `eureka`: 初始版本，使用 Eureka 作为注册中心

@@ -3,6 +3,10 @@ server:
 spring:
   application:
     name: ai-sample
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ai_demo
+    username: ai_user
+    password: ai_user
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
@@ -25,6 +29,11 @@ spring:
         name: spring-cloud-samples-mcp-server    # MCP 服务名称，Client 连接时使用
         version: 1.0.0                            # 服务版本
         type: SYNC                                # 运行模式：SYNC（同步）或 ASYNC（异步）
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always  # 自动创建 SPRING_AI_CHAT_MEMORY 表
 
 management:
   endpoints:

@@ -36,6 +36,7 @@ MODULES=(
 
 # 特殊模块（需额外条件）
 AI_MODULE=("cloud-ai-sample|ai|8888")
+RAG_MODULE=("cloud-ai-rag-sample|ai-rag|8889")
 STREAM_MODULE=("cloud-stream-sample|stream|8767")
 SEATA_MODULES=(
   "cloud-seata-sample/business-service|seata-business|18081"
@@ -51,6 +52,7 @@ SEATA_MODULES=(
 START_SEATA=false
 START_STREAM=false
 START_AI=false
+START_RAG=false
 
 check_java() {
   local min_version=17
@@ -111,6 +113,10 @@ check_mysql() {
 
 check_seata_server() {
   nc -z 127.0.0.1 8091 2>/dev/null
+}
+
+check_postgresql() {
+  pg_isready -h localhost -p 5432 &>/dev/null
 }
 
 start_rocketmq() {
@@ -215,15 +221,32 @@ check_special_prerequisites() {
     echo "[Seata] 将启动 7 个微服务 (18081-18084 + 3 Dubbo)"
   fi
 
-  # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY
+  # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY + PostgreSQL (ChatMemory JDBC)
   if [ -n "$OPENAI_API_KEY" ] || [ -n "$DEEPSEEK_API_KEY" ]; then
     local keys=""
     [ -n "$OPENAI_API_KEY" ] && keys="OPENAI_API_KEY"
     [ -n "$DEEPSEEK_API_KEY" ] && keys="${keys:+$keys, }DEEPSEEK_API_KEY"
-    echo "[AI] ✓ 已配置: $keys"
-    START_AI=true
+    if check_postgresql; then
+      echo "[AI] ✓ 已配置: $keys，PostgreSQL 已运行"
+      START_AI=true
+    else
+      echo "[AI] ✗ 已配置: $keys，但 PostgreSQL 未运行，跳过 AI 模块"
+      echo "[AI]   ChatMemory JDBC 需要 PostgreSQL，请启动: brew services start postgresql"
+    fi
   else
     echo "[AI] ✗ OPENAI_API_KEY 和 DEEPSEEK_API_KEY 均未设置，跳过 AI 模块"
+  fi
+
+  # RAG: PostgreSQL + OPENAI_API_KEY
+  if [ -n "$OPENAI_API_KEY" ] && check_postgresql; then
+    echo "[RAG] ✓ PostgreSQL 已运行，将启动 AI RAG 模块 (端口 8889)"
+    START_RAG=true
+  elif [ -n "$OPENAI_API_KEY" ]; then
+    echo "[RAG] ✗ PostgreSQL 未运行，跳过 AI RAG 模块"
+    echo "[RAG]   如需启用，请安装: brew install postgresql pgvector && brew services start postgresql"
+    echo "[RAG]   然后初始化: psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql"
+  else
+    echo "[RAG] ✗ 未配置 OPENAI_API_KEY，跳过 AI RAG 模块"
   fi
 
   echo "=================================="
@@ -298,6 +321,11 @@ start_ai_module() {
   start_module "$module_dir" "$display_name" "$port"
 }
 
+start_rag_module() {
+  IFS='|' read -r module_dir display_name port <<< "${RAG_MODULE[0]}"
+  start_module "$module_dir" "$display_name" "$port"
+}
+
 start_stream_module() {
   IFS='|' read -r module_dir display_name port <<< "${STREAM_MODULE[0]}"
   start_module "$module_dir" "$display_name" "$port"
@@ -340,7 +368,7 @@ stop_all() {
   echo "正在停止所有服务..."
 
   # 收集所有模块名（含特殊模块）
-  local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${STREAM_MODULE[@]}" "${SEATA_MODULES[@]}")
+  local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${RAG_MODULE[@]}" "${STREAM_MODULE[@]}" "${SEATA_MODULES[@]}")
 
   # 第一阶段：通过 PID 文件停止（脚本自身启动的进程）
   for pid_file in "$PID_DIR"/*.pid; do
@@ -554,10 +582,18 @@ demo_urls() {
   echo "=================================="
 
   # AI 模块验证
-  if [ -f "$PID_DIR/ai.pid" ] && kill -0 "$(cat "$PID_DIR/ai.pid")" 2>/dev/null; then
+  if [ -f "$PID_DIR/ai.pid" ] && kill -0 "$(cat "$PID_DIR/ai.pid")" 2>/dev/null || curl -s -o /dev/null --connect-timeout 2 "http://localhost:8888/actuator/health" 2>/dev/null; then
     echo ""
     echo "========== Spring AI 模块验证 =========="
     verify_url "http://localhost:8888/actuator/health" "AI 模块健康检查"
+    echo "=================================="
+  fi
+
+  # AI RAG 模块验证
+  if [ -f "$PID_DIR/ai-rag.pid" ] && kill -0 "$(cat "$PID_DIR/ai-rag.pid")" 2>/dev/null || curl -s -o /dev/null --connect-timeout 2 "http://localhost:8889/actuator/health" 2>/dev/null; then
+    echo ""
+    echo "========== Spring AI RAG 模块验证 =========="
+    verify_url "http://localhost:8889/actuator/health" "AI RAG 模块健康检查"
     echo "=================================="
   fi
 
@@ -644,8 +680,16 @@ demo_urls() {
     echo "     • Tool Calling、ReAct Agent"
     echo "     • 多模态视觉识别 (6种场景)"
     echo "     • DeepSeek 多提供商集成 (需配置 DEEPSEEK_API_KEY)"
+    echo "     • ChatMemory 多轮对话记忆 (JDBC 持久化到 PostgreSQL)"
+    echo "     • PromptTemplate 提示词模板 (产品描述/代码解释/自定义模板)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
+    if [ -f "$PID_DIR/ai-rag.pid" ] && kill -0 "$(cat "$PID_DIR/ai-rag.pid")" 2>/dev/null; then
+    echo "  7️⃣  Spring AI RAG 模块 (端口 8889):"
+    echo "     • RAG 检索增强生成: 文档摄入 → 向量化存储 → 相似性检索 → 增强回答"
+    echo "     → 使用 demo-spring-cloud skill 进行验证"
+    echo ""
+    fi
   else
     echo ""
     echo "  以下验证项失败:"
@@ -679,7 +723,7 @@ status_all() {
     _check_status "$display_name" "$port"
   done
   # 特殊模块
-  local all_special=("${AI_MODULE[0]}" "${STREAM_MODULE[0]}" "${SEATA_MODULES[@]}")
+  local all_special=("${AI_MODULE[0]}" "${RAG_MODULE[0]}" "${STREAM_MODULE[0]}" "${SEATA_MODULES[@]}")
   for entry in "${all_special[@]}"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     _check_status "$display_name" "$port"
@@ -867,7 +911,7 @@ logs_all() {
     echo "可用模块:"
     echo "  核心模块: nacos-discovery, gateway, provider, provider-reactive, provider-dubbo,"
     echo "            grpc-server, consumer, consumer-reactive, grpc-client, nacos-config"
-    echo "  特殊模块: ai, stream, seata-business, seata-storage, seata-order, seata-account,"
+    echo "  特殊模块: ai, ai-rag, stream, seata-business, seata-storage, seata-order, seata-account,"
     echo "            seata-storage-dubbo, seata-order-dubbo, seata-account-dubbo"
     echo "  基础设施: rocketmq-namesrv, rocketmq-broker, seata-server"
     return
@@ -910,6 +954,7 @@ case "${1:-start}" in
     $START_SEATA && start_seata_services
     $START_STREAM && start_stream_module
     $START_AI && start_ai_module
+    $START_RAG && start_rag_module
     echo ""
     status_all
     demo_urls
@@ -939,6 +984,7 @@ case "${1:-start}" in
     $START_SEATA && start_seata_services
     $START_STREAM && start_stream_module
     $START_AI && start_ai_module
+    $START_RAG && start_rag_module
     echo ""
     status_all
     demo_urls
