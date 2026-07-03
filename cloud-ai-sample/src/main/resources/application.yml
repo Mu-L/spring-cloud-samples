@@ -33,7 +33,7 @@ spring:
       memory:
         repository:
           jdbc:
-            initialize-schema: always  # 自动创建 SPRING_AI_CHAT_MEMORY 表
+            initialize-schema: always  # 自动创建 spring_ai_chat_memory 表
 
 management:
   endpoints:

@@ -87,6 +87,39 @@ public class AdvancedChatController {
     }
 
     /**
+     * 提取用户信息为结构化数据
+     * <p>
+     * 测试示例: "我叫张三，今年25岁，是一名软件工程师，喜欢编程和打篮球，邮箱是zhangsan@example.com"
+     * </p>
+     *
+     * @param message 包含用户信息的自然语言文本
+     * @return 结构化的用户信息
+     */
+    @PostMapping("/extract-user")
+    public Object extractUserInfo(@RequestParam String message) {
+        log.info("提取用户信息: {}", message);
+
+        record UserInfo(String name, Integer age, String email, List<String> hobbies, String occupation) {}
+
+        return chatClient.prompt()
+                .system("""
+                        你是一个信息提取助手。请从用户的描述中提取个人信息，并以 JSON 格式返回。
+                        
+                        要求：
+                        - name: 姓名（字符串）
+                        - age: 年龄（整数）
+                        - email: 邮箱（字符串）
+                        - hobbies: 爱好（字符串数组）
+                        - occupation: 职业（字符串）
+                        
+                        如果某些信息不存在，用 null 或空数组表示。
+                        """)
+                .user(message)
+                .call()
+                .entity(UserInfo.class);
+    }
+
+    /**
      * 多轮对话（手动维护上下文）
      *
      * @param message 当前用户消息
