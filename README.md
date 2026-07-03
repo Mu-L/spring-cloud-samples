@@ -516,10 +516,10 @@ export OPENAI_API_KEY=your-api-key-here
 
 基于 `spring-ai-starter-model-chat-memory-repository-jdbc`，对话历史持久化到 PostgreSQL，支持会话隔离。需前置 PostgreSQL（同 RAG 模块）。
 
-| 接口                          | 说明              |
-|-----------------------------|------------------|
-| `POST /ai/memory/chat`      | 带记忆的多轮对话      |
-| `DELETE /ai/memory/{conversationId}` | 清除会话记忆 |
+| 接口                                   | 说明       |
+|--------------------------------------|----------|
+| `POST /ai/memory/chat`               | 带记忆的多轮对话 |
+| `DELETE /ai/memory/{conversationId}` | 清除会话记忆   |
 
 ```shell
 # 第 1 轮：告诉 AI 你的名字
@@ -545,11 +545,11 @@ curl -X DELETE http://localhost:8888/ai/memory/session-001
 
 使用 Spring AI 的 `PromptTemplate` 进行 `{variable}` 占位符替换，演示三种模板场景。
 
-| 接口                     | 说明           |
-|------------------------|--------------|
-| `POST /ai/prompt/product` | 产品描述生成    |
-| `POST /ai/prompt/code`    | 代码解释       |
-| `POST /ai/prompt/custom`  | 自定义模板（通用入口）|
+| 接口                        | 说明          |
+|---------------------------|-------------|
+| `POST /ai/prompt/product` | 产品描述生成      |
+| `POST /ai/prompt/code`    | 代码解释        |
+| `POST /ai/prompt/custom`  | 自定义模板（通用入口） |
 
 ```shell
 # 产品描述生成
@@ -582,13 +582,11 @@ psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
 
 启动 RAG 模块（端口 8889），同样需要配置 `OPENAI_API_KEY`。
 
-#### RAG 检索增强生成
-
-| 接口                    | 说明             |
-|-----------------------|----------------|
-| `POST /ai/rag/ingest` | 摄入文档到向量数据库   |
-| `GET /ai/rag/query`   | 基于知识库的 RAG 问答 |
-| `DELETE /ai/rag/documents` | 删除指定来源的文档  |
+| 接口                         | 说明            |
+|----------------------------|---------------|
+| `POST /ai/rag/ingest`      | 摄入文档到向量数据库    |
+| `GET /ai/rag/query`        | 基于知识库的 RAG 问答 |
+| `DELETE /ai/rag/documents` | 删除指定来源的文档     |
 
 ```shell
 # 摄入文档
