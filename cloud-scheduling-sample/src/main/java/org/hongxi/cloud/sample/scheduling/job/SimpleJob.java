@@ -20,7 +20,7 @@ public class SimpleJob {
 	 */
 	@Scheduled(cron = "0/5 * * * * ?")
 	public void job1() {
-        log.info("time={} do job1...", DateTime.now().toString("YYYY-MM-dd HH:mm:ss"));
+        log.info("time={} do job1...", DateTime.now().toString("yyyy-MM-dd HH:mm:ss"));
 	}
 
 
@@ -32,7 +32,7 @@ public class SimpleJob {
 	@Scheduled(cron = "0/5 * * * * ?")
 	@SchedulerLock(name = "lock-job2", lockAtMostFor = "10s")
 	public void job2() throws InterruptedException {
-        log.info("time={} do job2...", DateTime.now().toString("YYYY-MM-dd HH:mm:ss"));
+        log.info("time={} do job2...", DateTime.now().toString("yyyy-MM-dd HH:mm:ss"));
 		TimeUnit.SECONDS.sleep(1L);
 	}
 }
