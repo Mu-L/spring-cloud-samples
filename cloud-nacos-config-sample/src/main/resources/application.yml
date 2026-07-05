@@ -9,7 +9,7 @@ spring:
       username: nacos
       password: 7fDJZBbiLzO2
       config:
-        serverAddr: 127.0.0.1:8848
+        serverAddr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
   config:
     import:
       - nacos:cloud-agent.properties?refreshEnabled=true&group=DEFAULT_GROUP

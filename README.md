@@ -4,24 +4,6 @@
 
 ![poster](poster.png)
 
-### 🤖 AI 一键演示
-
-> 本项目内置 Qoder Agent Skill，clone 后在 Qoder 中输入 `/demo-spring-cloud` 或告诉 AI "演示项目"，
-> 即可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
-
-```
-# 快速体验（仅需 Nacos）
-告诉 AI: "演示本项目"
-
-# 单独验证某个场景
-告诉 AI: "验证 Seata 分布式事务"
-告诉 AI: "验证 Stream 消息收发"
-告诉 AI: "演示 Spring AI"
-告诉 AI: "演示一下视觉识别"
-```
-
-详见 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md)
-
 ### 📦 模块介绍
 | 模块                               | 简称                | 端口           | 说明                          |
 |----------------------------------|-------------------|--------------|-----------------------------|
@@ -50,15 +32,32 @@
 
 ### 🎮 演示方式
 
-> **优先级：AI Skill > 脚本 > 手动**
-
 | 方式                  | 说明                                | 适用场景       |
 |---------------------|-----------------------------------|------------|
 | 🤖 **AI Skill（推荐）** | 告诉 AI 助手 "演示项目"，自动完成环境检查、启动、验证全流程 | 快速体验、集成测试  |
 | 📜 **一键脚本**         | 通过 `start-all.sh` 脚本自动化启动和验证      | 批量验证、CI/CD |
+| 🐳 **Docker 部署**    | 中间件本地运行，微服务全部容器化                  | 容器化实践、贴近生产 |
 | 🔧 **手动启动**         | 逐个模块手动启动，灵活控制                     | 学习调试、单模块开发 |
 
-一键脚本：
+#### 🤖 AI 一键演示（推荐）
+
+> 本项目内置 Qoder Agent Skill，clone 后在 Qoder 中输入 `/demo-spring-cloud` 或告诉 AI "演示项目"，
+> 即可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
+
+```
+# 快速体验（仅需 Nacos）
+告诉 AI: "演示本项目"
+
+# 单独验证某个场景
+告诉 AI: "验证 Seata 分布式事务"
+告诉 AI: "验证 Stream 消息收发"
+告诉 AI: "演示 Spring AI"
+告诉 AI: "演示一下视觉识别"
+```
+
+详见 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md)
+
+#### 📜 一键脚本
 
 ```shell
 # 查看所有命令
@@ -67,6 +66,7 @@ sh start-all.sh --help
 # 常用命令
 sh start-all.sh install  # 检查并安装中间件（Nacos/RocketMQ/MySQL/Seata）+ 打包模块
 sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动、验证）
+sh start-all.sh seata    # 仅启动 Seata 分布式事务 (7个模块)
 sh start-all.sh build    # 打包所有模块
 sh start-all.sh verify   # 执行验证（不启动，仅验证已运行的服务）
 sh start-all.sh status   # 查看服务状态
@@ -77,6 +77,78 @@ sh start-all.sh clean    # 清理构建产物
 ```
 
 > 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
+
+#### 🐳 Docker 部署
+
+中间件本地运行，微服务全部 Docker 容器化，通过 `host.docker.internal` 连接宿主机中间件。
+
+**架构**
+
+```
+Mac 宿主机
+├── 本地中间件: Nacos(8848) / RocketMQ(9876) / MySQL(3306) / PostgreSQL(5432)
+│
+└── Docker 容器 (通过 host.docker.internal 连宿主机)
+    ├── 核心微服务 (9个): gateway / consumer / provider / grpc-server ...
+    ├── Stream 消息     (profile: stream)
+    ├── Spring AI       (profile: ai)
+    └── Seata 分布式事务 (profile: seata)
+```
+
+**快速开始**
+
+```shell
+# 1. 启动本地中间件（Nacos / RocketMQ / MySQL / PostgreSQL）
+./start-all.sh infra
+
+# 2. Maven 打包 + 构建所有 Docker 镜像
+./docker-build.sh build
+
+# 3. 启动核心微服务 (9个)
+./docker-build.sh up
+
+# 4. 验证
+curl 'http://localhost:8766/hi?name=docker'
+curl 'http://localhost:8764/consumer-sample/hi?name=docker'
+```
+
+**常用命令**
+
+```shell
+./docker-build.sh up          # 启动核心微服务 (9个)
+./docker-build.sh up-seata    # 启动 Seata 分布式事务 (7个)
+./docker-build.sh up-all      # 启动全部 (含 Stream/AI/Seata)
+./docker-build.sh down        # 停止所有微服务
+./docker-build.sh status      # 查看容器状态
+./docker-build.sh logs [svc]  # 查看日志
+./docker-build.sh clean       # 停止并清理
+```
+
+**单模块部署**
+
+```shell
+# 打包单个模块
+./mvnw package -DskipTests -pl cloud-provider-sample -am
+
+# 构建镜像 + 启动
+docker build --build-arg MODULE=cloud-provider-sample -t spring-cloud-samples/provider .
+docker compose up -d provider
+```
+
+Seata 示例（需前置 MySQL + Seata Server，7 个子模块需同时启动）：
+```shell
+# 打包 Seata 所有子模块
+./mvnw package -DskipTests -pl cloud-seata-sample/business-service,cloud-seata-sample/order-service,cloud-seata-sample/storage-service,cloud-seata-sample/account-service,cloud-seata-sample/account-dubbo-service,cloud-seata-sample/storage-dubbo-service,cloud-seata-sample/order-dubbo-service -am
+
+# 一次性启动 Seata 全部服务
+./docker-build.sh up-seata
+```
+
+> Docker 需要 [OrbStack](https://orbstack.dev)（`brew install orbstack`），国内拉镜像需配置[镜像加速](https://docs.orbstack.dev/docker/registry-mirrors)。
+
+#### 🔧 手动启动
+
+按下面的功能演示章节逐步操作即可，每个章节都包含前置条件、启动顺序和验证命令。
 
 ### 🔍 服务注册与发现演示
 > 首先安装部署 Nacos，完成后设置环境变量
@@ -422,27 +494,27 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 
 前置条件：MySQL + Seata Server，请参考 [seata-sample/README](cloud-seata-sample/README.md) 中的环境准备和运行示例。
 
-包含 7 个子模块，按依赖关系分四层启动：
+包含 7 个子模块，按依赖关系分三层启动：
 
 | 层级 | 服务                    | 端口    | 说明                                      |
 |----|-----------------------|-------|-----------------------------------------|
 | 1  | account-dubbo-service | 50071 | 账户服务 Dubbo 实现（基础层）                      |
 | 1  | account-service       | 18084 | 账户服务 REST 实现                            |
-| 2  | storage-dubbo-service | 50072 | 库存服务 Dubbo 实现                           |
+| 1  | storage-dubbo-service | 50072 | 库存服务 Dubbo 实现（基础层）                      |
+| 1  | storage-service       | 18082 | 库存服务 REST 实现                            |
 | 2  | order-dubbo-service   | 50073 | 订单服务 Dubbo 实现（依赖 account-dubbo-service） |
-| 3  | storage-service       | 18082 | 库存服务 REST 实现                            |
-| 3  | order-service         | 18083 | 订单服务 REST 实现                            |
-| 4  | business-service      | 18081 | 业务入口（依赖 storage-dubbo + order-dubbo）    |
+| 2  | order-service         | 18083 | 订单服务 REST 实现（依赖 account-service）         |
+| 3  | business-service      | 18081 | 业务入口（依赖 storage + order）               |
 
 验证分布式事务的回滚与提交，支持三种调用链路：
 ```shell
-# RestTemplate 链路（business → storage-service → account-service）
+# RestTemplate 链路（business → storage-service, business → order-service → account-service）
 curl http://localhost:18081/seata/rest
 
-# FeignClient 链路（business → storage-service → account-service）
+# FeignClient 链路（business → storage-service, business → order-service → account-service）
 curl http://localhost:18081/seata/feign
 
-# DubboReference 链路（business → storage-dubbo → account-dubbo）
+# DubboReference 链路（business → storage-dubbo, business → order-dubbo → account-dubbo）
 curl http://localhost:18081/seata/dubbo
 ```
 > order-service 内置随机异常模拟，多次调用可观察到事务回滚（数据恢复）和提交（数据扣减）两种场景。

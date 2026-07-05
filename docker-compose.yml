@@ -1,0 +1,336 @@
+# ============================================================
+# Spring Cloud Samples - 微服务 Docker Compose
+# ============================================================
+# 架构: 中间件本地安装，微服务 Docker 容器化
+#       微服务通过 host.docker.internal 连接宿主机上的中间件
+#
+# 前置条件 (本地中间件):
+#   Nacos:      localhost:8848
+#   RocketMQ:   localhost:9876
+#   PostgreSQL: localhost:5432
+#   MySQL:      localhost:3306
+#
+# 使用:
+#   1. 确保本地中间件已启动 (./start-all.sh 会自动检测并启动)
+#   2. ./mvnw clean package -DskipTests          # 打包
+#   3. docker compose up -d                      # 启动核心微服务
+#   4. docker compose --profile all up -d        # 启动全部(含 Stream/AI/Seata)
+#   5. docker compose down                       # 停止
+# ============================================================
+
+x-common: &common
+  restart: unless-stopped
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+# ======================== 核心微服务 ========================
+services:
+  nacos-discovery:
+    build:
+      context: .
+      args:
+        MODULE: cloud-nacos-discovery-sample
+    container_name: nacos-discovery
+    ports:
+      - "8760:8760"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    <<: *common
+
+  nacos-config:
+    build:
+      context: .
+      args:
+        MODULE: cloud-nacos-config-sample
+    container_name: nacos-config
+    ports:
+      - "8761:8761"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    <<: *common
+
+  provider:
+    build:
+      context: .
+      args:
+        MODULE: cloud-provider-sample
+    container_name: provider
+    ports:
+      - "8765:8765"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    <<: *common
+
+  provider-reactive:
+    build:
+      context: .
+      args:
+        MODULE: cloud-provider-reactive-sample
+    container_name: provider-reactive
+    ports:
+      - "8762:8762"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    <<: *common
+
+  provider-dubbo:
+    build:
+      context: .
+      args:
+        MODULE: cloud-provider-dubbo-sample
+    container_name: provider-dubbo
+    ports:
+      - "50051:50051"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    <<: *common
+
+  grpc-server:
+    build:
+      context: .
+      args:
+        MODULE: cloud-grpc-server-sample
+    container_name: grpc-server
+    ports:
+      - "8090:8090"
+      - "9090:9090"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    <<: *common
+
+  consumer:
+    build:
+      context: .
+      args:
+        MODULE: cloud-consumer-sample
+    container_name: consumer
+    ports:
+      - "8766:8766"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    depends_on:
+      - provider
+      - provider-dubbo
+      - grpc-server
+    <<: *common
+
+  consumer-reactive:
+    build:
+      context: .
+      args:
+        MODULE: cloud-consumer-reactive-sample
+    container_name: consumer-reactive
+    ports:
+      - "8763:8763"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    depends_on:
+      - provider-reactive
+      - provider-dubbo
+    <<: *common
+
+  gateway:
+    build:
+      context: .
+      args:
+        MODULE: cloud-gateway-sample
+    container_name: gateway
+    ports:
+      - "8764:8764"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    depends_on:
+      - consumer
+      - consumer-reactive
+    <<: *common
+
+# ======================== Stream 消息 (profile: stream) ========================
+  stream:
+    build:
+      context: .
+      args:
+        MODULE: cloud-stream-sample
+    container_name: stream
+    ports:
+      - "8767:8767"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      ROCKETMQ_NAME_SERVER: host.docker.internal:9876
+    profiles:
+      - stream
+      - all
+    <<: *common
+
+# ======================== Spring AI (profile: ai) ========================
+  ai:
+    build:
+      context: .
+      args:
+        MODULE: cloud-ai-sample
+    container_name: ai
+    ports:
+      - "8888:8888"
+    environment:
+      JAVA_OPTS: "-Xmx256m -Xms128m"
+      POSTGRES_HOST: host.docker.internal
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    profiles:
+      - ai
+      - all
+    <<: *common
+
+  ai-rag:
+    build:
+      context: .
+      args:
+        MODULE: cloud-ai-rag-sample
+    container_name: ai-rag
+    ports:
+      - "8889:8889"
+    environment:
+      JAVA_OPTS: "-Xmx256m -Xms128m"
+      POSTGRES_HOST: host.docker.internal
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    profiles:
+      - ai
+      - all
+    <<: *common
+
+# ======================== Seata 分布式事务 (profile: seata) ========================
+  seata-account-dubbo:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/account-dubbo-service
+    container_name: seata-account-dubbo
+    ports:
+      - "50071:50071"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
+    profiles:
+      - seata
+      - all
+    <<: *common
+
+  seata-account:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/account-service
+    container_name: seata-account
+    ports:
+      - "18084:18084"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
+    profiles:
+      - seata
+      - all
+    <<: *common
+
+  seata-storage-dubbo:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/storage-dubbo-service
+    container_name: seata-storage-dubbo
+    ports:
+      - "50072:50072"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
+    profiles:
+      - seata
+      - all
+    <<: *common
+
+  seata-storage:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/storage-service
+    container_name: seata-storage
+    ports:
+      - "18082:18082"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
+    profiles:
+      - seata
+      - all
+    <<: *common
+
+  seata-order-dubbo:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/order-dubbo-service
+    container_name: seata-order-dubbo
+    ports:
+      - "50073:50073"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
+    depends_on:
+      - seata-account-dubbo
+    profiles:
+      - seata
+      - all
+    <<: *common
+
+  seata-order:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/order-service
+    container_name: seata-order
+    ports:
+      - "18083:18083"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
+    depends_on:
+      - seata-account
+    profiles:
+      - seata
+      - all
+    <<: *common
+
+  seata-business:
+    build:
+      context: .
+      args:
+        MODULE: cloud-seata-sample/business-service
+    container_name: seata-business
+    ports:
+      - "18081:18081"
+    environment:
+      JAVA_OPTS: "-Xmx128m -Xms64m"
+      NACOS_SERVER_ADDR: host.docker.internal:8848
+    depends_on:
+      - seata-storage-dubbo
+      - seata-order-dubbo
+      - seata-storage
+      - seata-order
+    profiles:
+      - seata
+      - all
+    <<: *common

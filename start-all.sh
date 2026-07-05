@@ -332,34 +332,28 @@ start_stream_module() {
 }
 
 start_seata_services() {
-  # 按依赖顺序启动：account-dubbo/account → storage-dubbo/order-dubbo → storage/order → business
+  # 按依赖顺序启动：account/storage（基础层）→ order（依赖 account）→ business（依赖 storage + order）
   echo "[Seata] 按依赖顺序启动 7 个微服务..."
 
-  # 第一层：account-dubbo-service + account-service（account-dubbo 被 order-dubbo 依赖）
+  # 第一层：account-dubbo/account + storage-dubbo/storage（无下游依赖，基础层）
   for entry in \
     "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071" \
-    "cloud-seata-sample/account-service|seata-account|18084"; do
-    IFS='|' read -r module_dir display_name port <<< "$entry"
-    start_module "$module_dir" "$display_name" "$port"
-  done
-
-  # 第二层：storage-dubbo + order-dubbo（order-dubbo 依赖 account-dubbo）
-  for entry in \
+    "cloud-seata-sample/account-service|seata-account|18084" \
     "cloud-seata-sample/storage-dubbo-service|seata-storage-dubbo|50072" \
-    "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073"; do
+    "cloud-seata-sample/storage-service|seata-storage|18082"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     start_module "$module_dir" "$display_name" "$port"
   done
 
-  # 第三层：storage-service + order-service
+  # 第二层：order-dubbo（依赖 account-dubbo）+ order-service（依赖 account-service）
   for entry in \
-    "cloud-seata-sample/storage-service|seata-storage|18082" \
+    "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073" \
     "cloud-seata-sample/order-service|seata-order|18083"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     start_module "$module_dir" "$display_name" "$port"
   done
 
-  # 第四层：business-service（依赖 storage-dubbo + order-dubbo）
+  # 第三层：business-service（依赖 storage + order）
   IFS='|' read -r module_dir display_name port <<< "cloud-seata-sample/business-service|seata-business|18081"
   start_module "$module_dir" "$display_name" "$port"
 }
@@ -992,6 +986,20 @@ case "${1:-start}" in
   install)
     install_all
     ;;
+  infra)
+    echo "========== 仅启动中间件（不启动微服务） =========="
+    check_java
+    echo ""
+    check_nacos
+    echo ""
+    check_special_prerequisites
+    echo ""
+    echo "=========================================="
+    echo "  中间件已就绪，微服务未启动"
+    echo "  可使用 docker compose up -d 在 Docker 中启动微服务"
+    echo "  或使用 $0 start 在本地启动所有微服务"
+    echo "=========================================="
+    ;;
   build)
     build_all
     ;;
@@ -1007,14 +1015,59 @@ case "${1:-start}" in
   status)
     status_all
     ;;
+  seata)
+    echo "========== 启动 Seata 分布式事务 (7个模块) =========="
+    check_java
+    echo ""
+    check_nacos
+    echo ""
+    echo "========== 检查 Seata 前置条件 =========="
+    if ! check_mysql; then
+      echo "[Seata] ✗ MySQL 未运行，请先运行: $0 install"
+      exit 1
+    fi
+    echo "[Seata] ✓ MySQL 已运行"
+    if ! check_seata_server; then
+      if [ -d "$HOME/github/seata" ]; then
+        echo "[Seata] Seata Server 未运行，正在自动启动..."
+        if ! start_seata_server; then
+          echo "[Seata] ✗ Seata Server 启动失败"
+          exit 1
+        fi
+      else
+        echo "[Seata] ✗ Seata Server 未运行，请先启动 Seata Server"
+        exit 1
+      fi
+    fi
+    echo "[Seata] ✓ Seata Server 已运行"
+    echo "=================================="
+    echo "✓ 前置条件就绪"
+    echo ""
+    build_all
+    echo ""
+    start_seata_services
+    echo ""
+    echo "========== Seata 服务已启动 =========="
+    echo "  Business:   http://localhost:18081"
+    echo "  Order:      http://localhost:18083"
+    echo "  Storage:    http://localhost:18082"
+    echo "  Account:    http://localhost:18084"
+    echo ""
+    echo "验证:"
+    echo "  curl http://localhost:18081/seata/rest"
+    echo "  curl http://localhost:18081/seata/feign"
+    echo "  curl http://localhost:18081/seata/dubbo"
+    ;;
   help|--help|-h)
-    echo "用法: $0 {start|stop|restart|install|build|clean|verify|logs|status|help}"
+    echo "用法: $0 {start|stop|restart|install|infra|seata|build|clean|verify|logs|status|help}"
     echo ""
     echo "命令说明:"
     echo "  start    启动所有服务（默认）"
     echo "  stop     停止所有服务（含 RocketMQ、Seata Server）"
     echo "  restart  重启所有服务"
     echo "  install  检查并安装中间件 + 打包模块"
+    echo "  infra    仅启动中间件（配合 Docker 部署微服务时使用）"
+    echo "  seata    仅启动 Seata 分布式事务 (7个模块)"
     echo "  build    打包所有模块"
     echo "  clean    清理构建产物"
     echo "  verify   执行验证（不启动，仅验证已运行的服务）"
@@ -1023,7 +1076,7 @@ case "${1:-start}" in
     echo "  help     显示此帮助信息"
     ;;
   *)
-    echo "用法: $0 {start|stop|restart|install|build|clean|verify|logs|status|help}"
+    echo "用法: $0 {start|stop|restart|install|infra|seata|build|clean|verify|logs|status|help}"
     exit 1
     ;;
 esac

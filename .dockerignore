@@ -1,0 +1,28 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Git
+.git/
+
+# OS
+.DS_Store
+*.swp
+*~
+
+# Logs
+logs/
+*.log
+
+# Documentation
+*.md
+output/
+.qoder/
+
+# Misc
+derby.log
+.mvn/wrapper/maven-wrapper.jar

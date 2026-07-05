@@ -11,7 +11,7 @@ dubbo:
     port: 50051
   registry:
     id: nacos-registry
-    address: nacos://127.0.0.1:8848
+    address: nacos://${NACOS_SERVER_ADDR:127.0.0.1:8848}
     username: ${spring.cloud.nacos.username:nacos}
     password: ${spring.cloud.nacos.password:7fDJZBbiLzO2}
     register-mode: instance

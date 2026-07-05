@@ -9,11 +9,11 @@ spring:
       username: nacos
       password: 7fDJZBbiLzO2
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
   datasource:
     name: storageDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/seata?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/seata?useSSL=false&serverTimezone=UTC
     username: root
     password: root1234
 
@@ -37,7 +37,7 @@ seata:
   config:
     type: nacos
     nacos:
-      serverAddr: 127.0.0.1:8848
+      serverAddr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
       dataId: "seata.properties"
       group: SEATA_GROUP
       username: ${spring.cloud.nacos.username}
@@ -46,7 +46,7 @@ seata:
     type: nacos
     nacos:
       application: seata-server
-      server-addr: 127.0.0.1:8848
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
       cluster: default
       group: SEATA_GROUP
       username: ${spring.cloud.nacos.username}
