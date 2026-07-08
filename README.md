@@ -644,9 +644,9 @@ curl -X POST http://localhost:8888/ai/prompt/custom \
 
 基于 **Spring AI 2.0** 的检索增强生成模块，支持 **PgVector** 和 **Redis (RediSearch)** 两种向量存储，通过 Profile 一键切换，业务代码零改动。
 
-| Profile    | 向量库                   | 前置条件                        | 特点                       |
-|------------|----------------------|-----------------------------|-------------------------|
-| `pgvector` | PostgreSQL + pgvector | PostgreSQL + pgvector 扩展     | 持久化存储，支持 SQL + 向量混合查询    |
+| Profile    | 向量库                      | 前置条件                         | 特点                     |
+|------------|--------------------------|------------------------------|------------------------|
+| `pgvector` | PostgreSQL + pgvector    | PostgreSQL + pgvector 扩展     | 持久化存储，支持 SQL + 向量混合查询  |
 | `redis`    | Redis Stack (RediSearch) | Redis Stack（含 RediSearch 模块） | 内存级检索，HNSW/FLAT 索引，低延迟 |
 
 #### 前置条件
