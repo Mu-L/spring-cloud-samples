@@ -24,6 +24,7 @@
 | 🔄 cloud-seata-sample            | seata             | -            | Seata (含 7 个子模块)            |
 | 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
 | 🕒 cloud-scheduling-sample       | scheduling        | -            | Alibaba Schedulerx          |
+| 📨 cloud-kafka-sample            | kafka             | -            | Kafka 4.x                   |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
@@ -503,8 +504,8 @@ bin/mqadmin consumerProgress -n localhost:9876 -g stream-demo-consumer-group2
 | 1  | storage-dubbo-service | 50072 | 库存服务 Dubbo 实现（基础层）                      |
 | 1  | storage-service       | 18082 | 库存服务 REST 实现                            |
 | 2  | order-dubbo-service   | 50073 | 订单服务 Dubbo 实现（依赖 account-dubbo-service） |
-| 2  | order-service         | 18083 | 订单服务 REST 实现（依赖 account-service）         |
-| 3  | business-service      | 18081 | 业务入口（依赖 storage + order）               |
+| 2  | order-service         | 18083 | 订单服务 REST 实现（依赖 account-service）        |
+| 3  | business-service      | 18081 | 业务入口（依赖 storage + order）                |
 
 验证分布式事务的回滚与提交，支持三种调用链路：
 ```shell
@@ -705,6 +706,43 @@ curl -X DELETE "http://localhost:8889/ai/rag/documents?source=spring-cloud-aliba
 > 完整 RAG 流程：文档摄入 → TokenTextSplitter 自动分块 → 向量化存储（PgVector / Redis） → 相似性检索 → 上下文增强 Prompt → LLM 生成。当知识库无相关文档时自动降级为纯 LLM 回答。
 
 > 完整的 curl 命令示例和验证流程请参考 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md) 中的 Spring AI RAG 章节。
+
+### 📨 Kafka 4.x 集群演示
+
+基于 **Apache Kafka 4.x**（KRaft 模式，不依赖 ZooKeeper）演示 3 节点集群部署。
+
+前置条件：下载 [Kafka 4.x](https://kafka.apache.org/downloads)
+```shell
+tar -xzf kafka_2.13-4.3.1.tgz
+cd kafka_2.13-4.3.1
+```
+
+**启动 3 节点集群**
+```shell
+# 1. 生成集群 ID
+KAFKA_CLUSTER_ID="$(bin/kafka-storage.sh random-uuid)"
+
+# 2. 格式化 3 个节点的存储目录（使用同一份 cluster ID）
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-1.properties
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-2.properties
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-3.properties
+
+# 3. 分别在 3 个终端窗口启动
+bin/kafka-server-start.sh config/server-1.properties
+bin/kafka-server-start.sh config/server-2.properties
+bin/kafka-server-start.sh config/server-3.properties
+```
+
+**验证集群**
+```shell
+# 创建 3 分区 3 副本的 Topic
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic test-cluster --partitions 3 --replication-factor 3
+
+# 查看 Topic 详情（可看到 Leader 和 Replica 分布在 3 个节点上）
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic test-cluster
+```
+
+> 详细配置说明、节点参数解释和常见问题处理请参考 [cloud-kafka-sample/README.md](cloud-kafka-sample/README.md)。
 
 ### 🌿 分支说明
 - 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例

@@ -47,12 +47,14 @@ SEATA_MODULES=(
   "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073"
   "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071"
 )
+KAFKA_MODULE=("cloud-kafka-sample|kafka-sample|-")
 
 # 特殊模块启动标记
 START_SEATA=false
 START_STREAM=false
 START_AI=false
 START_RAG=false
+START_KAFKA=false
 
 check_java() {
   local min_version=17
@@ -117,6 +119,10 @@ check_seata_server() {
 
 check_postgresql() {
   pg_isready -h localhost -p 5432 &>/dev/null
+}
+
+check_kafka() {
+  nc -z 127.0.0.1 9092 2>/dev/null
 }
 
 start_rocketmq() {
@@ -249,6 +255,15 @@ check_special_prerequisites() {
     echo "[RAG] ✗ 未配置 OPENAI_API_KEY，跳过 AI RAG 模块"
   fi
 
+  # Kafka: 检查集群是否运行
+  if check_kafka; then
+    echo "[Kafka] ✓ Kafka 集群已运行 (端口 9092)"
+    START_KAFKA=true
+  else
+    echo "[Kafka] ✗ Kafka 集群未运行，跳过 Kafka 模块"
+    echo "[Kafka]   如需启用，请按 cloud-kafka-sample/README.md 部署 Kafka 4.x 集群"
+  fi
+
   echo "=================================="
 }
 
@@ -326,6 +341,18 @@ start_rag_module() {
   start_module "$module_dir" "$display_name" "$port"
 }
 
+start_kafka_module() {
+  IFS='|' read -r module_dir display_name port <<< "${KAFKA_MODULE[0]}"
+  # 创建 testTopic（如不存在）
+  local kafka_home
+  kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
+  if [ -n "$kafka_home" ] && [ -f "$kafka_home/bin/kafka-topics.sh" ]; then
+    "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 --create --topic testTopic --partitions 3 --replication-factor 3 2>/dev/null || true
+    echo "[kafka-sample] ✓ testTopic 已创建"
+  fi
+  start_module "$module_dir" "$display_name" "$port"
+}
+
 start_stream_module() {
   IFS='|' read -r module_dir display_name port <<< "${STREAM_MODULE[0]}"
   start_module "$module_dir" "$display_name" "$port"
@@ -362,7 +389,7 @@ stop_all() {
   echo "正在停止所有服务..."
 
   # 收集所有模块名（含特殊模块）
-  local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${RAG_MODULE[@]}" "${STREAM_MODULE[@]}" "${SEATA_MODULES[@]}")
+  local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${RAG_MODULE[@]}" "${STREAM_MODULE[@]}" "${KAFKA_MODULE[@]}" "${SEATA_MODULES[@]}")
 
   # 第一阶段：通过 PID 文件停止（脚本自身启动的进程）
   for pid_file in "$PID_DIR"/*.pid; do
@@ -591,6 +618,15 @@ demo_urls() {
     echo "=================================="
   fi
 
+  # Kafka 模块验证
+  if [ -f "$PID_DIR/kafka-sample.pid" ] && kill -0 "$(cat "$PID_DIR/kafka-sample.pid")" 2>/dev/null; then
+    echo ""
+    echo "========== Kafka 4.x 集群消息收发验证 =========="
+    verify_log "$LOG_DIR/kafka-sample.log" "Sent sample message" "Kafka Producer 发送消息"
+    verify_log "$LOG_DIR/kafka-sample.log" "Received sample message" "Kafka Consumer 接收消息"
+    echo "=================================="
+  fi
+
   # Stream 模块验证
   if [ -f "$PID_DIR/stream.pid" ] && kill -0 "$(cat "$PID_DIR/stream.pid")" 2>/dev/null; then
     echo ""
@@ -684,6 +720,11 @@ demo_urls() {
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
     fi
+    echo "  8️⃣  Kafka 4.x 集群消息收发:"
+    echo "     • Producer 自动发送 SampleMessage 到 testTopic"
+    echo "     • Consumer @KafkaListener 消费并打印消息"
+    echo "     → 使用 demo-spring-cloud skill 进行验证"
+    echo ""
   else
     echo ""
     echo "  以下验证项失败:"
@@ -717,7 +758,7 @@ status_all() {
     _check_status "$display_name" "$port"
   done
   # 特殊模块
-  local all_special=("${AI_MODULE[0]}" "${RAG_MODULE[0]}" "${STREAM_MODULE[0]}" "${SEATA_MODULES[@]}")
+  local all_special=("${AI_MODULE[0]}" "${RAG_MODULE[0]}" "${STREAM_MODULE[0]}" "${KAFKA_MODULE[0]}" "${SEATA_MODULES[@]}")
   for entry in "${all_special[@]}"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     _check_status "$display_name" "$port"
@@ -905,7 +946,7 @@ logs_all() {
     echo "可用模块:"
     echo "  核心模块: nacos-discovery, gateway, provider, provider-reactive, provider-dubbo,"
     echo "            grpc-server, consumer, consumer-reactive, grpc-client, nacos-config"
-    echo "  特殊模块: ai, ai-rag, stream, seata-business, seata-storage, seata-order, seata-account,"
+    echo "  特殊模块: ai, ai-rag, stream, kafka-sample, seata-business, seata-storage, seata-order, seata-account,"
     echo "            seata-storage-dubbo, seata-order-dubbo, seata-account-dubbo"
     echo "  基础设施: rocketmq-namesrv, rocketmq-broker, seata-server"
     return
@@ -947,6 +988,7 @@ case "${1:-start}" in
     done
     $START_SEATA && start_seata_services
     $START_STREAM && start_stream_module
+    $START_KAFKA && start_kafka_module
     $START_AI && start_ai_module
     $START_RAG && start_rag_module
     echo ""
@@ -977,6 +1019,7 @@ case "${1:-start}" in
     done
     $START_SEATA && start_seata_services
     $START_STREAM && start_stream_module
+    $START_KAFKA && start_kafka_module
     $START_AI && start_ai_module
     $START_RAG && start_rag_module
     echo ""
