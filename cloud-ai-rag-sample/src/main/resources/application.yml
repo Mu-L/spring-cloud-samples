@@ -1,12 +1,10 @@
 server:
   port: 8889
 spring:
+  profiles:
+    active: pgvector
   application:
     name: ai-rag-sample
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/ai_demo
-    username: ai_user
-    password: ai_user
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
@@ -17,13 +15,47 @@ spring:
           temperature: 0.2
       embedding:
         model: text-embedding-v3   # Embedding 模型（用于 RAG 向量化）
-    vectorstore:
-      pgvector:
-        dimensions: 1024           # text-embedding-v3 向量维度
-        initialize-schema: false   # 设为false，手动执行 psql -U postgres -f init_ai_demo.sql
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+---
+spring:
+  config:
+    activate:
+      on-profile: pgvector
+  autoconfigure:
+    exclude: org.springframework.ai.vectorstore.redis.autoconfigure.RedisVectorStoreAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/ai_demo
+    username: ai_user
+    password: ai_user
+  ai:
+    vectorstore:
+      pgvector:
+        dimensions: 1024           # text-embedding-v3 向量维度
+        initialize-schema: false   # 设为false，手动执行 psql -U postgres -f init_ai_demo.sql
+
+---
+spring:
+  config:
+    activate:
+      on-profile: redis
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  ai:
+    vectorstore:
+      redis:
+        dimensions: 1024
+        initialize-schema: true
+        index-name: ${spring.application.name}
+        prefix: ${spring.application.name}
