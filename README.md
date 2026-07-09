@@ -5,25 +5,25 @@
 ![poster](poster.png)
 
 ### 📦 模块介绍
-| 模块                               | 简称                | 端口           | 说明                          |
-|----------------------------------|-------------------|--------------|-----------------------------|
-| 🔍 cloud-nacos-discovery-sample  | discovery         | 8760         | Nacos Discovery             |
-| ⚙️ cloud-nacos-config-sample     | config            | 8761         | Nacos Config                |
-| ⚡ cloud-provider-reactive-sample | provider-reactive | 8762         | Reactive Web Provider       |
-| ⚡ cloud-consumer-reactive-sample | consumer-reactive | 8763         | Reactive Web Consumer       |
-| 🌐 cloud-gateway-sample          | gateway           | 8764         | Spring Cloud Gateway        |
-| 📤 cloud-provider-sample         | provider          | 8765         | Web Provider                |
-| 📥 cloud-consumer-sample         | consumer          | 8766         | Web Consumer                |
-| 🚀 cloud-provider-dubbo-sample   | provider-dubbo    | 50051        | Dubbo Provider              |
-| 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
-| 📋 cloud-sample-api              | api               | -            | Interface & Proto           |
-| 🧩 cloud-commons                 | commons           | -            | Cloud Commons               |
-| 📨 cloud-stream-sample           | stream            | 8767         | Spring Cloud Stream         |
-| 🔄 cloud-seata-sample            | seata             | -            | Seata (含 7 个子模块)            |
-| 🕒 cloud-scheduling-sample       | scheduling        | -            | Alibaba Schedulerx          |
-| 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
-| 🤖 cloud-ai-rag-sample           | rag               | 8889         | Spring AI · RAG             |
-| 📨 cloud-kafka-sample            | kafka             | 8768         | Kafka 4.x                   |
+| 模块                               | 简称                | 端口    | 说明                    |
+|----------------------------------|-------------------|-------|-----------------------|
+| 🔍 cloud-nacos-discovery-sample  | discovery         | 8760  | Nacos Discovery       |
+| ⚙️ cloud-nacos-config-sample     | config            | 8761  | Nacos Config          |
+| ⚡ cloud-provider-reactive-sample | provider-reactive | 8762  | Reactive Web Provider |
+| ⚡ cloud-consumer-reactive-sample | consumer-reactive | 8763  | Reactive Web Consumer |
+| 🌐 cloud-gateway-sample          | gateway           | 8764  | Spring Cloud Gateway  |
+| 📤 cloud-provider-sample         | provider          | 8765  | Web Provider          |
+| 📥 cloud-consumer-sample         | consumer          | 8766  | Web Consumer          |
+| 🚀 cloud-provider-dubbo-sample   | provider-dubbo    | 50051 | Dubbo Provider        |
+| 🔌 cloud-grpc-server-sample      | grpc-server       | 9090  | gRPC Server           |
+| 📋 cloud-sample-api              | api               | -     | Interface & Proto     |
+| 🧩 cloud-commons                 | commons           | -     | Cloud Commons         |
+| 📨 cloud-stream-sample           | stream            | 8767  | Spring Cloud Stream   |
+| 🔄 cloud-seata-sample            | seata             | -     | Seata (含 7 个子模块)      |
+| 🕒 cloud-scheduling-sample       | scheduling        | -     | Alibaba Schedulerx    |
+| 🤖 cloud-ai-sample               | ai                | 8888  | Spring AI             |
+| 🤖 cloud-ai-rag-sample           | rag               | 8889  | Spring AI · RAG       |
+| 📨 cloud-kafka-sample            | kafka             | 8768  | Kafka 4.x             |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
