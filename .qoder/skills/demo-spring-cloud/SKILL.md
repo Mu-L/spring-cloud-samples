@@ -343,13 +343,7 @@ sh start-all.sh clean    # 清理构建产物
 
 ## 演示与验证
 
-### 1. Nacos Discovery 服务发现
-
-```bash
-curl http://localhost:8760/discovery/services
-```
-
-### 2. 普通 Web 服务调用
+### 1. 普通 Web 服务调用
 
 ```bash
 # 直接访问 (consumer → provider)
@@ -358,7 +352,7 @@ curl 'http://localhost:8766/hi?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/hi?name=hongxi'
 ```
 
-### 3. Reactive Web 服务调用
+### 2. Reactive Web 服务调用
 
 ```bash
 # 直接访问 (consumer-reactive → provider-reactive)
@@ -367,7 +361,7 @@ curl 'http://localhost:8763/hi?name=hongxi'
 curl 'http://localhost:8764/consumer-reactive-sample/hi?name=hongxi'
 ```
 
-### 4. Dubbo 服务调用
+### 3. Dubbo 服务调用
 
 ```bash
 # consumer → provider-dubbo
@@ -379,17 +373,7 @@ curl 'http://localhost:8764/consumer-sample/dubbo?name=hongxi'
 curl 'http://localhost:8764/consumer-reactive-sample/dubbo?name=hongxi'
 ```
 
-### 5. gRPC 服务调用
-
-```bash
-# consumer → grpc-server
-curl 'http://localhost:8766/grpc?name=hongxi'
-# 通过网关
-curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
-```
-
-### 6. Dubbo REST 接口
-
+**Dubbo REST 接口：**
 ```bash
 # 直接访问 provider-dubbo
 curl http://localhost:50051/api/hello/lily
@@ -400,7 +384,16 @@ curl 'http://localhost:50051/api/greet/lily?lang=zh'
 curl http://localhost:8764/provider-dubbo-sample/api/hello/lily
 ```
 
-### 7. Trace 链路追踪
+### 4. gRPC 服务调用
+
+```bash
+# consumer → grpc-server
+curl 'http://localhost:8766/grpc?name=hongxi'
+# 通过网关
+curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
+```
+
+### 5. Trace 链路追踪
 
 **执行一键验证脚本：**
 ```bash
@@ -422,13 +415,13 @@ bash .qoder/skills/demo-spring-cloud/verify-trace.sh
 >
 > 前置服务：consumer-sample (8766)、consumer-reactive-sample (8763)、provider-sample (8765)、provider-reactive-sample (8762)、grpc-server-sample (8090)、provider-dubbo-sample（Nacos 注册）
 
-### 8. Nacos Config 动态配置
+### 6. Nacos Config 动态配置
 
 **前提**：`cloud-nacos-config-sample`（8761）已启动。
 
 按以下步骤逐一验证 Nacos Config 的三大核心能力：基础配置管理、@NacosConfig 注解注入、@ConfigurationProperties + @Value 动态刷新。
 
-#### 8a. Nacos 原生 API
+#### 6a. Nacos 原生 API
 
 通过 `cloud-nacos-config-sample` 模块（端口 8761）提供的接口管理配置，避免直接调用 Nacos API 的鉴权问题。
 
@@ -443,7 +436,7 @@ curl 'http://localhost:8761/nacos/listener?dataId=my.city'
 curl 'http://localhost:8761/nacos/removeConfig?dataId=my.city'
 ```
 
-#### 8b. 演示 @NacosConfig 注解
+#### 6b. 演示 @NacosConfig 注解
 
 先用原生 API 发布配置，再访问接口验证：
 
@@ -456,7 +449,7 @@ curl http://localhost:8761/config/hello
 # 删除配置后观察日志（@NacosConfigListener 回调）
 ```
 
-#### 8c. 演示 @ConfigurationProperties 和 @Value
+#### 6c. 演示 @ConfigurationProperties 和 @Value
 
 先用原生 API 发布 Properties 格式配置，再访问接口验证：
 
@@ -480,7 +473,7 @@ curl http://localhost:8761/config/value
 # 修改配置后再访问，观察动态刷新
 ```
 
-### 9. Sentinel 网关限流
+### 7. Sentinel 网关限流
 
 **前提**：`cloud-gateway-sample`（8764）、`cloud-consumer-sample`（8766）、`cloud-provider-sample`（8765）、`cloud-nacos-config-sample`（8761）已启动。
 
@@ -533,7 +526,7 @@ curl -s "http://localhost:8761/nacos/removeConfig?dataId=cloud.sample.gateway.gw
 curl -s "http://localhost:8761/nacos/removeConfig?dataId=cloud.sample.gateway.gw-flow&group=SENTINEL_GROUP"
 ```
 
-### 10. Sentinel 应用级熔断降级
+### 8. Sentinel 应用级熔断降级
 
 **前提**：`cloud-consumer-sample`（8766）、`cloud-provider-sample`（8765）、`cloud-nacos-config-sample`（8761）已启动。
 
@@ -551,7 +544,7 @@ curl -s "http://localhost:8761/nacos/removeConfig?dataId=cloud.sample.gateway.gw
 > 
 > **注意**：`grade=2`（异常比例）的 `count` 不能设为 1（判断条件为 `currentRatio > count`，需要 >100% 异常，不可能触发），应设为 0.5。`statIntervalMs` 需设为 10000ms 确保请求落在同一统计窗口内。
 
-### 11. Stream 消息收发（需 RocketMQ）
+### 9. Stream 消息收发（需 RocketMQ）
 
 > 本模块演示 Spring Cloud Stream 的六大核心场景：
 >
@@ -614,7 +607,7 @@ curl -X POST "http://localhost:8767/stream/tx?message=hello+tx"
 # 多次调用可观察到 commit 和 rollback 两种场景
 ```
 
-### 12. Seata 分布式事务（需 MySQL + Seata Server）
+### 10. Seata 分布式事务（需 MySQL + Seata Server）
 
 **执行流程：**
 
@@ -657,7 +650,7 @@ curl -X POST "http://localhost:8767/stream/tx?message=hello+tx"
 
 **如果用户选择手动操作**，详细步骤请参考`seata-sample`模块的 README。
 
-### 13. Spring AI 模块
+### 11. Spring AI 模块
 
 > ⏱️ **耗时提示**：AI 接口调用大模型 API，每次响应通常需 **5~30 秒**，完整演示所有 AI 功能约需 **5~10 分钟**。
 > 建议：
@@ -858,7 +851,7 @@ curl --max-time 60 -X POST http://localhost:8888/ai/prompt/custom \
   -d '{"template":"请用{language}写一个{function}的示例代码","variables":{"language":"Python","function":"快速排序"}}' | head -c 500
 ```
 
-### 14. Spring AI RAG 模块（需 PostgreSQL + pgvector）
+### 12. Spring AI RAG 模块（需 PostgreSQL + pgvector）
 
 > ⏱️ **耗时提示**：AI 接口调用大模型 API，每次响应通常需 **5~30 秒**，完整演示约需 **5~10 分钟**。
 > 建议：所有 AI curl 命令加 `--max-time 60` 防止无限等待。
@@ -941,7 +934,7 @@ curl --max-time 60 --get --data-urlencode "question=What is PgVector?" "http://l
 > # 预期返回 chunks > 1，验证 TokenTextSplitter 自动分块
 > ```
 
-### 15. Kafka 4.x 消息收发（需 Kafka 集群）
+### 13. Kafka 4.x 消息收发（需 Kafka 集群）
 
 > 本模块演示 Kafka 4.x 传统 Consumer Group、Share Groups 特性（允许多消费者从同一分区并行消费）和两种确认模式，以及事务消息。
 > Kafka 集群需单独部署，详见 [cloud-kafka-sample/README.md](../../../cloud-kafka-sample/README.md)。
