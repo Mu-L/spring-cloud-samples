@@ -37,7 +37,7 @@ public class DemoController {
     @Autowired
     private DiscoveryClient discoveryClient;
 
-    @DubboReference(check = false)
+    @DubboReference
     private DemoService demoService;
 
     @Autowired

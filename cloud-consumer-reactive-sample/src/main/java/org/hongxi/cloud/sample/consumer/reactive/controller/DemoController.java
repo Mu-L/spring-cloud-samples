@@ -28,7 +28,7 @@ public class DemoController {
     @Autowired
     private ReactiveDiscoveryClient reactiveDiscoveryClient;
 
-    @DubboReference(check = false)
+    @DubboReference
     private DemoService demoService;
 
     @RequestMapping("/hi")
