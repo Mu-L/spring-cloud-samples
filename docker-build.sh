@@ -5,19 +5,18 @@
 #
 # 用法:
 #   ./docker-build.sh build             # Maven 打包 + 构建所有 Docker 镜像
-#   ./docker-build.sh build-one <module> # 构建指定模块 (如 cloud-kafka-sample)
+#   ./docker-build.sh build-one <module> # 构建指定模块 (如 cloud-provider-sample)
 #   ./docker-build.sh up            # 启动核心微服务 (9个)
 #   ./docker-build.sh up-stream     # 启动 Stream 消息模块
-#   ./docker-build.sh up-kafka      # 启动 Kafka 模块
 #   ./docker-build.sh up-ai         # 启动 Spring AI 模块 (2个)
 #   ./docker-build.sh up-seata      # 启动 Seata 分布式事务 (7个)
-#   ./docker-build.sh up-all        # 启动全部 (含 Stream/Kafka/AI/Seata)
+#   ./docker-build.sh up-all        # 启动全部 (含 Stream/AI/Seata)
 #   ./docker-build.sh down        # 停止所有微服务
 #   ./docker-build.sh clean       # 停止并清除
 #   ./docker-build.sh status      # 查看容器状态
 #   ./docker-build.sh logs [svc]  # 查看日志
 #
-# 前置条件: 本地中间件已启动 (Nacos/RocketMQ/MySQL/PostgreSQL/Kafka)
+# 前置条件: 本地中间件已启动 (Nacos/RocketMQ/MySQL/PostgreSQL)
 #
 
 set -e
@@ -40,7 +39,6 @@ CORE_MODULES=(
 
 # 可选模块
 STREAM_MODULE="cloud-stream-sample"
-KAFKA_MODULE="cloud-kafka-sample"
 AI_MODULES=("cloud-ai-sample" "cloud-ai-rag-sample")
 SEATA_MODULES=(
   "cloud-seata-sample/account-dubbo-service"
@@ -84,7 +82,7 @@ build_one() {
   local module="$1"
   if [ -z "$module" ]; then
     echo "用法: $0 build-one <module-name>"
-    echo "示例: $0 build-one cloud-kafka-sample"
+    echo "示例: $0 build-one cloud-provider-sample"
     echo "      $0 build-one cloud-seata-sample/business-service"
     exit 1
   fi
@@ -111,7 +109,6 @@ build_all_images() {
     build_image "$module"
   done
   build_image "$STREAM_MODULE"
-  build_image "$KAFKA_MODULE"
   for module in "${AI_MODULES[@]}"; do
     build_image "$module"
   done
@@ -157,7 +154,6 @@ up_all() {
   echo "========== 服务端口 =========="
   echo "  Gateway:          http://localhost:8764"
   echo "  Stream:           http://localhost:8767"
-  echo "  Kafka Sample:     http://localhost:8768"
   echo "  AI:               http://localhost:8888"
   echo "  AI RAG:           http://localhost:8889"
   echo "  Seata Business:   http://localhost:18081"
@@ -172,17 +168,6 @@ up_stream() {
   echo ""
   echo "========== 服务端口 =========="
   echo "  Stream:           http://localhost:8767"
-}
-
-# 启动 Kafka 模块
-up_kafka() {
-  echo "========== 启动 Kafka 模块 =========="
-  docker compose --profile kafka up -d
-  echo ""
-  echo "✓ Kafka 服务已启动"
-  echo ""
-  echo "========== 服务端口 =========="
-  echo "  Kafka Sample:     http://localhost:8768"
 }
 
 # 启动 Spring AI 模块 (2个)
@@ -264,9 +249,6 @@ case "${1:-help}" in
   up-stream)
     up_stream
     ;;
-  up-kafka)
-    up_kafka
-    ;;
   up-ai)
     up_ai
     ;;
@@ -297,20 +279,19 @@ case "${1:-help}" in
     echo ""
     echo "命令:"
     echo "  build             Maven 打包 + 构建所有 Docker 镜像"
-    echo "  build-one <mod>   构建指定模块 (如 cloud-kafka-sample)"
+    echo "  build-one <mod>   构建指定模块 (如 cloud-provider-sample)"
     echo "  up          启动核心微服务 (9个)"
     echo "  up-stream   启动 Stream 消息模块"
-    echo "  up-kafka    启动 Kafka 模块"
     echo "  up-ai       启动 Spring AI 模块 (2个)"
     echo "  up-seata    启动 Seata 分布式事务 (7个)"
-    echo "  up-all      启动全部 (含 Stream/Kafka/AI/Seata)"
+    echo "  up-all      启动全部 (含 Stream/AI/Seata)"
     echo "  down        停止所有微服务"
     echo "  clean       停止并清除"
     echo "  status      查看容器状态"
     echo "  logs [svc]  查看日志"
     echo ""
     echo "快速开始:"
-    echo "  1. 确保本地中间件已启动 (Nacos/RocketMQ/MySQL/PostgreSQL/Kafka)"
+    echo "  1. 确保本地中间件已启动 (Nacos/RocketMQ/MySQL/PostgreSQL)"
     echo "  2. $0 build    # 首次构建"
     echo "  3. $0 up       # 启动核心服务"
     echo "  4. $0 down     # 停止"

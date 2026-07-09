@@ -85,12 +85,11 @@ sh start-all.sh clean    # 清理构建产物
 
 ```
 Mac 宿主机
-├── 本地中间件: Nacos(8848) / RocketMQ(9876) / MySQL(3306) / PostgreSQL(5432) / Kafka(9092,9094,9096)
+├── 本地中间件: Nacos(8848) / RocketMQ(9876) / MySQL(3306) / PostgreSQL(5432)
 │
 └── Docker 容器 (通过 host.docker.internal 连宿主机)
     ├── 核心微服务 (9个): gateway / consumer / provider / grpc-server ...
     ├── Stream 消息         (profile: stream)
-    ├── Kafka 消息收发        (profile: kafka)
     ├── Spring AI           (profile: ai)
     └── Seata 分布式事务   (profile: seata)
 ```
@@ -98,7 +97,7 @@ Mac 宿主机
 **快速开始**
 
 ```shell
-# 1. 启动本地中间件（Nacos / RocketMQ / MySQL / PostgreSQL / Kafka）
+# 1. 启动本地中间件（Nacos / RocketMQ / MySQL / PostgreSQL）
 ./start-all.sh infra
 
 # 2. Maven 打包 + 构建所有 Docker 镜像
@@ -116,13 +115,12 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 
 ```shell
 ./docker-build.sh build             # Maven 打包 + 构建所有 Docker 镜像
-./docker-build.sh build-one <mod>   # 构建指定模块 (如 cloud-kafka-sample)
+./docker-build.sh build-one <mod>   # 构建指定模块 (如 cloud-provider-sample)
 ./docker-build.sh up                # 启动核心微服务 (9个)
 ./docker-build.sh up-stream         # 启动 Stream 消息模块
-./docker-build.sh up-kafka          # 启动 Kafka 模块
 ./docker-build.sh up-ai             # 启动 Spring AI 模块 (2个)
 ./docker-build.sh up-seata          # 启动 Seata 分布式事务 (7个)
-./docker-build.sh up-all            # 启动全部 (含 Stream/Kafka/AI/Seata)
+./docker-build.sh up-all            # 启动全部 (含 Stream/AI/Seata)
 ./docker-build.sh down              # 停止所有微服务
 ./docker-build.sh status            # 查看容器状态
 ./docker-build.sh logs [svc]        # 查看日志

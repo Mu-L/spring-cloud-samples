@@ -9,18 +9,16 @@
 #   RocketMQ:   localhost:9876
 #   PostgreSQL: localhost:5432
 #   MySQL:      localhost:3306
-#   Kafka:      localhost:9092,9094,9096 (3节点 KRaft 集群)
 #
 # 使用:
 #   1. 确保本地中间件已启动 (./start-all.sh infra 会自动检测并启动)
 #   2. ./mvnw clean package -DskipTests          # 打包
 #   3. docker compose --profile core up -d       # 启动核心微服务 (9个)
 #   4. docker compose --profile stream up -d     # 启动 Stream 消息模块
-#   5. docker compose --profile kafka up -d      # 启动 Kafka 模块
-#   6. docker compose --profile ai up -d         # 启动 Spring AI 模块
-#   7. docker compose --profile seata up -d      # 启动 Seata 分布式事务模块
-#   8. docker compose --profile all up -d        # 启动全部
-#   9. docker compose --profile all down         # 停止
+#   5. docker compose --profile ai up -d         # 启动 Spring AI 模块
+#   6. docker compose --profile seata up -d      # 启动 Seata 分布式事务模块
+#   7. docker compose --profile all up -d        # 启动全部
+#   8. docker compose --profile all down         # 停止
 # ============================================================
 
 x-common: &common
@@ -200,23 +198,6 @@ services:
       ROCKETMQ_NAME_SERVER: host.docker.internal:9876
     profiles:
       - stream
-      - all
-    <<: *common
-
-# ======================== Kafka 消息收发 (profile: kafka) ========================
-  kafka-sample:
-    build:
-      context: .
-      args:
-        MODULE: cloud-kafka-sample
-    container_name: kafka-sample
-    ports:
-      - "8768:8768"
-    environment:
-      JAVA_OPTS: "-Xmx128m -Xms64m"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9092,host.docker.internal:9094,host.docker.internal:9096
-    profiles:
-      - kafka
       - all
     <<: *common
 
