@@ -22,15 +22,13 @@ MODULES=(
   # 3. Providers
   "cloud-provider-sample|provider|8765"
   "cloud-provider-reactive-sample|provider-reactive|8762"
-  "cloud-provider-dubbo-sample|provider-dubbo|-"
+  "cloud-provider-dubbo-sample|provider-dubbo|50051"
   # 4. gRPC Server
   "cloud-grpc-server-sample|grpc-server|8090"
   # 5. Consumers
   "cloud-consumer-sample|consumer|8766"
   "cloud-consumer-reactive-sample|consumer-reactive|8763"
-  # 6. gRPC Client
-  "cloud-grpc-client-sample|grpc-client|-"
-  # 7. Nacos Config
+  # 6. Nacos Config
   "cloud-nacos-config-sample|nacos-config|8761"
 )
 
@@ -613,15 +611,6 @@ demo_urls() {
   done
   echo "=================================="
 
-  # gRPC 四种调用模式验证（Unary / 三种流式 / 服务发现）
-  echo ""
-  echo "========== gRPC 四种调用模式验证 =========="
-  verify_log "$LOG_DIR/grpc-client.log" "Unary result" "gRPC Unary RPC"
-  verify_log "$LOG_DIR/grpc-client.log" "Fibonacci numbers" "gRPC Server Streaming (Fibonacci)"
-  verify_log "$LOG_DIR/grpc-client.log" "Accumulate result" "gRPC Client Streaming (Accumulate)"
-  verify_log "$LOG_DIR/grpc-client.log" "BiDi streaming completed" "gRPC Bidirectional Streaming (Chat)"
-  echo "=================================="
-
   # Dubbo REST 接口验证
   echo ""
   echo "========== Dubbo REST 接口验证 =========="
@@ -990,7 +979,7 @@ logs_all() {
     echo ""
     echo "可用模块:"
     echo "  核心模块: nacos-discovery, gateway, provider, provider-reactive, provider-dubbo,"
-    echo "            grpc-server, consumer, consumer-reactive, grpc-client, nacos-config"
+    echo "            grpc-server, consumer, consumer-reactive, nacos-config"
     echo "  特殊模块: ai, ai-rag, stream, kafka-sample, seata-business, seata-storage, seata-order, seata-account,"
     echo "            seata-storage-dubbo, seata-order-dubbo, seata-account-dubbo"
     echo "  基础设施: rocketmq-namesrv, rocketmq-broker, seata-server"

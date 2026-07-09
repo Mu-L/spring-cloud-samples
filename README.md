@@ -18,7 +18,6 @@
 | 🔍 cloud-nacos-discovery-sample  | discovery         | 8760         | Nacos Discovery             |
 | 📨 cloud-stream-sample           | stream            | 8767         | Spring Cloud Stream         |
 | 🔌 cloud-grpc-server-sample      | grpc-server       | 9090<br>8090 | gRPC Server<br>(8090是Web端口) |
-| 🔌 cloud-grpc-client-sample      | grpc-client       | -            | gRPC Client                 |
 | 🤖 cloud-ai-sample               | ai                | 8888         | Spring AI                   |
 | 🤖 cloud-ai-rag-sample           | rag               | 8889         | Spring AI · RAG             |
 | 🔄 cloud-seata-sample            | seata             | -            | Seata (含 7 个子模块)            |
@@ -223,7 +222,7 @@ spring:
 ```
 关于服务发现，Spring Cloud 与 gRPC 是两套服务发现模式，本项目使用 <br>
 NameResolver SPI 桥接 DiscoveryClient 方式实现了两者服务发现模式的集成， <br>
-具体实现请参考`cloud-commons`和`grpc-client-sample` <br>
+具体实现请参考`cloud-commons`模块<br>
 接着前面的，启动grpc-server <br>
 直接访问(consumer → grpc-server)
 ```shell
@@ -250,17 +249,6 @@ curl 'http://localhost:8764/provider-dubbo-sample/api/add?a=1&b=2'
 curl -X POST http://localhost:8764/provider-dubbo-sample/api/echo -H "Content-Type: application/json" -d '{"message":"hi"}'
 curl 'http://localhost:8764/provider-dubbo-sample/api/greet/lily?lang=zh'
 ```
-
-### 🔀 gRPC 四种调用模式
-
-启动 grpc-server、grpc-client，通过 `CommandLineRunner` 自动演示四种 gRPC 调用模式：
-
-| 模式                      | 说明                           | 日志预期                                                   |
-|-------------------------|------------------------------|--------------------------------------------------------|
-| Unary                   | 客户端发送单个请求，服务端返回单个响应          | `Unary result: Hello, lily`                            |
-| Server Streaming        | 客户端发送上限值，服务端流式返回斐波那契数列       | `Fibonacci numbers up to 100: 0, 1, 1, 2, 3, 5, 8 ...` |
-| Client Streaming        | 客户端流式发送多个数字，服务端汇总返回总和与平均值    | `Accumulate result: count=5, sum=150.0, average=30.0`  |
-| Bidirectional Streaming | 双向流式交互，客户端发送名称，服务端实时回复带序号的问候 | `Received: Hello, Alice! (msg #1)`                     |
 
 ### 🔍 Trace 链路追踪
 

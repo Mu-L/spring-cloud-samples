@@ -260,7 +260,6 @@ public class ProjectDemoTools {
                 【RPC 服务】
                   - cloud-provider-dubbo-sample (50051)  Dubbo Provider
                   - cloud-grpc-server-sample (8090/9090) gRPC Server
-                  - cloud-grpc-client-sample             gRPC Client
                 
                 【高级功能】
                   - cloud-ai-sample (8888)               Spring AI（对话/视觉/Tool Calling/Agent）

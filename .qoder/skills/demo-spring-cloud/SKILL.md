@@ -324,8 +324,7 @@ sh start-all.sh clean    # 清理构建产物
 | 6 | cloud-grpc-server-sample | 8090(Web)/9090(gRPC) | gRPC Server |
 | 7 | cloud-consumer-sample | 8766 | Web Consumer |
 | 8 | cloud-consumer-reactive-sample | 8763 | Reactive Consumer |
-| 9 | cloud-grpc-client-sample | - | gRPC Client |
-| 10 | cloud-nacos-config-sample | 8761 | Nacos Config |
+| 9 | cloud-nacos-config-sample | 8761 | Nacos Config |
 
 单独启动某模块：
 ```bash
@@ -389,28 +388,6 @@ curl 'http://localhost:8766/grpc?name=hongxi'
 curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'
 ```
 
-#### gRPC 负载均衡验证（Nacos 服务发现 + round_robin）
-
-> 通过启动两个 gRPC Server 实例，验证 gRPC 客户端基于 Nacos 服务发现的负载均衡。
-> `GreeterImpl` 响应中携带端口号，便于观察请求分发效果。
-
-1. **确保第一个实例已启动**（端口 9090，start-all.sh 已启动）
-2. **启动第二个实例**（端口 9091）：
-   ```bash
-   java -jar cloud-grpc-server-sample/target/cloud-grpc-server-sample.jar \
-     --spring.grpc.server.port=9091 --server.port=8091 > logs/grpc-server-2.log 2>&1 &
-   echo $! > .pids/grpc-server-2.pid
-   ```
-3. **等待注册完成后，多次调用观察负载均衡**：
-   ```bash
-   for i in $(seq 1 6); do curl -s 'http://localhost:8766/grpc?name=hongxi'; echo; done
-   ```
-   预期响应交替出现 `from port 9090` 和 `from port 9091`（round_robin 策略）
-4. **验证完毕后关闭第二个实例**：
-   ```bash
-   kill $(cat .pids/grpc-server-2.pid) 2>/dev/null; rm -f .pids/grpc-server-2.pid
-   ```
-
 ### 6. Dubbo REST 接口
 
 ```bash
@@ -425,14 +402,28 @@ curl http://localhost:8764/provider-dubbo-sample/api/hello/lily
 
 ### 7. gRPC 四种调用模式
 
-启动 grpc-server、grpc-client，通过 `CommandLineRunner` 自动演示四种 gRPC 调用模式：
+启动 grpc-server 和 consumer 模块后，通过 consumer 模块的 REST 接口演示四种 gRPC 调用模式：
 
-| 模式 | 说明 | 日志预期 |
-|------|------|----------|
-| Unary | 客户端发送单个请求，服务端返回单个响应 | `Unary result: Hello, lily` |
-| Server Streaming | 客户端发送上限值，服务端流式返回斐波那契数列 | `Fibonacci numbers up to 100: 0, 1, 1, 2, 3, 5, 8 ...` |
-| Client Streaming | 客户端流式发送多个数字，服务端汇总返回总和与平均值 | `Accumulate result: count=5, sum=150.0, average=30.0` |
-| Bidirectional Streaming | 双向流式交互，客户端发送名称，服务端实时回复带序号的问候 | `Received: Hello, Alice! (msg #1)` |
+| 模式 | 接口路径 | 说明 |
+|------|----------|------|
+| Unary | GET /grpc/modes/unary | 客户端发送单个请求，服务端返回单个响应 |
+| Server Streaming | GET /grpc/modes/server-streaming | 客户端发送上限值，服务端流式返回斐波那契数列 |
+| Client Streaming | POST /grpc/modes/client-streaming | 客户端流式发送多个数字，服务端汇总返回总和与平均值 |
+| Bidirectional Streaming | POST /grpc/modes/bidi-streaming | 双向流式交互，客户端发送名称，服务端实时回复带序号的问候 |
+
+```bash
+# Unary
+curl 'http://localhost:8766/grpc/modes/unary?name=lily'
+
+# Server Streaming
+curl 'http://localhost:8766/grpc/modes/server-streaming?limit=100'
+
+# Client Streaming
+curl -X POST 'http://localhost:8766/grpc/modes/client-streaming?values=10,20,30,40,50'
+
+# Bidirectional Streaming
+curl -X POST 'http://localhost:8766/grpc/modes/bidi-streaming?names=Alice,Bob,Charlie'
+```
 
 ### 8. Trace 链路追踪
 

@@ -27,7 +27,6 @@
         <module>cloud-nacos-config-sample</module>
         <module>cloud-stream-sample</module>
         <module>cloud-grpc-server-sample</module>
-        <module>cloud-grpc-client-sample</module>
         <module>cloud-ai-sample</module>
         <module>cloud-ai-rag-sample</module>
         <module>cloud-seata-sample</module>
