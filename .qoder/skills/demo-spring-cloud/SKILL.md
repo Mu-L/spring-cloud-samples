@@ -400,32 +400,7 @@ curl 'http://localhost:50051/api/greet/lily?lang=zh'
 curl http://localhost:8764/provider-dubbo-sample/api/hello/lily
 ```
 
-### 7. gRPC 四种调用模式
-
-启动 grpc-server 和 consumer 模块后，通过 consumer 模块的 REST 接口演示四种 gRPC 调用模式：
-
-| 模式 | 接口路径 | 说明 |
-|------|----------|------|
-| Unary | GET /grpc/modes/unary | 客户端发送单个请求，服务端返回单个响应 |
-| Server Streaming | GET /grpc/modes/server-streaming | 客户端发送上限值，服务端流式返回斐波那契数列 |
-| Client Streaming | POST /grpc/modes/client-streaming | 客户端流式发送多个数字，服务端汇总返回总和与平均值 |
-| Bidirectional Streaming | POST /grpc/modes/bidi-streaming | 双向流式交互，客户端发送名称，服务端实时回复带序号的问候 |
-
-```bash
-# Unary
-curl 'http://localhost:8766/grpc/modes/unary?name=lily'
-
-# Server Streaming
-curl 'http://localhost:8766/grpc/modes/server-streaming?limit=100'
-
-# Client Streaming
-curl -X POST 'http://localhost:8766/grpc/modes/client-streaming?values=10,20,30,40,50'
-
-# Bidirectional Streaming
-curl -X POST 'http://localhost:8766/grpc/modes/bidi-streaming?names=Alice,Bob,Charlie'
-```
-
-### 8. Trace 链路追踪
+### 7. Trace 链路追踪
 
 **执行一键验证脚本：**
 ```bash
@@ -447,7 +422,7 @@ bash .qoder/skills/demo-spring-cloud/verify-trace.sh
 >
 > 前置服务：consumer-sample (8766)、consumer-reactive-sample (8763)、provider-sample (8765)、provider-reactive-sample (8762)、grpc-server-sample (8090)、provider-dubbo-sample（Nacos 注册）
 
-### 9. Nacos Config 动态配置
+### 8. Nacos Config 动态配置
 
 **执行一键验证脚本：**
 ```bash
@@ -457,7 +432,7 @@ bash .qoder/skills/demo-spring-cloud/verify-nacos-config.sh
 
 > 以下为手动演示步骤，供学习参考。
 
-#### 9a. Nacos 原生 API
+#### 8a. Nacos 原生 API
 
 通过 `cloud-nacos-config-sample` 模块（端口 8761）提供的接口管理配置，避免直接调用 Nacos API 的鉴权问题。
 
@@ -472,7 +447,7 @@ curl 'http://localhost:8761/nacos/listener?dataId=my.city'
 curl 'http://localhost:8761/nacos/removeConfig?dataId=my.city'
 ```
 
-#### 9b. 演示 @NacosConfig 注解
+#### 8b. 演示 @NacosConfig 注解
 
 先用原生 API 发布配置，再访问接口验证：
 
@@ -485,7 +460,7 @@ curl http://localhost:8761/config/hello
 # 删除配置后观察日志（@NacosConfigListener 回调）
 ```
 
-#### 9c. 演示 @ConfigurationProperties 和 @Value
+#### 8c. 演示 @ConfigurationProperties 和 @Value
 
 先用原生 API 发布 Properties 格式配置，再访问接口验证：
 
@@ -509,7 +484,7 @@ curl http://localhost:8761/config/value
 # 修改配置后再访问，观察动态刷新
 ```
 
-### 10. Sentinel 网关限流
+### 9. Sentinel 网关限流
 
 **前提**：`cloud-gateway-sample`（8764）、`cloud-consumer-sample`（8766）、`cloud-provider-sample`（8765）、`cloud-nacos-config-sample`（8761）已启动。
 
@@ -521,7 +496,7 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-gateway.sh
 
 配置 JSON 参考项目 README 的 [Sentinel Gateway 演示](../../../README.md#-sentinel-gateway-演示) 章节。
 
-### 11. Sentinel 应用级熔断降级
+### 10. Sentinel 应用级熔断降级
 
 **前提**：`cloud-consumer-sample`（8766）、`cloud-provider-sample`（8765）、`cloud-nacos-config-sample`（8761）已启动。
 
@@ -543,7 +518,7 @@ bash .qoder/skills/demo-spring-cloud/verify-sentinel-app.sh
 > 
 > **注意**：`grade=2`（异常比例）的 `count` 不能设为 1（判断条件为 `currentRatio > count`，需要 >100% 异常，不可能触发），应设为 0.5。`statIntervalMs` 需设为 10000ms 确保请求落在同一统计窗口内。
 
-### 12. Stream 消息收发（需 RocketMQ）
+### 11. Stream 消息收发（需 RocketMQ）
 
 > 本模块演示 Spring Cloud Stream 的六大核心场景：
 >
@@ -606,7 +581,7 @@ curl -X POST "http://localhost:8767/stream/tx?message=hello+tx"
 # 多次调用可观察到 commit 和 rollback 两种场景
 ```
 
-### 13. Seata 分布式事务（需 MySQL + Seata Server）
+### 12. Seata 分布式事务（需 MySQL + Seata Server）
 
 **执行流程：**
 
@@ -649,7 +624,7 @@ curl -X POST "http://localhost:8767/stream/tx?message=hello+tx"
 
 **如果用户选择手动操作**，详细步骤请参考`seata-sample`模块的 README。
 
-### 14. Spring AI 模块
+### 13. Spring AI 模块
 
 > ⏱️ **耗时提示**：AI 接口调用大模型 API，每次响应通常需 **5~30 秒**，完整演示所有 AI 功能约需 **5~10 分钟**。
 > 建议：
@@ -850,7 +825,7 @@ curl --max-time 60 -X POST http://localhost:8888/ai/prompt/custom \
   -d '{"template":"请用{language}写一个{function}的示例代码","variables":{"language":"Python","function":"快速排序"}}' | head -c 500
 ```
 
-### 15. Spring AI RAG 模块（需 PostgreSQL + pgvector）
+### 14. Spring AI RAG 模块（需 PostgreSQL + pgvector）
 
 > ⏱️ **耗时提示**：AI 接口调用大模型 API，每次响应通常需 **5~30 秒**，完整演示约需 **5~10 分钟**。
 > 建议：所有 AI curl 命令加 `--max-time 60` 防止无限等待。
@@ -933,7 +908,7 @@ curl --max-time 60 --get --data-urlencode "question=What is PgVector?" "http://l
 > # 预期返回 chunks > 1，验证 TokenTextSplitter 自动分块
 > ```
 
-### 16. Kafka 4.x 消息收发（需 Kafka 集群）
+### 15. Kafka 4.x 消息收发（需 Kafka 集群）
 
 > 本模块演示 Kafka 4.x 传统 Consumer Group、Share Groups 特性（允许多消费者从同一分区并行消费）和两种确认模式，以及事务消息。
 > Kafka 集群需单独部署，详见 [cloud-kafka-sample/README.md](../../../cloud-kafka-sample/README.md)。
