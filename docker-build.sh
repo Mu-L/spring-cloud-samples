@@ -34,6 +34,7 @@ CORE_MODULES=(
 
 # 可选模块
 STREAM_MODULE="cloud-stream-sample"
+KAFKA_MODULE="cloud-kafka-sample"
 AI_MODULES=("cloud-ai-sample" "cloud-ai-rag-sample")
 SEATA_MODULES=(
   "cloud-seata-sample/account-dubbo-service"
@@ -81,6 +82,7 @@ build_all_images() {
     build_image "$module"
   done
   build_image "$STREAM_MODULE"
+  build_image "$KAFKA_MODULE"
   for module in "${AI_MODULES[@]}"; do
     build_image "$module"
   done
@@ -126,6 +128,7 @@ up_all() {
   echo "========== 服务端口 =========="
   echo "  Gateway:          http://localhost:8764"
   echo "  Stream:           http://localhost:8767"
+  echo "  Kafka Sample:     http://localhost:8768"
   echo "  AI:               http://localhost:8888"
   echo "  AI RAG:           http://localhost:8889"
   echo "  Seata Business:   http://localhost:18081"
@@ -221,7 +224,7 @@ case "${1:-help}" in
     echo "  build       Maven 打包 + 构建所有 Docker 镜像"
     echo "  up          启动核心微服务 (9个)"
     echo "  up-seata    启动 Seata 分布式事务 (7个)"
-    echo "  up-all      启动全部 (含 Stream/AI/Seata)"
+    echo "  up-all      启动全部 (含 Stream/Kafka/AI/Seata)"
     echo "  down        停止所有微服务"
     echo "  clean       停止并清除"
     echo "  status      查看容器状态"
