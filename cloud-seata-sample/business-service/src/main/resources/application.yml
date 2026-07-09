@@ -10,6 +10,21 @@ spring:
       password: 7fDJZBbiLzO2
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+    scheduling:
+      distributed-mode: shedlock
+  task:
+    scheduling:
+      thread-name-prefix: sca-schedule-
+      pool:
+        size: 5
+      shutdown:
+        await-termination: true
+        await-termination-period: 60s
+  datasource:
+    driver-class: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/seata?useSSL=false&serverTimezone=UTC
+    username: root
+    password: root1234
 
 management:
   otlp:

@@ -1,4 +1,4 @@
-package org.hongxi.cloud.sample.scheduling.job;
+package org.hongxi.cloud.sample.seata.business.job;
 
 import java.util.concurrent.TimeUnit;
 

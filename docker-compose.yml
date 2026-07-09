@@ -347,6 +347,7 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+      MYSQL_HOST: host.docker.internal
     depends_on:
       - seata-storage-dubbo
       - seata-order-dubbo
