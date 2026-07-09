@@ -397,60 +397,99 @@ stop_all() {
   # 收集所有模块名（含特殊模块）
   local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${RAG_MODULE[@]}" "${STREAM_MODULE[@]}" "${KAFKA_MODULE[@]}" "${SEATA_MODULES[@]}")
 
-  # 第一阶段：通过 PID 文件停止（脚本自身启动的进程）
+  # 第一阶段：并发停止通过 PID 文件启动的进程
+  # 1a. 先对所有进程发送 SIGTERM
+  local -a pending_pids=()
+  local -a pending_names=()
   for pid_file in "$PID_DIR"/*.pid; do
     [ -f "$pid_file" ] || continue
     local name=$(basename "$pid_file" .pid)
     local pid=$(cat "$pid_file")
     if kill -0 "$pid" 2>/dev/null; then
-      printf '[%s] 停止中 (PID: %s) ...' "$name" "$pid"
-      kill "$pid"
-      for i in $(seq 1 10); do
-        if ! kill -0 "$pid" 2>/dev/null; then break; fi
-        sleep 1
-      done
-      if kill -0 "$pid" 2>/dev/null; then
-        kill -9 "$pid" 2>/dev/null || true
-      fi
-      echo " 已停止"
+      kill "$pid" 2>/dev/null || true
+      pending_pids+=("$pid")
+      pending_names+=("$name")
+      printf '[%s] 发送停止信号 (PID: %s)\n' "$name" "$pid"
     else
       echo "[$name] 未在运行"
     fi
     rm -f "$pid_file"
   done
 
-  # 第二阶段：扫描并停止外部启动的项目模块进程（如 IDE、手动 java -jar 等）
+  # 1b. 统一等待所有进程退出（最多 15 秒）
+  if [ ${#pending_pids[@]} -gt 0 ]; then
+    echo "等待 ${#pending_pids[@]} 个进程退出..."
+    for i in $(seq 1 15); do
+      local all_gone=true
+      for pid in "${pending_pids[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+          all_gone=false
+          break
+        fi
+      done
+      if $all_gone; then break; fi
+      sleep 1
+    done
+
+    # 1c. 强杀仍未退出的进程
+    for idx in "${!pending_pids[@]}"; do
+      local pid="${pending_pids[$idx]}"
+      local name="${pending_names[$idx]}"
+      if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+        echo "[$name] 强制终止 (PID: $pid)"
+      fi
+    done
+    echo "所有 PID 文件记录的进程已停止"
+  fi
+
+  # 第二阶段：并发扫描并停止外部启动的项目模块进程（如 IDE、手动 java -jar 等）
   echo ""
   echo "扫描外部启动的模块进程..."
   local found_external=false
+  local -a external_pids=()
+  local -a external_names=()
   for entry in "${all_modules[@]}"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
-    # 精确匹配: spring-boot:run 或 项目 jar，避免误杀
-    # 注意：spring-boot:run 启动的子进程可能以 .jar 结尾，需要同时匹配
     local killed
     killed=$(pgrep -f "${module_dir}.*(spring-boot:run|\.jar)" 2>/dev/null || true)
     if [ -n "$killed" ]; then
       found_external=true
+      for pid in $killed; do
+        external_pids+=("$pid")
+        external_names+=("$display_name")
+      done
       echo "$killed" | xargs kill 2>/dev/null || true
-      sleep 2
-      # 确认已退出，未退出则强杀
-      local remaining
-      remaining=$(pgrep -f "${module_dir}.*(spring-boot:run|\.jar)" 2>/dev/null || true)
-      if [ -n "$remaining" ]; then
-        echo "$remaining" | xargs kill -9 2>/dev/null || true
-      fi
-      echo "[$display_name] 已停止外部进程 (PID: $(echo $killed | tr '\n' ' '))"
     fi
   done
+
+  # 统一等待外部进程退出（最多 5 秒）
+  if [ ${#external_pids[@]} -gt 0 ]; then
+    for i in $(seq 1 5); do
+      local all_gone=true
+      for pid in "${external_pids[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then all_gone=false; break; fi
+      done
+      if $all_gone; then break; fi
+      sleep 1
+    done
+    # 强杀剩余
+    for pid in "${external_pids[@]}"; do
+      if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+      fi
+    done
+    echo "已停止外部进程 (PID: ${external_pids[*]})"
+  fi
   if ! $found_external; then
     echo "未发现外部启动的模块进程"
   fi
 
   # 停止 RocketMQ 和 Seata Server
   pkill -f "rocketmq" 2>/dev/null || true
+  pkill -f "seata.*spring-boot:run" 2>/dev/null || true
   sleep 1
   pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null || true
-  pkill -f "seata.*spring-boot:run" 2>/dev/null || true
   rm -rf "$LOG_DIR" "$PID_DIR"
   echo "所有服务已停止，logs 和 .pids 目录已清理"
 }
