@@ -56,50 +56,37 @@ START_KAFKA=false
 
 check_java() {
   local min_version=17
-  if ! command -v java &>/dev/null; then
-    echo "[Java] ✗ 未检测到 Java"
-    echo "[Java] 正在通过 Homebrew 安装 JDK $min_version ..."
-    if command -v brew &>/dev/null; then
-      brew install openjdk@$min_version
-      echo "[Java] ✓ JDK $min_version 安装完成"
-      echo "[Java] 请执行以下命令配置 PATH（或添加到 ~/.zshrc）:"
-      echo "  sudo ln -sfn $(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-$min_version.jdk"
-      echo "  export JAVA_HOME=$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
-      echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
-      export JAVA_HOME="$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
-      export PATH="$JAVA_HOME/bin:$PATH"
-    else
-      echo "[Java] ✗ 未安装 Homebrew，请手动安装 JDK $min_version"
-      echo "  brew install openjdk@$min_version"
-      return 1
-    fi
+  local java_version
+  java_version=$(java -version 2>&1 | head -1 | sed -E 's/.*"([0-9]+)\..*/\1/' 2>/dev/null || echo 0)
+
+  if [ "$java_version" -ge "$min_version" ] 2>/dev/null; then
+    echo "[Java] ✓ Java $java_version"
+    return
   fi
 
-  local java_version
-  java_version=$(java -version 2>&1 | head -1 | sed -E 's/.*"([0-9]+)\..*/\1/')
-  if [ "$java_version" -lt "$min_version" ] 2>/dev/null; then
+  if ! command -v java &>/dev/null; then
+    echo "[Java] ✗ 未检测到 Java"
+  else
     echo "[Java] ✗ 当前 Java 版本: $java_version，需要 >= $min_version"
-    printf '[Java] 是否自动安装 JDK %s? [Y/n] ' "$min_version"
-    read -r answer
-    if [[ "$answer" != "n" && "$answer" != "N" ]]; then
-      if command -v brew &>/dev/null; then
-        echo "[Java] 正在通过 Homebrew 安装 JDK $min_version ..."
-        brew install openjdk@$min_version
-        export JAVA_HOME="$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
-        export PATH="$JAVA_HOME/bin:$PATH"
-        echo "[Java] ✓ JDK $min_version 已安装并激活（当前会话）"
-        echo "[Java] 建议将以下内容添加到 ~/.zshrc 以永久生效:"
-        echo "  export JAVA_HOME=$JAVA_HOME"
-        echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
-      else
-        echo "[Java] ✗ 未安装 Homebrew，请手动安装 JDK $min_version"
-        return 1
-      fi
+  fi
+  printf '[Java] 是否自动安装 JDK %s? [Y/n] ' "$min_version"
+  read -r answer
+  if [[ "$answer" != "n" && "$answer" != "N" ]]; then
+    if command -v brew &>/dev/null; then
+      echo "[Java] 正在通过 Homebrew 安装 JDK $min_version ..."
+      brew install openjdk@$min_version
+      export JAVA_HOME="$(brew --prefix)/opt/openjdk@$min_version/libexec/openjdk.jdk/Contents/Home"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      echo "[Java] ✓ JDK $min_version 已安装并激活（当前会话）"
+      echo "[Java] 建议将以下内容添加到 ~/.zshrc 以永久生效:"
+      echo "  export JAVA_HOME=$JAVA_HOME"
+      echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
     else
-      echo "[Java] 跳过安装，继续执行..."
+      echo "[Java] ✗ 未安装 Homebrew，请手动安装 JDK $min_version"
+      return 1
     fi
   else
-    echo "[Java] ✓ Java $java_version"
+    echo "[Java] 跳过安装，继续执行..."
   fi
 }
 
@@ -329,13 +316,9 @@ start_module() {
   fi
 }
 
-start_ai_module() {
-  IFS='|' read -r module_dir display_name port <<< "${AI_MODULE[0]}"
-  start_module "$module_dir" "$display_name" "$port"
-}
-
-start_rag_module() {
-  IFS='|' read -r module_dir display_name port <<< "${RAG_MODULE[0]}"
+start_single() {
+  local -n arr=$1
+  IFS='|' read -r module_dir display_name port <<< "${arr[0]}"
   start_module "$module_dir" "$display_name" "$port"
 }
 
@@ -357,10 +340,7 @@ start_kafka_module() {
   start_module "$module_dir" "$display_name" "$port"
 }
 
-start_stream_module() {
-  IFS='|' read -r module_dir display_name port <<< "${STREAM_MODULE[0]}"
-  start_module "$module_dir" "$display_name" "$port"
-}
+
 
 start_seata_services() {
   # 按依赖顺序启动：account/storage（基础层）→ order（依赖 account）→ business（依赖 storage + order）
@@ -803,30 +783,30 @@ status_all() {
 NACOS_HOST="127.0.0.1"
 NACOS_PORT="8848"
 
+wait_nacos_ready() {
+  for i in $(seq 1 30); do
+    if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+      echo " 就绪"
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
 check_nacos() {
   printf '[Nacos] 检查注册中心 (%s:%s) ...' "$NACOS_HOST" "$NACOS_PORT"
-  # 已运行
   if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
     echo " 就绪"
     return 0
   fi
-  # 尝试自动启动
   echo " 未运行，正在尝试自动启动..."
-  # 在用户目录下查找 Nacos
-  local nacos_bin
   local nacos_dir
   nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
   if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
-    nacos_bin="$nacos_dir/bin"
-    bash "$nacos_bin/startup.sh" -m standalone
+    bash "$nacos_dir/bin/startup.sh" -m standalone
     printf '[Nacos] 等待启动就绪...'
-    for i in $(seq 1 30); do
-      if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
-        echo " 就绪"
-        return 0
-      fi
-      sleep 2
-    done
+    wait_nacos_ready && return 0
   fi
   echo " 失败!"
   echo "请先安装并启动 Nacos:"
@@ -851,43 +831,9 @@ install_deps() {
 install_all() {
   echo "========== 检查并安装中间件 =========="
 
-  # Nacos
+  # Nacos (复用 check_nacos)
   echo ""
-  echo "--- Nacos ---"
-  if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
-    echo "✓ Nacos 已运行"
-  else
-    # 在用户目录下查找 Nacos
-    local nacos_bin
-    local nacos_dir
-    nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
-    if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
-      nacos_bin="$nacos_dir/bin"
-      echo "Nacos 已安装但未运行，正在启动..."
-      bash "$nacos_bin/startup.sh" -m standalone
-      echo "等待 Nacos 启动..."
-      for i in $(seq 1 30); do
-        if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
-          echo "✓ Nacos 已启动"
-          break
-        fi
-        sleep 2
-      done
-    else
-      echo "正在安装 Nacos..."
-      curl -fsSL https://nacos.io/nacos-installer.sh | bash
-      echo "正在部署 Nacos..."
-      nacos-setup
-      echo "等待 Nacos 启动..."
-      for i in $(seq 1 30); do
-        if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
-          echo "✓ Nacos 已启动"
-          break
-        fi
-        sleep 2
-      done
-    fi
-  fi
+  check_nacos
 
   # RocketMQ
   echo ""
@@ -994,13 +940,6 @@ logs_all() {
   fi
 }
 
-clean_all() {
-  echo "========== 清理构建产物 =========="
-  cd "$BASE_DIR"
-  ./mvnw clean -q
-  echo "✓ 已清理所有 target 目录"
-}
-
 # 主逻辑
 case "${1:-start}" in
   start)
@@ -1020,44 +959,16 @@ case "${1:-start}" in
       start_module "$module_dir" "$display_name" "$port"
     done
     $START_SEATA && start_seata_services
-    $START_STREAM && start_stream_module
+    $START_STREAM && start_single STREAM_MODULE
     $START_KAFKA && start_kafka_module
-    $START_AI && start_ai_module
-    $START_RAG && start_rag_module
+    $START_AI && start_single AI_MODULE
+    $START_RAG && start_single RAG_MODULE
     echo ""
     status_all
     demo_urls
     ;;
   stop)
     stop_all
-    ;;
-  restart)
-    stop_all
-    sleep 2
-    echo ""
-    echo "========== 重新启动所有服务 =========="
-    check_java
-    echo ""
-    check_nacos
-    echo ""
-    check_special_prerequisites
-    echo ""
-    install_deps
-    echo ""
-    build_all
-    echo ""
-    for entry in "${MODULES[@]}"; do
-      IFS='|' read -r module_dir display_name port <<< "$entry"
-      start_module "$module_dir" "$display_name" "$port"
-    done
-    $START_SEATA && start_seata_services
-    $START_STREAM && start_stream_module
-    $START_KAFKA && start_kafka_module
-    $START_AI && start_ai_module
-    $START_RAG && start_rag_module
-    echo ""
-    status_all
-    demo_urls
     ;;
   install)
     install_all
@@ -1078,9 +989,6 @@ case "${1:-start}" in
     ;;
   build)
     build_all
-    ;;
-  clean)
-    clean_all
     ;;
   verify)
     demo_urls
@@ -1135,24 +1043,23 @@ case "${1:-start}" in
     echo "  curl http://localhost:18081/seata/dubbo"
     ;;
   help|--help|-h)
-    echo "用法: $0 {start|stop|restart|install|infra|seata|build|clean|verify|logs|status|help}"
+    echo "用法: $0 {start|stop|install|infra|seata|build|verify|logs|status|help}"
     echo ""
     echo "命令说明:"
     echo "  start    启动所有服务（默认）"
     echo "  stop     停止所有服务（含 RocketMQ、Seata Server）"
-    echo "  restart  重启所有服务"
+    
     echo "  install  检查并安装中间件 + 打包模块"
     echo "  infra    仅启动中间件（配合 Docker 部署微服务时使用）"
     echo "  seata    仅启动 Seata 分布式事务 (7个模块)"
     echo "  build    打包所有模块"
-    echo "  clean    清理构建产物"
     echo "  verify   执行验证（不启动，仅验证已运行的服务）"
     echo "  status   查看服务状态"
     echo "  logs     查看模块日志 (用法: $0 logs <模块名>)"
     echo "  help     显示此帮助信息"
     ;;
   *)
-    echo "用法: $0 {start|stop|restart|install|infra|seata|build|clean|verify|logs|status|help}"
+    echo "用法: $0 {start|stop|install|infra|seata|build|verify|logs|status|help}"
     exit 1
     ;;
 esac
