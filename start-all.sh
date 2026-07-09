@@ -47,7 +47,7 @@ SEATA_MODULES=(
   "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073"
   "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071"
 )
-KAFKA_MODULE=("cloud-kafka-sample|kafka-sample|-")
+KAFKA_MODULE=("cloud-kafka-sample|kafka-sample|8768")
 
 # 特殊模块启动标记
 START_SEATA=false
@@ -343,13 +343,6 @@ start_rag_module() {
 
 start_kafka_module() {
   IFS='|' read -r module_dir display_name port <<< "${KAFKA_MODULE[0]}"
-  # 创建 testTopic（如不存在）
-  local kafka_home
-  kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
-  if [ -n "$kafka_home" ] && [ -f "$kafka_home/bin/kafka-topics.sh" ]; then
-    "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 --create --topic testTopic --partitions 3 --replication-factor 3 2>/dev/null || true
-    echo "[kafka-sample] ✓ testTopic 已创建"
-  fi
   start_module "$module_dir" "$display_name" "$port"
 }
 
@@ -720,9 +713,9 @@ demo_urls() {
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
     fi
-    echo "  8️⃣  Kafka 4.x 集群消息收发:"
-    echo "     • Producer 自动发送 SampleMessage 到 testTopic"
-    echo "     • Consumer @KafkaListener 消费并打印消息"
+    echo "  8️⃣  Kafka 4.x 集群消息收发 (端口 8768):"
+    echo "     • 启动后 ApplicationRunner 自动发送传统 Consumer Group 消息"
+    echo "     • Share Group 隐式/显式确认消息 (REST 接口触发)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
   else

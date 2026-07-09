@@ -340,7 +340,7 @@ sh start-all.sh clean    # 清理构建产物
 | cloud-ai-rag-sample | 8889        | Spring AI · RAG，需 PostgreSQL + pgvector + OPENAI_API_KEY |
 | cloud-stream-sample | 8767        | 需先安装并启动 RocketMQ |
 | cloud-seata-sample | 18081-18084 + 3 Dubbo | 需 MySQL + Seata Server，含 7 个子模块 |
-| cloud-kafka-sample | - | 需 Kafka 4.x 集群（KRaft 模式） |
+| cloud-kafka-sample | 8768 | 需 Kafka 4.x 集群（KRaft 模式） |
 
 ## 演示与验证
 
@@ -942,67 +942,72 @@ curl --max-time 60 --get --data-urlencode "question=What is PgVector?" "http://l
 > # 预期返回 chunks > 1，验证 TokenTextSplitter 自动分块
 > ```
 
-### 16. Kafka 4.x 集群消息收发（需 Kafka 集群）
+### 16. Kafka 4.x Share Groups 消息收发（需 Kafka 集群）
 
-> 本模块演示 Spring Boot 应用连接 Kafka 4.x 集群（KRaft 模式）进行消息收发。
-> Kafka 集群需单独部署，详见 [cloud-kafka-sample/README.md](cloud-kafka-sample/README.md)。
+> 本模块演示 Kafka 4.x Share Groups 特性（允许多消费者从同一分区并行消费）和两种确认模式。
+> Kafka 集群需单独部署，详见 [cloud-kafka-sample/README.md](../../../cloud-kafka-sample/README.md)。
 
-**前置条件**：Kafka 4.x 3 节点集群已启动（端口 9092/9094/9096）
+**前置条件**：Kafka 4.x 3节点集群已启动（端口 9092/9094/9096）
 
 ```bash
 # 检查 Kafka 集群是否运行
-nc -z 127.0.0.1 9092 2>/dev/null && echo "✓ Kafka Broker 1 已运行" || echo "✗ Kafka 集群未运行"
+nc -z 127.0.0.1 9092 2>/dev/null && echo "✓ Kafka Broker 已运行" || echo "✗ Kafka 集群未运行"
 ```
 
 若 Kafka 集群未启动，请按 cloud-kafka-sample/README.md 中的步骤部署。
 
-**Step 1：创建 Topic（必须，3 分区 3 副本）：**
-
-> **⚠️ 必须先手动创建 Topic 再启动应用**。Kafka 开启了 `auto.create.topics`，不手动创建也能启动，
-> 但自动创建的 Topic 只有 **1 个分区 1 个副本**，无法体现 3 节点集群的高可用特性。
-> 手动指定 3 分区 3 副本确保消息分布在 3 个 Broker 节点上，任意 1 个节点宕机服务仍可用。
+**Step 1：创建 Topic（必须，3分区 3副本）：**
 
 ```bash
-# 在 Kafka 集群中创建 demo-topic（3分区、3副本，分布在3个Broker节点）
+# 在 Kafka 集群中创建 Share Groups topic
 KAFKA_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
-$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic demo-topic --partitions 3 --replication-factor 3
-
-# 验证 Topic 创建成功（确认 3 个分区各有 3 个副本）
-$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic demo-topic
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic share-demo-topic --partitions 3 --replication-factor 3
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic share-demo-topic-explicit --partitions 3 --replication-factor 3
 ```
 
-预期输出中每个 Partition 都有 `Leader` + 2 个 `Isr`（副本），共 3 个 Partition：
-```
-Topic: demo-topic  PartitionCount: 3
-        Partition: 0  Leader: 1  Replicas: 1,2,3  Isr: 1,2,3
-        Partition: 1  Leader: 2  Replicas: 2,3,1  Isr: 2,3,1
-        Partition: 2  Leader: 3  Replicas: 3,1,2  Isr: 3,1,2
-```
-
-**Step 2：启动模块（必须传 `--app.kafka.topic=demo-topic`）：**
-
-> **⚠️ 启动时必须通过 `--app.kafka.topic=demo-topic` 指定 Topic**，不传则默认使用 `testTopic`，
-> 会被自动创建为 1 分区 1 副本，达不到演示 3 节点集群高可用的效果。
+**Step 2：启动模块：**
 
 ```bash
-./mvnw -pl cloud-kafka-sample spring-boot:run -Dspring-boot.run.arguments="--app.kafka.topic=demo-topic"
+./mvnw -pl cloud-kafka-sample spring-boot:run
 ```
 
 **验证消息收发：**
 
-模块启动后，`Producer`（ApplicationRunner）自动发送 `SampleMessage{id=1, message='test'}` 到 `demo-topic`，`Consumer`（@KafkaListener）自动消费并打印。
-
-查看日志确认：
-```bash
-grep -aE "Sent sample message|Received sample message" logs/kafka-sample.log
+模块启动后，`ApplicationRunner` 自动发送传统 Consumer Group 消息，日志中可观察到：
 ```
-预期输出：
-```
-Sent sample message [SampleMessage{id=1, message='test'}] to topic [demo-topic]
+Sent sample message [SampleMessage{id=1, message='test'}] to topic [testTopic]
 Received sample message [SampleMessage{id=1, message='test'}]
 ```
 
-> 发送和接收都出现即验证通过，证明 Spring Boot 应用成功连接 Kafka 集群并完成消息收发。
+通过 REST 接口触发 Share Group 消息发送：
+
+```bash
+# 发送 Share Group 隐式确认消息（默认10条）
+curl -X POST "http://localhost:8768/kafka/share/implicit?count=10"
+
+# 发送 Share Group 显式确认消息（默认10条）
+curl -X POST "http://localhost:8768/kafka/share/explicit?count=15"
+```
+
+查看日志确认 Share Group 消息收发：
+```bash
+grep -aE "\[Share-" logs/kafka-sample.log | head -50
+```
+预期输出：
+```
+[Share-Implicit] Received: SampleMessage{id=1, message='share-task-1'} from partition 0 offset 0
+[Share-Implicit] Received: SampleMessage{id=2, message='share-task-2'} from partition 1 offset 0
+...
+[Share-Explicit] Received: SampleMessage{id=1, message='explicit-task-1'} from partition 1 offset 0
+[Share-Explicit] Simulating retry for id=5
+```
+
+> **核心特性**：
+> - **并行消费**：同一分区的消息可被多个消费者同时处理（传统模式仅允许单消费者）
+> - **逐条确认**：支持 ACK/NACK 机制，精确控制每条消息的确认、重试或拒绝
+> - **隐式确认**：方法正常返回自动 ACCEPT，抛出异常自动 REJECT
+> - **显式确认**：手动调用 `acknowledgment.acknowledge()/release()/reject()` 精细控制
+> - **重试演示**：id 为 5 的倍数的消息会触发 release，最多重投递 5 次（Kafka 默认 `group.share.delivery.count.limit=5`）后停止
 
 ## 常见问题
 
@@ -1019,4 +1024,4 @@ Received sample message [SampleMessage{id=1, message='test'}]
 | RAG 摄入返回 0 chunks | 检查 content 是否为空，确认 PgVector 扩展已启用（`\connect ai_demo` 后 `CREATE EXTENSION vector`） |
 | RAG 查询回答未引用参考资料 | 确认文档已成功摄入（ingest 返回 chunks > 0），检查 topK 参数是否合理 |
 | ChatMemory 无记忆效果 | 确认 JDBC 表 `SPRING_AI_CHAT_MEMORY` 已自动创建（ai 模块端口 8888），检查 conversationId 是否一致 |
-| Kafka 模块连接失败 | 确认 Kafka 集群已启动（端口 9092/9094/9096），已创建 demo-topic |
+| Kafka 模块连接失败 | 确认 Kafka 集群已启动（端口 9092/9094/9096），已创建 share-demo-topic 和 share-demo-topic-explicit |

@@ -1,6 +1,12 @@
+server:
+  port: 8768
+
 app:
   kafka:
     topic: testTopic
+    share-topic: share-demo-topic
+    share-topic-explicit: share-demo-topic-explicit
+    share-group: share-demo-group
 
 spring:
   kafka:
@@ -13,3 +19,12 @@ spring:
         spring.json.trusted.packages: org.hongxi.cloud.sample.kafka
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
