@@ -12,15 +12,15 @@
 #   Kafka:      localhost:9092,9094,9096 (3节点 KRaft 集群)
 #
 # 使用:
-#   1. 确保本地中间件已启动 (./start-all.sh 会自动检测并启动)
+#   1. 确保本地中间件已启动 (./start-all.sh infra 会自动检测并启动)
 #   2. ./mvnw clean package -DskipTests          # 打包
-#   3. docker compose up -d                      # 启动核心微服务
+#   3. docker compose --profile core up -d       # 启动核心微服务 (9个)
 #   4. docker compose --profile stream up -d     # 启动 Stream 消息模块
-#   5. docker compose --profile kafka up -d      # 启动 Kafka Share Groups 模块
+#   5. docker compose --profile kafka up -d      # 启动 Kafka 模块
 #   6. docker compose --profile ai up -d         # 启动 Spring AI 模块
 #   7. docker compose --profile seata up -d      # 启动 Seata 分布式事务模块
 #   8. docker compose --profile all up -d        # 启动全部
-#   9. docker compose down                       # 停止
+#   9. docker compose --profile all down         # 停止
 # ============================================================
 
 x-common: &common
@@ -41,6 +41,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+    profiles:
+      - core
+      - all
     <<: *common
 
   nacos-config:
@@ -54,6 +57,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+    profiles:
+      - core
+      - all
     <<: *common
 
   provider:
@@ -67,6 +73,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+    profiles:
+      - core
+      - all
     <<: *common
 
   provider-reactive:
@@ -80,6 +89,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+    profiles:
+      - core
+      - all
     <<: *common
 
   provider-dubbo:
@@ -93,6 +105,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+    profiles:
+      - core
+      - all
     <<: *common
 
   grpc-server:
@@ -107,6 +122,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx128m -Xms64m"
       NACOS_SERVER_ADDR: host.docker.internal:8848
+    profiles:
+      - core
+      - all
     <<: *common
 
   consumer:
@@ -124,6 +142,9 @@ services:
       - provider
       - provider-dubbo
       - grpc-server
+    profiles:
+      - core
+      - all
     <<: *common
 
   consumer-reactive:
@@ -140,6 +161,9 @@ services:
     depends_on:
       - provider-reactive
       - provider-dubbo
+    profiles:
+      - core
+      - all
     <<: *common
 
   gateway:
@@ -156,6 +180,9 @@ services:
     depends_on:
       - consumer
       - consumer-reactive
+    profiles:
+      - core
+      - all
     <<: *common
 
 # ======================== Stream 消息 (profile: stream) ========================
@@ -176,7 +203,7 @@ services:
       - all
     <<: *common
 
-# ======================== Kafka Share Groups (profile: kafka) ========================
+# ======================== Kafka 消息收发 (profile: kafka) ========================
   kafka-sample:
     build:
       context: .

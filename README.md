@@ -90,7 +90,7 @@ Mac 宿主机
 └── Docker 容器 (通过 host.docker.internal 连宿主机)
     ├── 核心微服务 (9个): gateway / consumer / provider / grpc-server ...
     ├── Stream 消息         (profile: stream)
-    ├── Kafka Share Groups  (profile: kafka)
+    ├── Kafka 消息收发        (profile: kafka)
     ├── Spring AI           (profile: ai)
     └── Seata 分布式事务   (profile: seata)
 ```
@@ -98,7 +98,7 @@ Mac 宿主机
 **快速开始**
 
 ```shell
-# 1. 启动本地中间件（Nacos / RocketMQ / MySQL / PostgreSQL）
+# 1. 启动本地中间件（Nacos / RocketMQ / MySQL / PostgreSQL / Kafka）
 ./start-all.sh infra
 
 # 2. Maven 打包 + 构建所有 Docker 镜像
@@ -115,32 +115,33 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 **常用命令**
 
 ```shell
-./docker-build.sh up          # 启动核心微服务 (9个)
-./docker-build.sh up-seata    # 启动 Seata 分布式事务 (7个)
-./docker-build.sh up-all      # 启动全部 (含 Stream/Kafka/AI/Seata)
-./docker-build.sh down        # 停止所有微服务
-./docker-build.sh status      # 查看容器状态
-./docker-build.sh logs [svc]  # 查看日志
-./docker-build.sh clean       # 停止并清理
+./docker-build.sh build             # Maven 打包 + 构建所有 Docker 镜像
+./docker-build.sh build-one <mod>   # 构建指定模块 (如 cloud-kafka-sample)
+./docker-build.sh up                # 启动核心微服务 (9个)
+./docker-build.sh up-stream         # 启动 Stream 消息模块
+./docker-build.sh up-kafka          # 启动 Kafka 模块
+./docker-build.sh up-ai             # 启动 Spring AI 模块 (2个)
+./docker-build.sh up-seata          # 启动 Seata 分布式事务 (7个)
+./docker-build.sh up-all            # 启动全部 (含 Stream/Kafka/AI/Seata)
+./docker-build.sh down              # 停止所有微服务
+./docker-build.sh status            # 查看容器状态
+./docker-build.sh logs [svc]        # 查看日志
+./docker-build.sh clean             # 停止并清理
 ```
 
 **单模块部署**
 
 ```shell
-# 打包单个模块
-./mvnw package -DskipTests -pl cloud-provider-sample -am
+# 打包 + 构建镜像 + 清理旧镜像（一条命令）
+./docker-build.sh build-one cloud-provider-sample
 
-# 构建镜像 + 启动
-docker build --build-arg MODULE=cloud-provider-sample -t spring-cloud-samples/provider .
-docker compose up -d provider
+# 启动对应服务
+docker compose --profile core up -d provider
 ```
 
-Seata 示例（需前置 MySQL + Seata Server，7 个子模块需同时启动）：
+Seata 子模块示例：
 ```shell
-# 打包 Seata 所有子模块
-./mvnw package -DskipTests -pl cloud-seata-sample/business-service,cloud-seata-sample/order-service,cloud-seata-sample/storage-service,cloud-seata-sample/account-service,cloud-seata-sample/account-dubbo-service,cloud-seata-sample/storage-dubbo-service,cloud-seata-sample/order-dubbo-service -am
-
-# 一次性启动 Seata 全部服务
+./docker-build.sh build-one cloud-seata-sample/business-service
 ./docker-build.sh up-seata
 ```
 
