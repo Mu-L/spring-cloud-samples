@@ -272,31 +272,12 @@ done
 
 ## 启动方式
 
-> **优先级：AI Skill > 脚本 > 手动**
-
-| 方式 | 说明 | 适用场景 |
-|------|------|----------|
-| 🤖 **AI Skill（推荐）** | 告诉 AI "演示项目"，自动完成环境检查、启动、验证全流程 | 快速体验、集成测试 |
-| 📜 **一键脚本** | 通过 `start-all.sh` 自动化启动和验证 | 批量验证、CI/CD |
-| 🔧 **手动启动** | 逐个模块手动启动，灵活控制 | 学习调试、单模块开发 |
-
-### 方式一：AI Skill（推荐）
-
-直接告诉 AI 助手你要做什么，例如：
-- "演示项目"
-- "启动所有服务并验证"
-- "验证 Seata 分布式事务"
-- "验证 Stream 消息收发"
-
-AI 会自动检查环境、安装依赖、启动服务、执行验证。无需手动操作。
-
-### 方式二：一键脚本
-
-前置条件参考上方「前置条件」章节，脚本会自动检查并尝试启动缺失的组件。
+### 一键脚本
 
 ```bash
 sh start-all.sh install  # 检查并安装中间件 + 打包模块
 sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动、验证）
+sh start-all.sh seata    # 仅启动 Seata 分布式事务 (7个模块)
 sh start-all.sh build    # 打包所有模块
 sh start-all.sh verify   # 执行验证（不启动，仅验证已运行的服务）
 sh start-all.sh status   # 查看服务状态
@@ -308,36 +289,35 @@ sh start-all.sh clean    # 清理构建产物
 
 > 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
 
-### 方式三：手动逐个启动
+### 手动逐个启动
 
-前置条件参考上方「前置条件」章节。
+启动顺序：**基础设施 → Config → Gateway → Provider → Consumer**
 
-启动顺序原则：**基础设施 → Provider → Consumer → Client → Config**
-
-| 顺序 | 模块 | 端口 | 说明 |
-|------|------|------|------|
-| 1 | cloud-nacos-discovery-sample | 8760 | 服务发现 |
-| 2 | cloud-gateway-sample | 8764 | 网关 |
-| 3 | cloud-provider-sample | 8765 | Web Provider |
-| 4 | cloud-provider-reactive-sample | 8762 | Reactive Provider |
-| 5 | cloud-provider-dubbo-sample | 50051 | Dubbo Provider |
-| 6 | cloud-grpc-server-sample | 8090(Web)/9090(gRPC) | gRPC Server |
-| 7 | cloud-consumer-sample | 8766 | Web Consumer |
-| 8 | cloud-consumer-reactive-sample | 8763 | Reactive Consumer |
-| 9 | cloud-nacos-config-sample | 8761 | Nacos Config |
-
-单独启动某模块：
 ```bash
 ./mvnw -pl <模块目录> spring-boot:run
 ```
 
-### 独立模块（无启动顺序依赖）
+**核心模块（按顺序）：**
 
-| 模块 | 端口          | 说明 |
-|------|-------------|------|
-| cloud-ai-sample | 8888        | Spring AI，需配置 OPENAI_API_KEY |
-| cloud-ai-rag-sample | 8889        | Spring AI · RAG，需 PostgreSQL + pgvector + OPENAI_API_KEY |
-| cloud-stream-sample | 8767        | 需先安装并启动 RocketMQ |
+| 模块 | 端口 | 说明 |
+|------|------|------|
+| cloud-nacos-discovery-sample | 8760 | 服务发现 |
+| cloud-nacos-config-sample | 8761 | Nacos Config |
+| cloud-gateway-sample | 8764 | 网关 |
+| cloud-provider-sample | 8765 | Web Provider |
+| cloud-provider-reactive-sample | 8762 | Reactive Provider |
+| cloud-provider-dubbo-sample | 50051 | Dubbo Provider |
+| cloud-grpc-server-sample | 8090(Web)/9090(gRPC) | gRPC Server |
+| cloud-consumer-sample | 8766 | Web Consumer |
+| cloud-consumer-reactive-sample | 8763 | Reactive Consumer |
+
+**独立模块（无启动顺序依赖）：**
+
+| 模块 | 端口 | 说明 |
+|------|------|------|
+| cloud-ai-sample | 8888 | Spring AI，需配置 OPENAI_API_KEY |
+| cloud-ai-rag-sample | 8889 | Spring AI · RAG，需 PostgreSQL + pgvector + OPENAI_API_KEY |
+| cloud-stream-sample | 8767 | 需先安装并启动 RocketMQ |
 | cloud-seata-sample | 18081-18084 + 3 Dubbo | 需 MySQL + Seata Server，含 7 个子模块 |
 | cloud-kafka-sample | 8768 | 需 Kafka 4.x 集群（KRaft 模式） |
 
