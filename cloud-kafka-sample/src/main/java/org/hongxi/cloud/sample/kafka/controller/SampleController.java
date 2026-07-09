@@ -43,4 +43,22 @@ public class SampleController {
 		producer.sendShareExplicit(count);
 		return ResponseEntity.ok("Sent share explicit message, count: " + count);
 	}
+
+	/**
+	 * 发送事务消息（提交）- 消息在事务内原子发送，事务提交后消费者可见
+	 */
+	@PostMapping("/tx/commit")
+	public ResponseEntity<String> sendTxCommit(@RequestParam(defaultValue = "5") int count) {
+		producer.sendTransactional(count, true);
+		return ResponseEntity.ok("Sent transactional message (committed), count: " + count);
+	}
+
+	/**
+	 * 发送事务消息（回滚）- 消息在事务内发送但事务回滚，消费者不可见
+	 */
+	@PostMapping("/tx/rollback")
+	public ResponseEntity<String> sendTxRollback(@RequestParam(defaultValue = "5") int count) {
+		producer.sendTransactional(count, false);
+		return ResponseEntity.ok("Sent transactional message (rolled back), count: " + count);
+	}
 }

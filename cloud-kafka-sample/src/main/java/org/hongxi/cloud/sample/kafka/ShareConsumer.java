@@ -1,6 +1,8 @@
 package org.hongxi.cloud.sample.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.ShareAcknowledgment;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ShareConsumer {
 
+	private static final Logger log = LoggerFactory.getLogger(ShareConsumer.class);
+
 	/**
 	 * 隐式确认模式 - 方法正常返回自动 ACCEPT，抛出异常自动 REJECT
 	 */
@@ -23,9 +27,8 @@ public class ShareConsumer {
 			groupId = "${app.kafka.share-group}"
 	)
 	void processImplicit(ConsumerRecord<String, SampleMessage> record) {
-		System.out.println("[Share-Implicit] Received: " + record.value()
-				+ " from partition " + record.partition()
-				+ " offset " + record.offset());
+		log.info("[Share-Implicit] Received: {} from partition {} offset {}",
+				record.value(), record.partition(), record.offset());
 	}
 
 	/**
@@ -42,13 +45,12 @@ public class ShareConsumer {
 			concurrency = "5"
 	)
 	void processExplicit(ConsumerRecord<String, SampleMessage> record, ShareAcknowledgment acknowledgment) {
-		System.out.println("[Share-Explicit] Received: " + record.value()
-				+ " from partition " + record.partition()
-				+ " offset " + record.offset());
+		log.info("[Share-Explicit] Received: {} from partition {} offset {}",
+				record.value(), record.partition(), record.offset());
 		try {
 			// 模拟业务处理
 			if (record.value().getId() % 5 == 0) {
-				System.out.println("[Share-Explicit] Simulating retry for id=" + record.value().getId());
+				log.info("[Share-Explicit] Simulating retry for id={}", record.value().getId());
 				acknowledgment.release();
 				return;
 			}

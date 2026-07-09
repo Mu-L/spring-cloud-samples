@@ -7,6 +7,7 @@ app:
     share-topic: share-demo-topic
     share-topic-explicit: share-demo-topic-explicit
     share-group: share-demo-group
+    tx-topic: tx-demo-topic
 
 spring:
   kafka:

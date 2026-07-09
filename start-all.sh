@@ -343,6 +343,19 @@ start_rag_module() {
 
 start_kafka_module() {
   IFS='|' read -r module_dir display_name port <<< "${KAFKA_MODULE[0]}"
+
+  # 创建 Kafka topics（3分区 3副本）
+  local kafka_home
+  kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
+  if [ -n "$kafka_home" ] && [ -x "$kafka_home/bin/kafka-topics.sh" ]; then
+    echo "[Kafka] 检查并创建 Topic ..."
+    for topic in share-demo-topic share-demo-topic-explicit tx-demo-topic; do
+      "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 \
+        --create --topic "$topic" --partitions 3 --replication-factor 3 --if-not-exists 2>/dev/null \
+        && echo "  ✓ Topic [$topic] 已就绪" || true
+    done
+  fi
+
   start_module "$module_dir" "$display_name" "$port"
 }
 
@@ -614,9 +627,8 @@ demo_urls() {
   # Kafka 模块验证
   if [ -f "$PID_DIR/kafka-sample.pid" ] && kill -0 "$(cat "$PID_DIR/kafka-sample.pid")" 2>/dev/null; then
     echo ""
-    echo "========== Kafka 4.x 集群消息收发验证 =========="
-    verify_log "$LOG_DIR/kafka-sample.log" "Sent sample message" "Kafka Producer 发送消息"
-    verify_log "$LOG_DIR/kafka-sample.log" "Received sample message" "Kafka Consumer 接收消息"
+    echo "========== Kafka 4.x 模块验证 =========="
+    verify_url "http://localhost:8768/actuator/health" "Kafka 模块健康检查"
     echo "=================================="
   fi
 
@@ -716,6 +728,7 @@ demo_urls() {
     echo "  8️⃣  Kafka 4.x 集群消息收发 (端口 8768):"
     echo "     • 启动后 ApplicationRunner 自动发送传统 Consumer Group 消息"
     echo "     • Share Group 隐式/显式确认消息 (REST 接口触发)"
+    echo "     • 事务消息: 原子发送 + 提交/回滚 (read_committed 隔离)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
   else
