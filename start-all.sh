@@ -795,7 +795,7 @@ demo_urls() {
   # Trace 链路追踪验证
   echo ""
   echo "========== Trace 链路追踪验证 =========="
-  echo "  提示: 执行 bash .qoder/skills/demo-spring-cloud/verify-trace.sh 验证五条链路 trace 传播 (Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo)"
+  echo "  提示: 执行 bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh 验证五条链路 trace 传播 (Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo)"
   echo "=================================="
 
   # Nacos Config 验证
@@ -876,7 +876,7 @@ demo_urls() {
     echo "  1️⃣  Trace 链路追踪:"
     echo "     • Web→Web / Web→gRPC / Web→Dubbo trace ID 自动传播"
     echo "     • Reactive→Reactive (WebClient 手动传递) / Reactive→Dubbo trace 传播"
-    echo "     → 使用 demo-spring-cloud skill 执行 verify-trace.sh"
+    echo "     → 使用 demo-spring-cloud skill 执行 scripts/verify-trace.sh"
     echo ""
     echo "  2️⃣  Nacos Config 动态配置 (端口 8761):"
     echo "     • 配置发布/读取/删除"
@@ -897,13 +897,13 @@ demo_urls() {
     echo "     • 延迟消息: StreamBridge + DELAY header 延迟投递"
     echo "     • 顺序消息: StreamBridge + ORDER_KEY 顺序消费"
     echo "     • 事务消息: StreamBridge + TransactionListener 两阶段提交"
-    echo "     → 使用 demo-spring-cloud skill 执行 verify-stream.sh"
+    echo "     → 使用 demo-spring-cloud skill 执行 scripts/verify-stream.sh"
     echo ""
     echo "  5️⃣  Seata 分布式事务 (7 个子模块, 端口 18081-18084 + 3 Dubbo):"
     echo "     • 全局事务回滚/提交场景"
     echo "     • Feign / RestTemplate / Dubbo 三种调用链路"
     echo "     • Xid 传递与数据一致性验证"
-    echo "     → 使用 demo-spring-cloud skill 执行 verify-seata.sh"
+    echo "     → 使用 demo-spring-cloud skill 执行 scripts/verify-seata.sh"
     echo ""
     echo "  6️⃣  Spring AI 深度功能 (端口 8888):"
     echo "     • 聊天对话、流式输出、结构化提取"
