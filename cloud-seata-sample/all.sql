@@ -1,6 +1,6 @@
 -- -------------------------------- Create undo_log table --------------------------------
 -- Seata AT Mode Need to use undo_log table.
-CREATE TABLE `undo_log` (
+CREATE TABLE IF NOT EXISTS `undo_log` (
                             `id` bigint(20) NOT NULL AUTO_INCREMENT,
                             `branch_id` bigint(20) NOT NULL,
                             `xid` varchar(100) NOT NULL,
@@ -83,10 +83,10 @@ CREATE TABLE IF NOT EXISTS `distributed_lock`
     ) ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4;
 
-INSERT INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('AsyncCommitting', ' ', 0);
-INSERT INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('RetryCommitting', ' ', 0);
-INSERT INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('RetryRollbacking', ' ', 0);
-INSERT INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('TxTimeoutCheck', ' ', 0);
+INSERT IGNORE INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('AsyncCommitting', ' ', 0);
+INSERT IGNORE INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('RetryCommitting', ' ', 0);
+INSERT IGNORE INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('RetryRollbacking', ' ', 0);
+INSERT IGNORE INTO `distributed_lock` (lock_key, lock_value, expire) VALUES ('TxTimeoutCheck', ' ', 0);
 
 -- -------------- Create the database tables needed by the business in the example ----------------
 DROP TABLE IF EXISTS `storage_tbl`;
