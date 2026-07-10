@@ -12,10 +12,28 @@
 | 事务消息   | Consumer | StreamBridge → tx-topic → tx              | 两阶段提交，随机模拟本地事务成功/失败         |
 
 前置条件：本地运行 RocketMQ
+
+**检查 RocketMQ**：
 ```shell
-# 下载并启动 RocketMQ
-bin/mqnamesrv
-bin/mqbroker -n localhost:9876
+nc -z 127.0.0.1 9876 && echo "✓ RocketMQ NameServer 已运行" || echo "✗ RocketMQ 未运行"
+```
+
+若未安装：
+```shell
+curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
+unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
+```
+
+启动 NameServer + Broker 并验证：
+```shell
+ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
+cd "$ROCKETMQ_HOME"
+nohup bin/mqnamesrv > namesrv.log 2>&1 &
+sleep 5
+nohup bin/mqbroker -n localhost:9876 > broker.log 2>&1 &
+sleep 10
+nc -z 127.0.0.1 9876 && echo "✓ NameServer 已启动" || echo "✗ NameServer 启动失败"
+nc -z 127.0.0.1 10911 && echo "✓ Broker 已启动" || echo "✗ Broker 启动失败"
 ```
 
 创建 Topic 和 Consumer Group：

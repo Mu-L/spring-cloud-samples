@@ -223,7 +223,7 @@ check_kafka() {
     create_kafka_topics
   else
     echo "[Kafka] ✗ Kafka 集群未运行，跳过 Kafka 模块"
-    echo "[Kafka]   如需启用，请按 cloud-kafka-sample/README.md 部署 Kafka 4.x 集群"
+    echo "[Kafka]   如需启用，请参考 references/kafka.md 部署 Kafka 4.x 集群"
   fi
 }
 
