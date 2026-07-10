@@ -10,40 +10,16 @@
 
 下载 `kafka_2.13-4.3.1.tgz` 并解压，进入 Kafka 解压目录。
 
-## Step 1：单节点模式部署
+> kafka-sample 模块配置了 3 节点集群地址 `localhost:9092,localhost:9094,localhost:9096`，必须部署 3 节点 KRaft 集群。
 
-生成集群 ID：
-```shell
-KAFKA_CLUSTER_ID="$(bin/kafka-storage.sh random-uuid)"
-echo $KAFKA_CLUSTER_ID
-```
+## Step 1：3 节点集群模式部署
 
-格式化存储目录（首次启动前执行一次）：
-```shell
-bin/kafka-storage.sh format --standalone -t $KAFKA_CLUSTER_ID -c config/server.properties
-```
-
-> 注意：请务必使用 `config/server.properties` 进行格式化，勿用 `config/kraft/server.properties`
-
-启动 Kafka 服务：
-```shell
-bin/kafka-server-start.sh config/server.properties
-```
-
-**预期结果**：Kafka 服务在端口 9092 上启动成功。
-
----
-
-## Step 2（可选）：3 节点集群模式
-
-> 如需演示集群高可用，按以下步骤操作。否则跳过此 Step，直接进入阶段二。
-
-**2.1 生成集群 ID**
+**1.1 生成集群 ID**
 ```shell
 KAFKA_CLUSTER_ID="$(bin/kafka-storage.sh random-uuid)"
 ```
 
-**2.2 准备 3 份配置文件**
+**1.2 准备 3 份配置文件**
 
 基于 `config/server.properties` 复制 3 份，关键配置如下：
 
@@ -83,14 +59,14 @@ listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,
 log.dirs=/tmp/kraft-logs-3
 ```
 
-**2.3 格式化 3 个节点**（使用同一个 KAFKA_CLUSTER_ID）
+**1.3 格式化 3 个节点**（使用同一个 KAFKA_CLUSTER_ID）
 ```shell
 bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-1.properties
 bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-2.properties
 bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-3.properties
 ```
 
-**2.4 依次启动 3 个节点**（每个节点在独立终端窗口中）
+**1.4 依次启动 3 个节点**（每个节点在独立终端窗口中）
 ```shell
 # 终端 1
 bin/kafka-server-start.sh config/server-1.properties
@@ -102,7 +78,7 @@ bin/kafka-server-start.sh config/server-3.properties
 
 > 启动第 1 个节点时会刷屏 WARN 日志，这是正常的，继续启动第 2、3 个节点后集群自动组网。
 
-**2.5 验证集群**
+**1.5 验证集群**
 ```shell
 bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic test-cluster --partitions 3 --replication-factor 3
 bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic test-cluster
@@ -110,7 +86,7 @@ bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic test-cl
 
 **预期结果**：`replication-factor=3`，每个分区在 3 个节点上都有副本。
 
-**2.6 停止集群**
+**1.6 停止集群**
 ```shell
 bin/kafka-server-stop.sh
 ```
@@ -126,21 +102,20 @@ java.lang.RuntimeException: No readable meta.properties files found.
 
 **解决方法：清理日志目录并重新格式化**
 ```shell
-# 单节点
-rm -rf /tmp/kraft-combined-logs
-# 3 节点
 rm -rf /tmp/kraft-logs-1 /tmp/kraft-logs-2 /tmp/kraft-logs-3
 KAFKA_CLUSTER_ID="$(bin/kafka-storage.sh random-uuid)"
-bin/kafka-storage.sh format --standalone -t $KAFKA_CLUSTER_ID -c config/server.properties
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-1.properties
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-2.properties
+bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/server-3.properties
 ```
 
 ---
 
 # 阶段二：消息收发验证（每次演示必做）
 
-> 🔴 **以下 Step 3~7 必须逐一执行，不可跳过。**
+> 🔴 **以下 Step 2~6 必须逐一执行，不可跳过。**
 
-## Step 3：创建演示 Topic
+## Step 2：创建演示 Topic
 
 ```shell
 KAFKA_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
@@ -153,7 +128,7 @@ $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --top
 
 ---
 
-## Step 4：启动 Kafka 模块并观察自动消息
+## Step 3：启动 Kafka 模块并观察自动消息
 
 ```shell
 ./mvnw -pl cloud-kafka-sample spring-boot:run
@@ -167,7 +142,7 @@ Received sample message [SampleMessage{id=1, message='test'}]
 
 ---
 
-## Step 5：Share Groups 隐式确认
+## Step 4：Share Groups 隐式确认
 
 ```shell
 curl -X POST "http://localhost:8768/kafka/share/implicit?count=10"
@@ -177,7 +152,7 @@ curl -X POST "http://localhost:8768/kafka/share/implicit?count=10"
 
 ---
 
-## Step 6：Share Groups 显式确认（含重试演示）
+## Step 5：Share Groups 显式确认（含重试演示）
 
 ```shell
 curl -X POST "http://localhost:8768/kafka/share/explicit?count=15"
@@ -192,7 +167,7 @@ grep -aE "\[Share-" logs/kafka-sample.log | head -50
 
 ---
 
-## Step 7：事务消息验证
+## Step 6：事务消息验证
 
 **事务提交** - 消费者可读到消息：
 ```shell
