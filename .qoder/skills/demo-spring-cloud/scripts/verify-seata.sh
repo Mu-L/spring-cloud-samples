@@ -2,7 +2,7 @@
 # Seata 分布式事务一键验证脚本
 # 用法: bash .qoder/skills/demo-spring-cloud/verify-seata.sh
 set -e
-cd "$(dirname "$0")/../../.."
+cd "$(dirname "$0")/../../../.."
 PROJECT_DIR=$(pwd)
 
 echo "=========================================="

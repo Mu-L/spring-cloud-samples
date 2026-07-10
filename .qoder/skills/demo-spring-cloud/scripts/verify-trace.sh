@@ -11,7 +11,7 @@
 
 # 自动检测项目根目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 LOG_DIR="$PROJECT_ROOT/logs"
 PID_DIR="$PROJECT_ROOT/.pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
