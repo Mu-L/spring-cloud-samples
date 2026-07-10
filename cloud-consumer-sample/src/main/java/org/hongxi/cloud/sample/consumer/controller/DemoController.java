@@ -1,8 +1,10 @@
 package org.hongxi.cloud.sample.consumer.controller;
 
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.apache.dubbo.rpc.RpcException;
 import org.hongxi.cloud.sample.api.DemoService;
 import org.hongxi.cloud.sample.consumer.client.ProviderClient;
 import org.hongxi.cloud.sample.idl.unary.GreeterGrpc;
@@ -86,7 +88,19 @@ public class DemoController {
         return httpResponseTime.record(() -> {
             log.info("traceparent: {}", traceparent);
             log.info("Calling dubbo service, name: {}", name);
-            return demoService.sayHello(name);
+            try {
+                return demoService.sayHello(name);
+            } catch (RpcException e) {
+                if (e.getCause() instanceof BlockException) {
+                    return "Dubbo fallback: service unavailable, name=" + name;
+                }
+                throw e;
+            } catch (RuntimeException e) {
+                if (e.getMessage() != null && e.getMessage().contains("SentinelBlockException")) {
+                    return "Dubbo fallback: service unavailable, name=" + name;
+                }
+                throw e;
+            }
         });
     }
 

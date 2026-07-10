@@ -42,6 +42,7 @@
         <nacos-client.version>3.2.2</nacos-client.version>
         <dubbo.version>3.3.6</dubbo.version>
         <fastjson2.version>2.0.61</fastjson2.version>
+        <sentinel.version>1.8.9</sentinel.version>
     </properties>
 
     <dependencyManagement>
