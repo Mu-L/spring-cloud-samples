@@ -16,15 +16,15 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 **预期结果**：脚本输出五条链路的验证结果，全部显示 ✅ 通过：
 
-| 链路                  | 路径                                    | trace 传播                        |
-|---------------------|---------------------------------------|---------------------------------|
-| Web → Web           | consumer → provider                   | RestTemplate / FeignClient 自动传播 |
-| Web → gRPC          | consumer → grpc-server                | gRPC Interceptor 自动传播           |
-| Web → Dubbo         | consumer → provider-dubbo             | Dubbo ObservationFilter 自动传播    |
-| Reactive → Reactive | consumer-reactive → provider-reactive | WebClient 手动传递 traceparent      |
-| Reactive → Dubbo    | consumer-reactive → provider-dubbo    | Dubbo ObservationFilter 自动传播    |
+| 链路                | 调用路径                                  | 协议                         | trace 传播 |
+|-------------------|---------------------------------------|----------------------------|----------|
+| Web→Web           | consumer → provider                   | RestTemplate / FeignClient | ✅/❌      |
+| Web→gRPC          | consumer → grpc-server                | gRPC Interceptor           | ✅/❌      |
+| Web→Dubbo         | consumer → provider-dubbo             | Dubbo ObservationFilter    | ✅/❌      |
+| Reactive→Reactive | consumer-reactive → provider-reactive | WebClient 手动传递             | ✅/❌      |
+| Reactive→Dubbo    | consumer-reactive → provider-dubbo    | Dubbo ObservationFilter    | ✅/❌      |
 
-**必须向用户展示脚本的完整输出**，确认每条链路的 trace ID 传播正常。
+**必须向用户展示脚本的完整输出，然后用表格汇总五条链路验证结果**，确认每条链路的 trace ID 传播正常。
 
 ---
 

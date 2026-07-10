@@ -26,15 +26,40 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 3. **端口规范**：项目已统一端口分配，AI 模块使用 8888 端口，禁止使用 8080 端口。
 
-4. **脚本输出规范**：执行任何项目脚本（`start-all.sh`、`verify-*.sh`）时，**必须完整输出脚本的全部日志**，禁止使用 `tail -n`、`tail -f`、`head -n` 等方式截断输出。脚本的完整输出是验证结果的依据，截断会导致无法确认每一步是否通过。
+4. **脚本输出规范**：执行任何项目脚本（`start-all.sh`、`verify-*.sh`）时，**必须完整输出脚本的全部日志**， 禁止使用 `tail -n`、`tail -f`、`head -n` 等方式截断输出。脚本的完整输出是验证结果的依据，截断会导致无法确认每一步是否通过。
 
 5. **演示纪律（强制执行）**：
    - 🔴 **禁止选择性演示**：每个演示场景的所有步骤必须 **逐一执行**，不可跳过任何一步
    - 🔴 **严格按步骤顺序**：必须按 Step 1 → Step 2 → ... 的顺序执行，不可乱序或合并
-   - 🔴 **每步必须展示结果**：每个 curl 命令执行后，必须向用户展示返回结果，并说明是否符合预期
+   - 🔴 **每步必须说明意图并评价结果**：每个 curl 命令执行前，必须用一句话说明 **该请求的目的**（如："接下来验证配置动态刷新：发布新配置后调用接口，观察值是否自动更新"）；执行后必须展示返回结果并进行 **说明或评价**（如："返回了 xxx，符合预期"、"模型正确提取了年龄和职业"、"流式输出逐字显示，体验良好"），不可仅贴出原始响应而不做任何解读
    - 🔴 **禁止用"参考文档"替代执行**：references/ 目录下的文档是操作手册，AI 必须按其中的步骤执行，而非仅列出链接
    - 🔴 **禁止省略 curl 命令**：不可用"同理"、"以此类推"、"省略"等理由跳过任何 curl 命令
    - 🔴 **演示完成后汇总**：所有场景演示完成后，输出汇总表格，列出每个场景的执行状态（✅ 通过 / ❌ 失败）
+
+6. **请求前后说明与评价（强制执行）**：
+   - 🔴 每发起一个或一批 curl 请求前，**必须先说明该请求的目的**（验证什么功能、预期返回什么），不可静默发起请求
+   - 🔴 请求返回后，**必须立即对结果进行说明或评价**，不可静默跳过
+   - 评价内容包括：返回状态是否正常、响应数据是否符合预期、关键信息提取是否准确、与上一步的对比差异等
+   - 对于 AI 类接口（chat/stream/extract/agent 等），需评价模型回答的质量（如：回答是否切题、结构化输出是否正确、记忆是否生效）
+   - 对于异常结果，需分析可能原因并给出处理建议
+
+7. **原理解读（强制执行）**：
+   - 🔴 演示每个功能时，**必须简要说明其背后的技术原理和项目代码实现**，不可只做"执行命令 → 展示结果"的操作工
+   - 原理解读应包含：核心组件/注解的作用、数据流转过程、框架自动完成的魔法等
+   - 🔴 **代码关联**：每个场景演示时，必须指出项目中使用了什么注解/类/方法来实现该功能（如："这个接口在 AiChatController 中通过 `.entity(PersonInfo.class)` 实现结构化输出"），让用户知其然也知其所以然
+   - 各场景必须覆盖的原理解读要点：
+     - **结构化输出**：说明 `.entity(PersonInfo.class)` 背后 Spring AI 的 BeanOutputConverter 如何从 Java 类型生成 JSON Schema、注入 prompt 引导模型输出结构化 JSON、再自动反序列化为 Java 对象；指出项目中 AiChatController 定义了 `record PersonInfo` 作为输出结构
+     - **流式输出**：说明 SSE（Server-Sent Events）协议、`.stream()` 与 `.call()` 的区别、Flux 响应式流；指出项目中 AiChatController 使用 `.stream().content()` 返回 `Flux<String>`
+     - **System Message**：说明 system/user message 的角色分工，system message 如何设定 AI 的行为边界；指出项目中 AdvancedChatController 通过 `.system(...)` 设置系统提示词
+     - **Tool Calling**：说明 `@Tool` 注解 → MethodToolCallbackProvider 注册 → 模型通过 function definition 选择工具 → Spring AI 自动执行 Java 方法 → 结果回传模型的完整链路；指出项目中 WeatherTools/TimeTools/SearchTools 使用 `@Tool` 注解定义工具方法
+     - **ReAct Agent**：说明 Agent 与普通 Tool Calling 的区别——Agent 具备多步推理和自主决策能力，可串联多个工具完成复杂任务；指出项目中 ReactAgentController 通过 `.tools(...)` 注入工具并设置 Agent 系统提示词
+     - **ChatMemory**：说明 JDBC ChatMemory 如何通过 conversationId 隔离会话、自动维护历史消息列表；指出项目中 ChatMemoryController 通过 `@PostMapping` 和 `@DeleteMapping` 提供对话和清除记忆接口
+     - **PromptTemplate**：说明模板变量替换机制，如何将结构化参数注入 prompt；指出项目中 PromptTemplateController 使用 `@RequestBody` 接收结构化参数
+     - **RAG**：说明文档切分 → Embedding 向量化 → pgvector 存储 → 语义检索 → 注入上下文 → 模型生成的完整 RAG 流水线
+     - **Sentinel 限流**：说明 QPS 计数、滑动窗口/令牌桶算法、Nacos 配置同步机制
+     - **Seata 分布式事务**：说明 AT 模式的 undo_log 机制、全局事务 ID（Xid）跨服务传递；指出项目中 `@GlobalTransactional` 注解开启全局事务
+     - **Nacos Config 动态刷新**：说明 `@RefreshScope` 代理机制、长轮询配置变更监听；指出项目中 `@NacosConfig`、`@ConfigurationProperties`、`@Value` 三种绑定方式
+     - **Kafka 事务消息**：说明 producer 事务的 commit/rollback 语义、消费者 read_committed 隔离级别
 
 ---
 
@@ -88,7 +113,8 @@ cd "$NACOS_DIR" && bin/startup.sh -m standalone
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 nacos-setup  # 本地一键部署单机版 Nacos
 ```
-> nacos-setup 自动下载安装、生成鉴权配置、检测端口冲突和 Java 环境。部署后自动创建账号（用户名：nacos），密码是无规律字符串。首次部署后会自动打开浏览器 http://127.0.0.1:8080/ 登录 Console。跳到 Step 4。
+> nacos-setup 自动下载安装、生成鉴权配置、检测端口冲突和 Java 环境。部署后自动创建账号（用户名：nacos），密码是无规律字符串。
+> 首次部署后会自动打开浏览器 http://127.0.0.1:8080/ 登录 Console。跳到 Step 4。
 
 **Step 4：设置环境变量**
 提示用户设置环境变量（用户名/密码为安装时创建的凭证）：
@@ -175,7 +201,8 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 
 ## 演示与验证
 
-> 本技能先使用 `start-all.sh` 启动服务并完成**基础验证**（服务注册发现、12 条调用链路、各模块健康检查），再逐一进行以下**深度演示**，覆盖 Trace、Nacos Config、Sentinel、Stream、Seata、AI 等高级功能。每个场景的所有步骤必须逐一执行，不可跳过，每步执行后展示结果并说明是否符合预期。
+> 本技能先使用 `start-all.sh` 启动服务并完成**基础验证**（服务注册发现、12 条调用链路、各模块健康检查），再逐一进行以下**深度演示**，
+> 覆盖 Trace、Nacos Config、Sentinel、Stream、Seata、AI 等高级功能。每个场景的所有步骤必须逐一执行，不可跳过，每步执行后展示结果并说明是否符合预期。
 > 各场景的详细 curl 命令参考 [references/](references/) 目录下对应文档。
 
 ### 1. Trace 链路追踪
@@ -188,7 +215,8 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 ```bash
 bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 ```
-2. 向用户展示脚本完整输出，确认五条链路（Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo）的 trace ID 传播均通过
+2. 向用户展示脚本完整输出，然后用表格汇总五条链路验证结果：
+
 3. 可选：查看 Prometheus 指标：`curl http://localhost:8766/actuator/prometheus`
 
 > 完整说明参考 [trace.md](references/trace.md)

@@ -9,6 +9,18 @@ spring:
       password: 7fDJZBbiLzO2
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+    sentinel:
+      eager: true
+      datasource:
+        ds1:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            username: ${spring.cloud.nacos.username}
+            password: ${spring.cloud.nacos.password}
+            group-id: SENTINEL_GROUP
+            data-id: cloud.sample.provider.flow
+            data-type: json
+            rule-type: flow
 
 management:
   otlp:
