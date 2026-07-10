@@ -192,7 +192,7 @@ public class ProjectDemoTools {
     @Tool(description = "查看 Nacos 注册中心中已注册的服务列表和实例信息")
     public String checkNacosServices() {
         try {
-            String url = "http://localhost:8760/discovery/instances";
+            String url = "http://localhost:8760/discovery/services";
             String result = restTemplate.getForObject(url, String.class);
             return "=== Nacos 已注册服务 ===\n" + result;
         } catch (Exception e) {

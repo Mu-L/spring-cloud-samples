@@ -184,7 +184,7 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 
 **必做步骤（按顺序）：**
 
-1. 查看已注册服务列表：`curl http://localhost:8760/discovery/instances`
+1. 查看已注册服务列表：`curl http://localhost:8760/discovery/services`
 2. Web 直接调用（consumer → provider）：`curl 'http://localhost:8766/hi?name=hongxi'`
 3. Web 网关调用（gateway → consumer → provider）：`curl 'http://localhost:8764/consumer-sample/hi?name=hongxi'`
 4. Reactive 直接调用（consumer-reactive → provider-reactive）：`curl 'http://localhost:8763/hi?name=hongxi'`
