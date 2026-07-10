@@ -21,14 +21,8 @@ psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
 ```
 
 **Redis 方式**
-```shell
-# 需要 RediSearch 模块支持向量搜索，可通过 Redis Stack 或 Redis OSS + 手动加载模块实现
-redis-server --port 6379 --daemonize yes \
-  --loadmodule ~/Downloads/redis-oss-8.8.0-arm64/lib/redis/modules/redisearch.so \
-  --loadmodule ~/Downloads/redis-oss-8.8.0-arm64/lib/redis/modules/rejson.so \
-  --loadmodule ~/Downloads/redis-oss-8.8.0-arm64/lib/redis/modules/redisbloom.so \
-  --loadmodule ~/Downloads/redis-oss-8.8.0-arm64/lib/redis/modules/redistimeseries.so
-```
+
+需先启动 Redis Stack（含 RediSearch 模块），默认演示 PgVector 方式，Redis 仅作备选。
 
 ## 启动与切换
 
