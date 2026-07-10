@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# 启动所有服务模块（除 cloud-sample-api 外）
+# 启动所有服务模块（除 cloud-sample-api cloud-commons 外）
 # 使用方式: ./start-all.sh
 # 停止所有服务: ./start-all.sh stop
 #
@@ -15,26 +15,18 @@ mkdir -p "$LOG_DIR" "$PID_DIR"
 
 # 模块列表: 目录名 | 显示名称 | 端口（启动顺序与验证顺序一致）
 MODULES=(
-  # 1. Nacos Discovery
   "cloud-nacos-discovery-sample|nacos-discovery|8760"
-  # 2. Gateway（验证 Web/Reactive/Dubbo/gRPC/REST 都需要）
+  "cloud-nacos-config-sample|nacos-config|8761"
   "cloud-gateway-sample|gateway|8764"
-  # 3. Providers
   "cloud-provider-sample|provider|8765"
   "cloud-provider-reactive-sample|provider-reactive|8762"
   "cloud-provider-dubbo-sample|provider-dubbo|50051"
-  # 4. gRPC Server
   "cloud-grpc-server-sample|grpc-server|8090"
-  # 5. Consumers
   "cloud-consumer-sample|consumer|8766"
   "cloud-consumer-reactive-sample|consumer-reactive|8763"
-  # 6. Nacos Config
-  "cloud-nacos-config-sample|nacos-config|8761"
 )
 
 # 特殊模块（需额外条件）
-AI_MODULE=("cloud-ai-sample|ai|8888")
-RAG_MODULE=("cloud-ai-rag-sample|ai-rag|8889")
 STREAM_MODULE=("cloud-stream-sample|stream|8767")
 SEATA_MODULES=(
   "cloud-seata-sample/business-service|seata-business|18081"
@@ -45,11 +37,13 @@ SEATA_MODULES=(
   "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073"
   "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071"
 )
+AI_MODULE=("cloud-ai-sample|ai|8888")
+RAG_MODULE=("cloud-ai-rag-sample|ai-rag|8889")
 KAFKA_MODULE=("cloud-kafka-sample|kafka-sample|8768")
 
 # 特殊模块启动标记
-START_SEATA=false
 START_STREAM=false
+START_SEATA=false
 START_AI=false
 START_RAG=false
 START_KAFKA=false
@@ -90,24 +84,147 @@ check_java() {
   fi
 }
 
+# Nacos 注册中心地址
+NACOS_HOST="127.0.0.1"
+NACOS_PORT="8848"
+
+check_nacos() {
+  printf '[Nacos] 检查注册中心 (%s:%s) ...' "$NACOS_HOST" "$NACOS_PORT"
+  if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+    echo " 就绪"
+    return 0
+  fi
+  echo " 未运行，正在尝试自动启动..."
+  local nacos_dir
+  nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
+  if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
+    bash "$nacos_dir/bin/startup.sh" -m standalone
+    printf '[Nacos] 等待启动就绪...'
+    wait_nacos_ready && return 0
+  fi
+  echo " 失败!"
+  echo "请先安装并启动 Nacos:"
+  echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
+  echo "  nacos-setup"
+  echo "  bin/startup.sh -m standalone"
+  exit 1
+}
+
+wait_nacos_ready() {
+  for i in $(seq 1 30); do
+    if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
+      echo " 就绪"
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+check_special_prerequisites() {
+  echo ""
+  echo "========== 检查特殊模块前置条件 =========="
+  check_rocketmq
+  check_seata
+  check_ai
+  check_rag
+  check_kafka
+  echo "=================================="
+}
+
 check_rocketmq() {
-  nc -z 127.0.0.1 9876 2>/dev/null
+  # RocketMQ: 检查或自动启动
+  if nc -z 127.0.0.1 9876 2>/dev/null; then
+    echo "[Stream] ✓ RocketMQ 已运行"
+    START_STREAM=true
+  elif find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' 2>/dev/null | grep -q .; then
+    echo "[Stream] RocketMQ 未运行，正在自动启动..."
+    if start_rocketmq; then
+      START_STREAM=true
+    else
+      echo "[Stream] ✗ RocketMQ 启动失败，跳过 Stream 模块"
+    fi
+  else
+    echo "[Stream] ✗ RocketMQ 未运行且未安装，跳过 Stream 模块"
+  fi
+  if $START_STREAM; then
+    create_rocketmq_topics
+  fi
 }
 
-check_mysql() {
-  mysql -u root -proot1234 -e "SELECT 1" &>/dev/null
+check_seata() {
+  # Seata: MySQL + Seata Server
+  local mysql_ok=false
+  local seata_server_ok=false
+  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    echo "[Seata] ✓ MySQL 已运行"
+    mysql_ok=true
+  else
+    echo "[Seata] ✗ MySQL 未运行，跳过 Seata 模块"
+  fi
+  if nc -z 127.0.0.1 8091 2>/dev/null; then
+    echo "[Seata] ✓ Seata Server 已运行"
+    seata_server_ok=true
+  elif $mysql_ok && [ -d "$HOME/github/seata" ]; then
+    echo "[Seata] Seata Server 未运行，正在自动启动..."
+    if start_seata_server; then
+      seata_server_ok=true
+    else
+      echo "[Seata] ✗ Seata Server 启动失败"
+    fi
+  elif ! $mysql_ok; then
+    :
+  else
+    echo "[Seata] ✗ Seata Server 未运行且源码不存在，跳过 Seata 模块"
+  fi
+  if $mysql_ok && $seata_server_ok; then
+    START_SEATA=true
+    echo "[Seata] 将启动 7 个微服务 (18081-18084 + 3 Dubbo)"
+  fi
 }
 
-check_seata_server() {
-  nc -z 127.0.0.1 8091 2>/dev/null
+check_ai() {
+  # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY + PostgreSQL (ChatMemory JDBC)
+  if [ -n "$OPENAI_API_KEY" ] || [ -n "$DEEPSEEK_API_KEY" ]; then
+    local keys=""
+    [ -n "$OPENAI_API_KEY" ] && keys="OPENAI_API_KEY"
+    [ -n "$DEEPSEEK_API_KEY" ] && keys="${keys:+$keys, }DEEPSEEK_API_KEY"
+    if pg_isready -h localhost -p 5432 &>/dev/null; then
+      echo "[AI] ✓ 已配置: $keys，PostgreSQL 已运行"
+      START_AI=true
+    else
+      echo "[AI] ✗ 已配置: $keys，但 PostgreSQL 未运行，跳过 AI 模块"
+      echo "[AI]   ChatMemory JDBC 需要 PostgreSQL，请启动: brew services start postgresql"
+    fi
+  else
+    echo "[AI] ✗ OPENAI_API_KEY 和 DEEPSEEK_API_KEY 均未设置，跳过 AI 模块"
+  fi
 }
 
-check_postgresql() {
-  pg_isready -h localhost -p 5432 &>/dev/null
+check_rag() {
+  # RAG: PostgreSQL + OPENAI_API_KEY
+  if [ -n "$OPENAI_API_KEY" ] && pg_isready -h localhost -p 5432 &>/dev/null; then
+    echo "[RAG] ✓ PostgreSQL 已运行，将启动 AI RAG 模块 (端口 8889)"
+    START_RAG=true
+  elif [ -n "$OPENAI_API_KEY" ]; then
+    echo "[RAG] ✗ PostgreSQL 未运行，跳过 AI RAG 模块"
+    echo "[RAG]   如需启用，请安装: brew install postgresql pgvector && brew services start postgresql"
+    echo "[RAG]   然后初始化: psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql"
+  else
+    echo "[RAG] ✗ 未配置 OPENAI_API_KEY，跳过 AI RAG 模块"
+  fi
 }
 
 check_kafka() {
-  nc -z 127.0.0.1 9092 2>/dev/null
+  # Kafka: 检查集群是否运行
+  if nc -z 127.0.0.1 9092 2>/dev/null; then
+    echo "[Kafka] ✓ Kafka 集群已运行 (端口 9092)"
+    START_KAFKA=true
+    create_kafka_topics
+  else
+    echo "[Kafka] ✗ Kafka 集群未运行，跳过 Kafka 模块"
+    echo "[Kafka]   如需启用，请按 cloud-kafka-sample/README.md 部署 Kafka 4.x 集群"
+  fi
 }
 
 start_rocketmq() {
@@ -139,6 +256,43 @@ start_rocketmq() {
   cd "$BASE_DIR"
 }
 
+create_rocketmq_topics() {
+  local rocketmq_home
+  rocketmq_home=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
+  if [ -z "$rocketmq_home" ] || [ ! -x "$rocketmq_home/bin/mqadmin" ]; then
+    echo "[Stream] ✗ 未找到 mqadmin，跳过 Topic 创建"
+    return
+  fi
+  echo "[Stream] 检查并创建 RocketMQ Topic 和消费组 ..."
+  local mqadmin="$rocketmq_home/bin/mqadmin"
+  # NORMAL Topics
+  for pair in \
+    "stream-demo-topic|stream-demo-consumer-group" \
+    "stream-demo-topic2|stream-demo-consumer-group2" \
+    "stream-transform-topic|stream-transform-group"; do
+    IFS='|' read -r topic group <<< "$pair"
+    $mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t "$topic" -a +message.type=NORMAL &>/dev/null \
+      && echo "  ✓ Topic [$topic]" || true
+    $mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g "$group" &>/dev/null \
+      && echo "  ✓ Group [$group]" || true
+  done
+  # DELAY Topic
+  $mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-delay-topic -a +message.type=DELAY &>/dev/null \
+    && echo "  ✓ Topic [stream-delay-topic] (DELAY)" || true
+  $mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-delay-group &>/dev/null \
+    && echo "  ✓ Group [stream-delay-group]" || true
+  # FIFO Topic
+  $mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-fifo-topic -a +message.type=FIFO &>/dev/null \
+    && echo "  ✓ Topic [stream-fifo-topic] (FIFO)" || true
+  $mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-fifo-group &>/dev/null \
+    && echo "  ✓ Group [stream-fifo-group]" || true
+  # TRANSACTION Topic
+  $mqadmin updateTopic -n localhost:9876 -c DefaultCluster -t stream-tx-topic -a +message.type=TRANSACTION &>/dev/null \
+    && echo "  ✓ Topic [stream-tx-topic] (TRANSACTION)" || true
+  $mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-tx-group &>/dev/null \
+    && echo "  ✓ Group [stream-tx-group]" || true
+}
+
 start_seata_server() {
   local seata_src="$HOME/github/seata"
   if [ ! -d "$seata_src" ]; then
@@ -164,92 +318,51 @@ start_seata_server() {
   fi
 }
 
-check_special_prerequisites() {
-  echo ""
-  echo "========== 检查特殊模块前置条件 =========="
+create_kafka_topics() {
+  local kafka_home
+  kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
+  if [ -n "$kafka_home" ] && [ -x "$kafka_home/bin/kafka-topics.sh" ]; then
+    echo "[Kafka] 检查并创建 Topic (3分区 3副本) ..."
+    for topic in share-demo-topic share-demo-topic-explicit tx-demo-topic; do
+      "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 \
+        --create --topic "$topic" --partitions 3 --replication-factor 3 --if-not-exists 2>/dev/null \
+        && echo "  ✓ Topic [$topic] 已就绪" || true
+    done
+  fi
+}
 
-  # RocketMQ: 检查或自动启动
-  if check_rocketmq; then
-    echo "[Stream] ✓ RocketMQ 已运行"
-    START_STREAM=true
-  elif find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' 2>/dev/null | grep -q .; then
-    echo "[Stream] RocketMQ 未运行，正在自动启动..."
-    if start_rocketmq; then
-      START_STREAM=true
-    else
-      echo "[Stream] ✗ RocketMQ 启动失败，跳过 Stream 模块"
-    fi
-  else
-    echo "[Stream] ✗ RocketMQ 未运行且未安装，跳过 Stream 模块"
-  fi
+start_single() {
+  local arr_name="$1"
+  eval "local first_elem=\"\${${arr_name}[0]}\""
+  IFS='|' read -r module_dir display_name port <<< "$first_elem"
+  start_module "$module_dir" "$display_name" "$port"
+}
 
-  # Seata: MySQL + Seata Server
-  local mysql_ok=false
-  local seata_server_ok=false
-  if check_mysql; then
-    echo "[Seata] ✓ MySQL 已运行"
-    mysql_ok=true
-  else
-    echo "[Seata] ✗ MySQL 未运行，跳过 Seata 模块"
-  fi
-  if check_seata_server; then
-    echo "[Seata] ✓ Seata Server 已运行"
-    seata_server_ok=true
-  elif $mysql_ok && [ -d "$HOME/github/seata" ]; then
-    echo "[Seata] Seata Server 未运行，正在自动启动..."
-    if start_seata_server; then
-      seata_server_ok=true
-    else
-      echo "[Seata] ✗ Seata Server 启动失败"
-    fi
-  elif ! $mysql_ok; then
-    :
-  else
-    echo "[Seata] ✗ Seata Server 未运行且源码不存在，跳过 Seata 模块"
-  fi
-  if $mysql_ok && $seata_server_ok; then
-    START_SEATA=true
-    echo "[Seata] 将启动 7 个微服务 (18081-18084 + 3 Dubbo)"
-  fi
+start_seata_services() {
+  # 按依赖顺序启动：account/storage（基础层）→ order（依赖 account）→ business（依赖 storage + order）
+  echo "[Seata] 按依赖顺序启动 7 个微服务..."
 
-  # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY + PostgreSQL (ChatMemory JDBC)
-  if [ -n "$OPENAI_API_KEY" ] || [ -n "$DEEPSEEK_API_KEY" ]; then
-    local keys=""
-    [ -n "$OPENAI_API_KEY" ] && keys="OPENAI_API_KEY"
-    [ -n "$DEEPSEEK_API_KEY" ] && keys="${keys:+$keys, }DEEPSEEK_API_KEY"
-    if check_postgresql; then
-      echo "[AI] ✓ 已配置: $keys，PostgreSQL 已运行"
-      START_AI=true
-    else
-      echo "[AI] ✗ 已配置: $keys，但 PostgreSQL 未运行，跳过 AI 模块"
-      echo "[AI]   ChatMemory JDBC 需要 PostgreSQL，请启动: brew services start postgresql"
-    fi
-  else
-    echo "[AI] ✗ OPENAI_API_KEY 和 DEEPSEEK_API_KEY 均未设置，跳过 AI 模块"
-  fi
+  # 第一层：account-dubbo/account + storage-dubbo/storage（无下游依赖，基础层）
+  for entry in \
+    "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071" \
+    "cloud-seata-sample/account-service|seata-account|18084" \
+    "cloud-seata-sample/storage-dubbo-service|seata-storage-dubbo|50072" \
+    "cloud-seata-sample/storage-service|seata-storage|18082"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    start_module "$module_dir" "$display_name" "$port"
+  done
 
-  # RAG: PostgreSQL + OPENAI_API_KEY
-  if [ -n "$OPENAI_API_KEY" ] && check_postgresql; then
-    echo "[RAG] ✓ PostgreSQL 已运行，将启动 AI RAG 模块 (端口 8889)"
-    START_RAG=true
-  elif [ -n "$OPENAI_API_KEY" ]; then
-    echo "[RAG] ✗ PostgreSQL 未运行，跳过 AI RAG 模块"
-    echo "[RAG]   如需启用，请安装: brew install postgresql pgvector && brew services start postgresql"
-    echo "[RAG]   然后初始化: psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql"
-  else
-    echo "[RAG] ✗ 未配置 OPENAI_API_KEY，跳过 AI RAG 模块"
-  fi
+  # 第二层：order-dubbo（依赖 account-dubbo）+ order-service（依赖 account-service）
+  for entry in \
+    "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073" \
+    "cloud-seata-sample/order-service|seata-order|18083"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    start_module "$module_dir" "$display_name" "$port"
+  done
 
-  # Kafka: 检查集群是否运行
-  if check_kafka; then
-    echo "[Kafka] ✓ Kafka 集群已运行 (端口 9092)"
-    START_KAFKA=true
-  else
-    echo "[Kafka] ✗ Kafka 集群未运行，跳过 Kafka 模块"
-    echo "[Kafka]   如需启用，请按 cloud-kafka-sample/README.md 部署 Kafka 4.x 集群"
-  fi
-
-  echo "=================================="
+  # 第三层：business-service（依赖 storage + order）
+  IFS='|' read -r module_dir display_name port <<< "cloud-seata-sample/business-service|seata-business|18081"
+  start_module "$module_dir" "$display_name" "$port"
 }
 
 start_module() {
@@ -316,65 +429,35 @@ start_module() {
   fi
 }
 
-start_single() {
-  local arr_name="$1"
-  eval "local first_elem=\"\${${arr_name}[0]}\""
-  IFS='|' read -r module_dir display_name port <<< "$first_elem"
-  start_module "$module_dir" "$display_name" "$port"
-}
-
-start_kafka_module() {
-  IFS='|' read -r module_dir display_name port <<< "${KAFKA_MODULE[0]}"
-
-  # 创建 Kafka topics（3分区 3副本）
-  local kafka_home
-  kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
-  if [ -n "$kafka_home" ] && [ -x "$kafka_home/bin/kafka-topics.sh" ]; then
-    echo "[Kafka] 检查并创建 Topic ..."
-    for topic in share-demo-topic share-demo-topic-explicit tx-demo-topic; do
-      "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 \
-        --create --topic "$topic" --partitions 3 --replication-factor 3 --if-not-exists 2>/dev/null \
-        && echo "  ✓ Topic [$topic] 已就绪" || true
-    done
-  fi
-
-  start_module "$module_dir" "$display_name" "$port"
-}
-
-
-
-start_seata_services() {
-  # 按依赖顺序启动：account/storage（基础层）→ order（依赖 account）→ business（依赖 storage + order）
-  echo "[Seata] 按依赖顺序启动 7 个微服务..."
-
-  # 第一层：account-dubbo/account + storage-dubbo/storage（无下游依赖，基础层）
-  for entry in \
-    "cloud-seata-sample/account-dubbo-service|seata-account-dubbo|50071" \
-    "cloud-seata-sample/account-service|seata-account|18084" \
-    "cloud-seata-sample/storage-dubbo-service|seata-storage-dubbo|50072" \
-    "cloud-seata-sample/storage-service|seata-storage|18082"; do
+cmd_start() {
+  echo "========== 启动所有服务 =========="
+  check_java
+  echo ""
+  check_nacos
+  echo ""
+  check_special_prerequisites
+  echo ""
+  build_all
+  echo ""
+  for entry in "${MODULES[@]}"; do
     IFS='|' read -r module_dir display_name port <<< "$entry"
     start_module "$module_dir" "$display_name" "$port"
   done
-
-  # 第二层：order-dubbo（依赖 account-dubbo）+ order-service（依赖 account-service）
-  for entry in \
-    "cloud-seata-sample/order-dubbo-service|seata-order-dubbo|50073" \
-    "cloud-seata-sample/order-service|seata-order|18083"; do
-    IFS='|' read -r module_dir display_name port <<< "$entry"
-    start_module "$module_dir" "$display_name" "$port"
-  done
-
-  # 第三层：business-service（依赖 storage + order）
-  IFS='|' read -r module_dir display_name port <<< "cloud-seata-sample/business-service|seata-business|18081"
-  start_module "$module_dir" "$display_name" "$port"
+  $START_STREAM && start_single STREAM_MODULE
+  $START_SEATA && start_seata_services
+  $START_AI && start_single AI_MODULE
+  $START_RAG && start_single RAG_MODULE
+  $START_KAFKA && start_single KAFKA_MODULE
+  echo ""
+  status_all
+  demo_urls
 }
 
 stop_all() {
   echo "正在停止所有服务..."
 
   # 收集所有模块名（含特殊模块）
-  local all_modules=("${MODULES[@]}" "${AI_MODULE[@]}" "${RAG_MODULE[@]}" "${STREAM_MODULE[@]}" "${KAFKA_MODULE[@]}" "${SEATA_MODULES[@]}")
+  local all_modules=("${MODULES[@]}" "${STREAM_MODULE[@]}" "${SEATA_MODULES[@]}" "${AI_MODULE[@]}" "${RAG_MODULE[@]}" "${KAFKA_MODULE[@]}")
 
   # 第一阶段：并发停止通过 PID 文件启动的进程
   # 1a. 先对所有进程发送 SIGTERM
@@ -471,6 +554,110 @@ stop_all() {
   pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null || true
   rm -rf "$LOG_DIR" "$PID_DIR"
   echo "所有服务已停止，logs 和 .pids 目录已清理"
+}
+
+install_all() {
+  echo "========== 检查并安装中间件 =========="
+
+  # Nacos (复用 check_nacos)
+  echo ""
+  check_nacos
+
+  # RocketMQ
+  echo ""
+  echo "--- RocketMQ ---"
+  if nc -z 127.0.0.1 9876 2>/dev/null; then
+    echo "✓ RocketMQ 已运行"
+  elif find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' 2>/dev/null | grep -q .; then
+    echo "✓ RocketMQ 已安装（未运行）"
+  else
+    echo "正在下载 RocketMQ 5.5.0..."
+    cd "$HOME"
+    curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
+    unzip -o rocketmq-all-5.5.0-bin-release.zip -d "$HOME"
+    echo "✓ RocketMQ 已安装到 $(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)"
+    cd "$BASE_DIR"
+  fi
+
+  # MySQL
+  echo ""
+  echo "--- MySQL ---"
+  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    echo "✓ MySQL 已运行且密码正确"
+  elif command -v mysql &>/dev/null; then
+    echo "✗ MySQL 已安装但密码不是 root1234，请手动执行: mysqladmin -u root password 'root1234'"
+  else
+    echo "正在安装 MySQL..."
+    brew install mysql
+    mysql.server start
+    mysqladmin -u root password 'root1234'
+    echo "✓ MySQL 已安装并设置密码"
+  fi
+
+  # Seata Server
+  echo ""
+  echo "--- Seata Server ---"
+  if nc -z 127.0.0.1 8091 2>/dev/null; then
+    echo "✓ Seata Server 已运行"
+  elif [ -d "$HOME/github/seata" ]; then
+    echo "✓ Seata Server 源码已存在（未运行）"
+  else
+    echo "正在克隆 Seata 源码..."
+    mkdir -p "$HOME/github"
+    git clone https://github.com/javahongxi/seata.git "$HOME/github/seata"
+    echo "正在构建 Seata Server（首次构建耗时较长）..."
+    cd "$HOME/github/seata"
+    ./mvnw clean install -DskipTests -q
+    echo "✓ Seata Server 已构建"
+    cd "$BASE_DIR"
+  fi
+
+  # MySQL 数据库初始化
+  echo ""
+  echo "--- Seata 数据库初始化 ---"
+  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    mysql -u root -proot1234 seata < "$BASE_DIR/cloud-seata-sample/all.sql"
+    echo "✓ Seata 数据库已初始化"
+  else
+    echo "✗ MySQL 未就绪，跳过数据库初始化"
+  fi
+
+  echo ""
+  echo "=========================================="
+  echo "  中间件检查/安装完成"
+  echo "=========================================="
+
+  # 打包项目模块
+  echo ""
+  build_all
+}
+
+cmd_infra() {
+  echo "========== 仅启动中间件（不启动微服务） =========="
+  check_java
+  echo ""
+  check_nacos
+  echo ""
+  check_special_prerequisites
+  echo ""
+  echo "=========================================="
+  echo "  中间件已就绪，微服务未启动"
+  echo "  可使用 docker compose up -d 在 Docker 中启动微服务"
+  echo "  或使用 $0 start 在本地启动所有微服务"
+  echo "=========================================="
+}
+
+build_all() {
+  echo "========== 打包所有模块 =========="
+  cd "$BASE_DIR"
+  ./mvnw clean package -DskipTests -q
+  if [ $? -eq 0 ]; then
+    echo "✓ 所有模块打包成功"
+  else
+    echo "✗ 打包失败"
+    exit 1
+  fi
 }
 
 # 验证计数器
@@ -749,175 +936,6 @@ demo_urls() {
   fi
 }
 
-status_all() {
-  echo "========== 服务状态 =========="
-  printf "%-22s %-12s %s\n" "模块" "状态" "PID"
-  printf "%-22s %-12s %s\n" "----" "----" "---"
-  # 辅助函数: 检查单个模块状态
-  _check_status() {
-    local display_name="$1"
-    local port="$2"
-    local pid_file="$PID_DIR/$display_name.pid"
-    if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-      printf "%-22s %-12s %s\n" "$display_name" "运行中" "$(cat "$pid_file")"
-    elif [ "$port" != "-" ] && curl -s -o /dev/null --connect-timeout 2 "http://localhost:$port" 2>/dev/null; then
-      printf "%-22s %-12s %s\n" "$display_name" "运行中(外部)" "-"
-    else
-      printf "%-22s %-12s %s\n" "$display_name" "已停止" "-"
-      rm -f "$pid_file"
-    fi
-  }
-  for entry in "${MODULES[@]}"; do
-    IFS='|' read -r module_dir display_name port <<< "$entry"
-    _check_status "$display_name" "$port"
-  done
-  # 特殊模块
-  local all_special=("${AI_MODULE[0]}" "${RAG_MODULE[0]}" "${STREAM_MODULE[0]}" "${KAFKA_MODULE[0]}" "${SEATA_MODULES[@]}")
-  for entry in "${all_special[@]}"; do
-    IFS='|' read -r module_dir display_name port <<< "$entry"
-    _check_status "$display_name" "$port"
-  done
-  echo "=============================="
-}
-
-# Nacos 注册中心地址
-NACOS_HOST="127.0.0.1"
-NACOS_PORT="8848"
-
-wait_nacos_ready() {
-  for i in $(seq 1 30); do
-    if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
-      echo " 就绪"
-      return 0
-    fi
-    sleep 2
-  done
-  return 1
-}
-
-check_nacos() {
-  printf '[Nacos] 检查注册中心 (%s:%s) ...' "$NACOS_HOST" "$NACOS_PORT"
-  if curl -s -o /dev/null -w '' "http://$NACOS_HOST:$NACOS_PORT/nacos/actuator/health" 2>/dev/null; then
-    echo " 就绪"
-    return 0
-  fi
-  echo " 未运行，正在尝试自动启动..."
-  local nacos_dir
-  nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
-  if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
-    bash "$nacos_dir/bin/startup.sh" -m standalone
-    printf '[Nacos] 等待启动就绪...'
-    wait_nacos_ready && return 0
-  fi
-  echo " 失败!"
-  echo "请先安装并启动 Nacos:"
-  echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
-  echo "  nacos-setup"
-  echo "  bin/startup.sh -m standalone"
-  exit 1
-}
-
-install_deps() {
-  echo "正在安装依赖模块到本地仓库 ..."
-  cd "$BASE_DIR"
-  # 先安装根 pom，再安装依赖模块（cloud-commons、cloud-sample-api 依赖父 pom）
-  if ./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q; then
-    echo "cloud-commons、cloud-sample-api 安装成功"
-  else
-    echo "依赖模块安装失败!"
-    exit 1
-  fi
-}
-
-install_all() {
-  echo "========== 检查并安装中间件 =========="
-
-  # Nacos (复用 check_nacos)
-  echo ""
-  check_nacos
-
-  # RocketMQ
-  echo ""
-  echo "--- RocketMQ ---"
-  if nc -z 127.0.0.1 9876 2>/dev/null; then
-    echo "✓ RocketMQ 已运行"
-  elif find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' 2>/dev/null | grep -q .; then
-    echo "✓ RocketMQ 已安装（未运行）"
-  else
-    echo "正在下载 RocketMQ 5.5.0..."
-    cd "$HOME"
-    curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
-    unzip -o rocketmq-all-5.5.0-bin-release.zip -d "$HOME"
-    echo "✓ RocketMQ 已安装到 $(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)"
-    cd "$BASE_DIR"
-  fi
-
-  # MySQL
-  echo ""
-  echo "--- MySQL ---"
-  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
-    echo "✓ MySQL 已运行且密码正确"
-  elif command -v mysql &>/dev/null; then
-    echo "✗ MySQL 已安装但密码不是 root1234，请手动执行: mysqladmin -u root password 'root1234'"
-  else
-    echo "正在安装 MySQL..."
-    brew install mysql
-    mysql.server start
-    mysqladmin -u root password 'root1234'
-    echo "✓ MySQL 已安装并设置密码"
-  fi
-
-  # Seata Server
-  echo ""
-  echo "--- Seata Server ---"
-  if nc -z 127.0.0.1 8091 2>/dev/null; then
-    echo "✓ Seata Server 已运行"
-  elif [ -d "$HOME/github/seata" ]; then
-    echo "✓ Seata Server 源码已存在（未运行）"
-  else
-    echo "正在克隆 Seata 源码..."
-    mkdir -p "$HOME/github"
-    git clone https://github.com/javahongxi/seata.git "$HOME/github/seata"
-    echo "正在构建 Seata Server（首次构建耗时较长）..."
-    cd "$HOME/github/seata"
-    ./mvnw clean install -DskipTests -q
-    echo "✓ Seata Server 已构建"
-    cd "$BASE_DIR"
-  fi
-
-  # MySQL 数据库初始化
-  echo ""
-  echo "--- Seata 数据库初始化 ---"
-  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
-    mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-    mysql -u root -proot1234 seata < "$BASE_DIR/cloud-seata-sample/all.sql"
-    echo "✓ Seata 数据库已初始化"
-  else
-    echo "✗ MySQL 未就绪，跳过数据库初始化"
-  fi
-
-  echo ""
-  echo "=========================================="
-  echo "  中间件检查/安装完成"
-  echo "=========================================="
-
-  # 打包项目模块
-  echo ""
-  build_all
-}
-
-build_all() {
-  echo "========== 打包所有模块 =========="
-  cd "$BASE_DIR"
-  ./mvnw clean package -DskipTests -q
-  if [ $? -eq 0 ]; then
-    echo "✓ 所有模块打包成功"
-  else
-    echo "✗ 打包失败"
-    exit 1
-  fi
-}
-
 logs_all() {
   local module_name="$1"
   if [ -z "$module_name" ]; then
@@ -941,126 +959,108 @@ logs_all() {
   fi
 }
 
-# 主逻辑
-case "${1:-start}" in
-  start)
-    echo "========== 启动所有服务 =========="
-    check_java
-    echo ""
-    check_nacos
-    echo ""
-    check_special_prerequisites
-    echo ""
-    install_deps
-    echo ""
-    build_all
-    echo ""
-    for entry in "${MODULES[@]}"; do
-      IFS='|' read -r module_dir display_name port <<< "$entry"
-      start_module "$module_dir" "$display_name" "$port"
-    done
-    $START_SEATA && start_seata_services
-    $START_STREAM && start_single STREAM_MODULE
-    $START_KAFKA && start_kafka_module
-    $START_AI && start_single AI_MODULE
-    $START_RAG && start_single RAG_MODULE
-    echo ""
-    status_all
-    demo_urls
-    ;;
-  stop)
-    stop_all
-    ;;
-  install)
-    install_all
-    ;;
-  infra)
-    echo "========== 仅启动中间件（不启动微服务） =========="
-    check_java
-    echo ""
-    check_nacos
-    echo ""
-    check_special_prerequisites
-    echo ""
-    echo "=========================================="
-    echo "  中间件已就绪，微服务未启动"
-    echo "  可使用 docker compose up -d 在 Docker 中启动微服务"
-    echo "  或使用 $0 start 在本地启动所有微服务"
-    echo "=========================================="
-    ;;
-  build)
-    build_all
-    ;;
-  verify)
-    demo_urls
-    ;;
-  logs)
-    logs_all "$2"
-    ;;
-  status)
-    status_all
-    ;;
-  seata)
-    echo "========== 启动 Seata 分布式事务 (7个模块) =========="
-    check_java
-    echo ""
-    check_nacos
-    echo ""
-    echo "========== 检查 Seata 前置条件 =========="
-    if ! check_mysql; then
-      echo "[Seata] ✗ MySQL 未运行，请先运行: $0 install"
-      exit 1
+status_all() {
+  echo "========== 服务状态 =========="
+  printf "%-22s %-12s %s\n" "模块" "状态" "PID"
+  printf "%-22s %-12s %s\n" "----" "----" "---"
+  # 辅助函数: 检查单个模块状态
+  _check_status() {
+    local display_name="$1"
+    local port="$2"
+    local pid_file="$PID_DIR/$display_name.pid"
+    if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
+      printf "%-22s %-12s %s\n" "$display_name" "运行中" "$(cat "$pid_file")"
+    elif [ "$port" != "-" ] && curl -s -o /dev/null --connect-timeout 2 "http://localhost:$port" 2>/dev/null; then
+      printf "%-22s %-12s %s\n" "$display_name" "运行中(外部)" "-"
+    else
+      printf "%-22s %-12s %s\n" "$display_name" "已停止" "-"
+      rm -f "$pid_file"
     fi
-    echo "[Seata] ✓ MySQL 已运行"
-    if ! check_seata_server; then
-      if [ -d "$HOME/github/seata" ]; then
-        echo "[Seata] Seata Server 未运行，正在自动启动..."
-        if ! start_seata_server; then
-          echo "[Seata] ✗ Seata Server 启动失败"
-          exit 1
-        fi
-      else
-        echo "[Seata] ✗ Seata Server 未运行，请先启动 Seata Server"
+  }
+  for entry in "${MODULES[@]}"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    _check_status "$display_name" "$port"
+  done
+  # 特殊模块
+  local all_special=("${STREAM_MODULE[0]}" "${SEATA_MODULES[@]}" "${AI_MODULE[0]}" "${RAG_MODULE[0]}" "${KAFKA_MODULE[0]}")
+  for entry in "${all_special[@]}"; do
+    IFS='|' read -r module_dir display_name port <<< "$entry"
+    _check_status "$display_name" "$port"
+  done
+  echo "=============================="
+}
+
+cmd_seata() {
+  echo "========== 启动 Seata 分布式事务 (7个模块) =========="
+  check_java
+  echo ""
+  check_nacos
+  echo ""
+  echo "========== 检查 Seata 前置条件 =========="
+  if ! mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    echo "[Seata] ✗ MySQL 未运行，请先运行: $0 install"
+    exit 1
+  fi
+  echo "[Seata] ✓ MySQL 已运行"
+  if ! nc -z 127.0.0.1 8091 2>/dev/null; then
+    if [ -d "$HOME/github/seata" ]; then
+      echo "[Seata] Seata Server 未运行，正在自动启动..."
+      if ! start_seata_server; then
+        echo "[Seata] ✗ Seata Server 启动失败"
         exit 1
       fi
+    else
+      echo "[Seata] ✗ Seata Server 未运行，请先启动 Seata Server"
+      exit 1
     fi
-    echo "[Seata] ✓ Seata Server 已运行"
-    echo "=================================="
-    echo "✓ 前置条件就绪"
-    echo ""
-    build_all
-    echo ""
-    start_seata_services
-    echo ""
-    echo "========== Seata 服务已启动 =========="
-    echo "  Business:   http://localhost:18081"
-    echo "  Order:      http://localhost:18083"
-    echo "  Storage:    http://localhost:18082"
-    echo "  Account:    http://localhost:18084"
-    echo ""
-    echo "验证:"
-    echo "  curl http://localhost:18081/seata/rest"
-    echo "  curl http://localhost:18081/seata/feign"
-    echo "  curl http://localhost:18081/seata/dubbo"
-    ;;
-  help|--help|-h)
-    echo "用法: $0 {start|stop|install|infra|seata|build|verify|logs|status|help}"
-    echo ""
-    echo "命令说明:"
-    echo "  start    启动所有服务（默认）"
-    echo "  stop     停止所有服务（含 RocketMQ、Seata Server）"
-    
-    echo "  install  检查并安装中间件 + 打包模块"
-    echo "  infra    仅启动中间件（配合 Docker 部署微服务时使用）"
-    echo "  seata    仅启动 Seata 分布式事务 (7个模块)"
-    echo "  build    打包所有模块"
-    echo "  verify   执行验证（不启动，仅验证已运行的服务）"
-    echo "  status   查看服务状态"
-    echo "  logs     查看模块日志 (用法: $0 logs <模块名>)"
-    echo "  help     显示此帮助信息"
-    ;;
-  *)
-    echo "用法: $0 {start|stop|install|infra|seata|build|verify|logs|status|help}"
-    exit 1
-    ;;
+  fi
+  echo "[Seata] ✓ Seata Server 已运行"
+  echo "=================================="
+  echo "✓ 前置条件就绪"
+  echo ""
+  build_all
+  echo ""
+  start_seata_services
+  echo ""
+  echo "========== Seata 服务已启动 =========="
+  echo "  Business:   http://localhost:18081"
+  echo "  Order:      http://localhost:18083"
+  echo "  Storage:    http://localhost:18082"
+  echo "  Account:    http://localhost:18084"
+  echo ""
+  echo "验证:"
+  echo "  curl http://localhost:18081/seata/rest"
+  echo "  curl http://localhost:18081/seata/feign"
+  echo "  curl http://localhost:18081/seata/dubbo"
+}
+
+show_help() {
+  echo "用法: $0 {start|stop|install|infra|seata|build|verify|logs|status|help}"
+  echo ""
+  echo "命令说明:"
+  echo "  start    启动所有服务（默认）"
+  echo "  stop     停止所有服务（含 RocketMQ、Seata Server）"
+  echo "  install  检查并安装中间件 + 打包模块"
+  echo "  infra    仅启动中间件（配合 Docker 部署微服务时使用）"
+  echo "  seata    仅启动 Seata 分布式事务 (7个模块)"
+  echo "  build    打包所有模块"
+  echo "  verify   执行验证（不启动，仅验证已运行的服务）"
+  echo "  status   查看服务状态"
+  echo "  logs     查看模块日志 (用法: $0 logs <模块名>)"
+  echo "  help     显示此帮助信息"
+}
+
+# ===== 命令分发 =====
+case "${1:-start}" in
+  start)         cmd_start ;;
+  stop)          stop_all ;;
+  install)       install_all ;;
+  infra)         cmd_infra ;;
+  build)         build_all ;;
+  verify)        demo_urls ;;
+  logs)          logs_all "$2" ;;
+  status)        status_all ;;
+  seata)         cmd_seata ;;
+  help|--help|-h) show_help ;;
+  *)             show_help; exit 1 ;;
 esac
