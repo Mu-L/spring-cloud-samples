@@ -914,12 +914,10 @@ demo_urls() {
     echo "     • PromptTemplate 提示词模板 (产品描述/代码解释/自定义模板)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
-    if [ -f "$PID_DIR/ai-rag.pid" ] && kill -0 "$(cat "$PID_DIR/ai-rag.pid")" 2>/dev/null; then
     echo "  7️⃣  Spring AI RAG 模块 (端口 8889):"
     echo "     • RAG 检索增强生成: 文档摄入 → 向量化存储 → 相似性检索 → 增强回答"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
-    fi
     echo "  8️⃣  Kafka 4.x 集群消息收发 (端口 8768):"
     echo "     • 启动后 ApplicationRunner 自动发送传统 Consumer Group 消息"
     echo "     • Share Group 隐式/显式确认消息 (REST 接口触发)"
