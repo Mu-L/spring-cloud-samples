@@ -19,7 +19,7 @@
 | 📋 cloud-sample-api              | api               | -     | Interface & Proto     |
 | 🧩 cloud-commons                 | commons           | -     | Cloud Commons         |
 | 📨 cloud-stream-sample           | stream            | 8767  | Spring Cloud Stream   |
-| 🔄 cloud-seata-sample            | seata             | -     | Seata (含 7 个子模块)      |
+| 🔄 cloud-seata-sample            | seata             | ...   | Seata (含 7 个子模块)      |
 | 🤖 cloud-ai-sample               | ai                | 8888  | Spring AI             |
 | 🤖 cloud-ai-rag-sample           | rag               | 8889  | Spring AI · RAG       |
 | 📨 cloud-kafka-sample            | kafka             | 8768  | Kafka 4.x             |
