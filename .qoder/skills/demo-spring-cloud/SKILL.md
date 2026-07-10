@@ -28,43 +28,36 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 4. **脚本输出规范**：执行任何项目脚本（`start-all.sh`、`verify-*.sh`）时，**必须完整输出脚本的全部日志**，禁止使用 `tail -n`、`tail -f`、`head -n` 等方式截断输出。脚本的完整输出是验证结果的依据，截断会导致无法确认每一步是否通过。
 
+5. **演示纪律（强制执行）**：
+   - 🔴 **禁止选择性演示**：每个演示场景的所有步骤必须 **逐一执行**，不可跳过任何一步
+   - 🔴 **严格按步骤顺序**：必须按 Step 1 → Step 2 → ... 的顺序执行，不可乱序或合并
+   - 🔴 **每步必须展示结果**：每个 curl 命令执行后，必须向用户展示返回结果，并说明是否符合预期
+   - 🔴 **禁止用"参考文档"替代执行**：references/ 目录下的文档是操作手册，AI 必须按其中的步骤执行，而非仅列出链接
+   - 🔴 **禁止省略 curl 命令**：不可用"同理"、"以此类推"、"省略"等理由跳过任何 curl 命令
+   - 🔴 **演示完成后汇总**：所有场景演示完成后，输出汇总表格，列出每个场景的执行状态（✅ 通过 / ❌ 失败）
+
 ---
 
-## 项目介绍
+## 演示执行流程
 
-基于 **Spring Boot 4.x + Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目，涵盖服务发现、配置管理、网关路由、链路追踪、限流熔断、分布式事务、消息驱动、Spring AI 等核心能力，包含 16 个模块，支持 AI 一键演示。
+当用户说"演示本项目"时，按以下流程执行：
 
-## 30 秒快速体验
+1. **环境检查**：检查 Nacos 是否运行，未运行则引导安装
+2. **依赖安装**：执行 `./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q`
+3. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块
+4. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
+5. **深度验证**：按下方"演示与验证"章节的 10 个场景逐一执行（Trace → Nacos Config → Sentinel → Stream → Seata → Spring AI → RAG → Kafka）
+6. **结果汇总**：输出汇总表格，列出每个场景的执行状态（✅ 通过 / ❌ 失败）
 
-只需两步：
-1. 确保 Nacos 已运行（没有？告诉 AI "安装 Nacos"）
-2. 告诉 AI **"演示本项目"**
+> 用户也可以只演示单个模块，例如："验证 Seata 分布式事务"、"演示 Spring AI"、"演示 Kafka 消息收发"，此时仅执行对应场景的步骤。
 
-AI 会自动完成：环境检查 → 依赖安装 → 服务启动 → 接口验证 → 结果汇总。无需手动操作。
+### 验证范围
 
-> 也可以只验证单个模块，例如："验证 Seata 分布式事务"、"验证 Stream 消息收发"、"演示 Spring AI"、"演示 Kafka 消息收发"
+**基础验证**（`sh start-all.sh` 自动执行，无需额外操作）：
+- 服务注册发现、健康检查、基础调用链路（Web/Reactive/Dubbo/gRPC）、网关路由、Nacos Config 健康检查、AI/Stream/Seata/Kafka 模块健康检查
 
-### 验证层级说明
-
-**基础验证**（`sh start-all.sh` 自动执行）：
-- ✓ 服务注册发现
-- ✓ 健康检查
-- ✓ 基础调用链路（Web/Reactive/Dubbo/gRPC）
-- ✓ 网关路由
-- ✓ Nacos Config 健康检查
-- ✓ AI/Stream/Seata/Kafka 模块健康检查
-
-**深度验证**（需要单独执行）：
-- 🔍 Trace 链路追踪：五条链路（Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo）trace ID 自动传播、跨服务 trace 上下文传递
-- 🔍 Nacos Config 动态配置：配置发布/读取/删除、@NacosConfig 注解、@ConfigurationProperties + @Value 动态刷新
-- 🔍 Sentinel 限流：网关限流规则、应用级接口限流与 Feign/RestTemplate 熔断降级
-- 🔍 Stream 消息消费：StreamBridge 编程式发布、Supplier 定时消息源、Function 消息处理管道
-- 🔍 Seata 分布式事务：全局事务回滚/提交、Xid 传递、Dubbo 链路事务、数据一致性
-- 🔍 Spring AI 深度功能：聊天对话、流式输出、Tool Calling、ReAct Agent、多模态视觉识别、ChatMemory 多轮对话记忆、PromptTemplate 提示词模板
-- 🔍 Spring AI RAG 模块：RAG 检索增强生成全流程
-- 🔍 Kafka 4.x 集群消息收发：3 节点 KRaft 集群部署、Producer/Consumer 消息收发
-
-> 使用 `demo-spring-cloud` skill 可执行深度验证脚本（verify-trace.sh / verify-stream.sh / verify-seata.sh），或查看 [references/](references/) 目录下的各模块详细文档
+**深度验证**（按下方场景逐一执行，每个场景的所有步骤不可跳过）：
+- Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、Spring AI 全功能、Spring AI RAG、Kafka 4.x 消息收发
 
 ## 前置条件
 
@@ -182,31 +175,91 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 
 ## 演示与验证
 
-> 各场景的详细演示步骤和 curl 命令已整合到 [references/](references/) 目录下的对应文档中，以下列出各场景的入口和参考链接。
+> 🔴 **以下每个场景的所有步骤必须逐一执行，不可跳过。每步执行后展示结果并说明是否符合预期。**
+> 各场景的详细 curl 命令和完整步骤见 [references/](references/) 目录下对应文档，以下为各场景的演示入口和必做步骤清单。
 
 ### 1. 服务注册与发现（Web / Reactive / Dubbo / gRPC）
 
-参考 [discovery.md](references/discovery.md)
+> 前提：nacos-discovery(8760)、nacos-config(8761)、gateway(8764)、provider(8765)、consumer(8766)、provider-reactive(8762)、consumer-reactive(8763)、provider-dubbo(50051)、grpc-server(8090/9090) 已启动。
+
+**必做步骤（按顺序）：**
+
+1. 查看已注册服务列表：`curl http://localhost:8760/discovery/instances`
+2. Web 直接调用（consumer → provider）：`curl 'http://localhost:8766/hi?name=hongxi'`
+3. Web 网关调用（gateway → consumer → provider）：`curl 'http://localhost:8764/consumer-sample/hi?name=hongxi'`
+4. Reactive 直接调用（consumer-reactive → provider-reactive）：`curl 'http://localhost:8763/hi?name=hongxi'`
+5. Reactive 网关调用：`curl 'http://localhost:8764/consumer-reactive-sample/hi?name=hongxi'`
+6. Dubbo 调用（consumer → provider-dubbo）：`curl 'http://localhost:8766/dubbo?name=hongxi'`
+7. Dubbo 网关调用：`curl 'http://localhost:8764/consumer-sample/dubbo?name=hongxi'`
+8. Reactive → Dubbo 调用：`curl 'http://localhost:8763/dubbo?name=hongxi'`
+9. gRPC 调用（consumer → grpc-server）：`curl 'http://localhost:8766/grpc?name=hongxi'`
+10. gRPC 网关调用：`curl 'http://localhost:8764/consumer-sample/grpc?name=hongxi'`
+11. Dubbo REST 直接调用：`curl http://localhost:50051/api/hello/lily`
+12. Dubbo REST 网关调用：`curl http://localhost:8764/provider-dubbo-sample/api/hello/lily`
+
+> 完整命令参考 [discovery.md](references/discovery.md)
 
 ### 2. Trace 链路追踪
 
+> 前提：核心 9 模块已启动。
+
+**必做步骤：**
+
+1. 执行 trace 验证脚本（覆盖五条跨服务链路）：
 ```bash
 bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 ```
+2. 向用户展示脚本完整输出，确认五条链路（Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo）的 trace ID 传播均通过
+3. 可选：查看 Prometheus 指标：`curl http://localhost:8766/actuator/prometheus`
 
-参考 [trace.md](references/trace.md)
+> 完整说明参考 [trace.md](references/trace.md)
 
 ### 3. Nacos Config 动态配置
 
-参考 [nacos-config.md](references/nacos-config.md)
+> 前提：`cloud-nacos-config-sample`（8761）已启动。
+
+**必做步骤（按顺序）：**
+
+1. **发布配置**：`curl 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan'`
+2. **获取配置**：`curl 'http://localhost:8761/nacos/getConfig?dataId=my.city'` → 预期返回 `wuhan`
+3. **监听配置变更**：`curl 'http://localhost:8761/nacos/listener?dataId=my.city'`
+4. **删除配置**：`curl 'http://localhost:8761/nacos/removeConfig?dataId=my.city'`
+5. **@NacosConfig 注解**：先发布 `dataId=github.username, content=javahongxi`，再访问 `curl http://localhost:8761/config/hello` → 预期返回 `Hello, javahongxi`
+6. **@ConfigurationProperties**：发布 Properties 格式配置（见 nacos-config.md），访问 `curl http://localhost:8761/config/agent` → 预期返回 JSON
+7. **@Value + @RefreshScope**：访问 `curl http://localhost:8761/config/value` → 预期返回绑定值
+8. **动态刷新验证**：修改 github.username 配置后再次访问 `/config/hello`，观察值是否更新
+
+> 完整命令参考 [nacos-config.md](references/nacos-config.md)
 
 ### 4. Sentinel 网关限流
 
-参考 [sentinel-gateway.md](references/sentinel-gateway.md)
+> 前提：gateway(8764)、consumer(8766)、provider(8765)、nacos-config(8761) 已启动。
+
+**必做步骤（按顺序）：**
+
+1. 发布 API 分组配置到 Nacos（SENTINEL_GROUP）
+2. 发布限流规则到 Nacos（consumer_api QPS=5）
+3. 等待 5 秒配置同步
+4. 快速发 10 次请求验证限流：前 5 次正常，后续被拦截
+5. 清理 Sentinel 配置
+
+> 完整 curl 命令参考 [sentinel-gateway.md](references/sentinel-gateway.md)
 
 ### 5. Sentinel 应用级熔断降级
 
-参考 [sentinel-app.md](references/sentinel-app.md)
+> 前提：consumer(8766)、provider(8765)、nacos-config(8761) 已启动。
+
+**必做步骤（按顺序）：**
+
+1. **推送限流规则**（QPS=1）到 Nacos
+2. **快速连续调用** `/hi` 接口，第二次被限流 → 预期返回 `Blocked by Sentinel`
+3. **推送降级规则**（异常比例 50%，熔断 10s）到 Nacos
+4. **停止 provider**：`kill -9 $(cat .pids/provider.pid)`
+5. **调用 Feign 路径**触发 fallback → 预期返回 `fallback: service unavailable`
+6. **调用 RestTemplate 路径**两次 → 第一次 500，第二次被熔断
+7. **清理规则**，恢复 provider
+
+> 完整 curl 命令参考 [sentinel-app.md](references/sentinel-app.md)
 
 ### 6. Stream 消息收发（需 RocketMQ）
 
@@ -230,7 +283,15 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
    bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
    ```
 
-   详细手动操作步骤参考 [stream.md](references/stream.md)
+   **如果用户选择手动操作**，按 [stream.md](references/stream.md) 中的步骤逐一执行：
+   - Step 1: 启动 RocketMQ NameServer + Broker
+   - Step 2: 创建 6 个 Topic 和 Consumer Group
+   - Step 3: 启动 stream 模块，观察基础消费 + 定时消息源日志
+   - Step 4: 停止定时消息源（Actuator 端点）
+   - Step 5: 验证消息处理管道（发送消息观察大写转换）
+   - Step 6: 验证延迟消息（观察发送与接收时间差）
+   - Step 7: 验证顺序消息（发送 3 条相同 orderKey）
+   - Step 8: 验证事务消息（多次调用观察 commit/rollback）
 
 ### 7. Seata 分布式事务（需 MySQL + Seata Server）
 
@@ -270,25 +331,77 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
    bash .qoder/skills/demo-spring-cloud/scripts/verify-seata.sh
    ```
 
-   详细手动操作步骤参考 [seata.md](references/seata.md)
+   **如果用户选择手动操作**，按 [seata.md](references/seata.md) 中的步骤逐一执行：
+   - Step 1: 初始化 MySQL 数据库
+   - Step 2: 配置 Nacos（seata.properties）
+   - Step 3: 启动 Seata Server
+   - Step 4: 按三层依赖启动 7 个微服务
+   - Step 5: 验证 RestTemplate 链路：`curl http://localhost:18081/seata/rest`
+   - Step 6: 验证 Feign 链路：`curl http://localhost:18081/seata/feign`
+   - Step 7: 验证 Dubbo 链路：`curl http://localhost:18081/seata/dubbo`
+   - Step 8: 检查 Xid 传递一致性（查看日志）
+   - Step 9: 验证数据一致性（SQL 查询 account_tbl、storage_tbl、order_tbl）
 
 ### 8. Spring AI 模块
 
 > ⏱️ AI 接口调用大模型 API，每次响应通常需 **5~30 秒**。建议所有 curl 命令加 `--max-time 60`。
+> 🔴 **以下所有子场景必须逐一演示，不可跳过任何一项。**
 
-参考 [spring-ai.md](references/spring-ai.md)
+> 前提：OPENAI_API_KEY 已配置，cloud-ai-sample（8888）已启动。
+
+**必做步骤（按顺序）：**
+
+1. **基础聊天**：`curl --max-time 60 --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"`
+2. **流式输出**：`curl --max-time 60 --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"`
+3. **结构化输出**：`curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"`
+4. **System Message**：`curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"`
+5. **多轮对话**（2 轮即可）：发送 2 次 `/ai/advanced/conversation` 请求，第 2 轮追问验证上下文记忆
+6. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"`
+7. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"`
+8. **视觉识别**（6 个接口全部演示，不可跳过）：
+   - 先预检查 6 个图片 URL 可用性
+   - URL 图片分析、图片上传分析、OCR 文字识别、图表分析、代码截图转代码、多图片对比
+9. **ChatMemory 多轮对话记忆**（需 PostgreSQL）：
+   - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
+10. **PromptTemplate 提示词模板**（3 个接口）：
+    - 产品描述生成、代码解释、自定义模板
+11. **DeepSeek 多提供商**（如已配置 DEEPSEEK_API_KEY）：至少演示 chat + agent
+
+> 完整 curl 命令参考 [spring-ai.md](references/spring-ai.md)
 
 ### 9. Spring AI RAG 模块（需 PostgreSQL + pgvector）
 
 > ⏱️ AI 接口调用大模型 API，每次响应通常需 **5~30 秒**。建议所有 curl 命令加 `--max-time 60`。
+> 🔴 **RAG 全流程必须逐步演示，不可跳过。**
 
-参考 [spring-ai-rag.md](references/spring-ai-rag.md)
+> 前提：PostgreSQL + pgvector 已安装，OPENAI_API_KEY 已配置，cloud-ai-rag-sample（8889）已启动。
+
+**必做步骤（按顺序）：**
+
+1. **摄入第一篇文档**（Spring AI 介绍）→ 确认返回 chunks > 0
+2. **摄入第二篇文档**（PgVector 介绍）→ 确认返回 chunks > 0
+3. **RAG 基础查询**（topK=3）→ AI 回答中应包含参考资料内容
+4. **topK 对比**（topK=1）→ 对比不同检索数量下的回答差异
+5. **跨文档语义检索**（topK=2）→ AI 应精确回答索引类型和距离度量
+6. **删除文档后降级验证** → 回答中不应出现"参考资料"字样
+
+> 完整 curl 命令参考 [spring-ai-rag.md](references/spring-ai-rag.md)
 
 ### 10. Kafka 4.x 消息收发（需 Kafka 集群）
 
-> Kafka 集群需单独部署，详见 [kafka.md](references/kafka.md) 中的集群部署章节。
+> 前提：Kafka 4.x 集群已部署，Topic 已创建，cloud-kafka-sample（8768）已启动。
 
-参考 [kafka.md](references/kafka.md)
+**必做步骤（按顺序）：**
+
+1. **观察启动日志**：ApplicationRunner 自动发送消息，确认收发成功
+2. **Share Groups 隐式确认**：`curl -X POST "http://localhost:8768/kafka/share/implicit?count=10"`
+3. **Share Groups 显式确认**：`curl -X POST "http://localhost:8768/kafka/share/explicit?count=15"` → 观察 id=5,10,15 的重投递
+4. **查看 Share Group 日志**：`grep -aE "\[Share-" logs/kafka-sample.log | head -50`
+5. **事务消息提交**：`curl -X POST "http://localhost:8768/kafka/tx/commit?count=5"` → 消费者可读到
+6. **事务消息回滚**：`curl -X POST "http://localhost:8768/kafka/tx/rollback?count=5"` → 消费者读不到
+7. **查看事务消息日志**：`grep -aE "\[TX" logs/kafka-sample.log | tail -20`
+
+> Kafka 集群部署和完整命令参考 [kafka.md](references/kafka.md)
 
 ## 常见问题
 

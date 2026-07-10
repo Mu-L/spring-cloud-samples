@@ -1,5 +1,7 @@
 # 🛡️ Sentinel Gateway 限流演示
 
+> 🔴 **共 5 个步骤，必须逐一执行，不可跳过。每步执行后确认返回结果是否符合预期。**
+
 **前提**：`cloud-gateway-sample`（8764）、`cloud-consumer-sample`（8766）、`cloud-provider-sample`（8765）、`cloud-nacos-config-sample`（8761）已启动。
 
 按以下步骤验证 Sentinel 网关限流：

@@ -1,43 +1,73 @@
 # ⚙️ Nacos Config 动态配置
 
-**前提**：`cloud-nacos-config-sample`（8761）已启动。
+> 🔴 **共 8 个步骤，必须逐一执行，不可跳过。每步执行后确认返回结果是否符合预期。**
 
-按以下步骤逐一验证 Nacos Config 的三大核心能力：基础配置管理、@NacosConfig 注解注入、@ConfigurationProperties + @Value 动态刷新。
+## 前置条件
 
-## Nacos 原生 API
+`cloud-nacos-config-sample`（端口 8761）已启动。
 
-通过 `cloud-nacos-config-sample` 模块（端口 8761）提供的接口管理配置，避免直接调用 Nacos API 的鉴权问题。
+---
+
+## Step 1：发布配置
 
 ```shell
-# 发布配置
 curl 'http://localhost:8761/nacos/publishConfig?dataId=my.city&content=wuhan'
-# 获取配置
+```
+
+**预期结果**：返回 `true`
+
+---
+
+## Step 2：获取配置
+
+```shell
 curl 'http://localhost:8761/nacos/getConfig?dataId=my.city'
-# 监听配置变更
+```
+
+**预期结果**：返回 `wuhan`
+
+---
+
+## Step 3：监听配置变更
+
+```shell
 curl 'http://localhost:8761/nacos/listener?dataId=my.city'
-# 删除配置
+```
+
+**预期结果**：返回 `Add Lister successfully!`
+
+---
+
+## Step 4：删除配置
+
+```shell
 curl 'http://localhost:8761/nacos/removeConfig?dataId=my.city'
 ```
 
-## 演示 @NacosConfig 注解
+**预期结果**：返回 `true`
 
-先用原生 API 发布配置，再访问接口验证：
+---
 
+## Step 5：验证 @NacosConfig 注解注入
+
+先发布配置：
 ```shell
-# 发布配置：dataId=github.username, content=javahongxi
 curl 'http://localhost:8761/nacos/publishConfig?dataId=github.username&content=javahongxi'
-# 访问（@NacosConfig 注入字段值）
-curl http://localhost:8761/config/hello
-# 修改配置后再访问，观察动态刷新
-# 删除配置后观察日志（@NacosConfigListener 回调）
 ```
 
-## 演示 @ConfigurationProperties 和 @Value
-
-先用原生 API 发布 Properties 格式配置，再访问接口验证：
-
+再访问接口验证：
 ```shell
-# 发布配置（Properties 格式）
+curl http://localhost:8761/config/hello
+```
+
+**预期结果**：返回 `Hello, javahongxi`
+
+---
+
+## Step 6：验证 @ConfigurationProperties Bean 绑定
+
+发布 Properties 格式配置：
+```shell
 CONTENT="cloud.agent.name=Trae CN
 cloud.agent.version=3.3.60
 cloud.agent.credits=2000000
@@ -49,9 +79,46 @@ curl -s -X POST http://localhost:8761/nacos/publishConfig \
   -d "dataId=cloud-agent.properties" \
   -d "type=properties" \
   --data-urlencode "content=$CONTENT"
-# 查看 @ConfigurationProperties Bean 绑定结果
+```
+
+查看绑定结果：
+```shell
 curl http://localhost:8761/config/agent
-# 查看 @Value + @RefreshScope 注入结果
+```
+
+**预期结果**：返回 JSON，如 `{"credits":2000000,"enabled":true,"name":"Trae CN","provider":{"apiKey":"xxx123aa","model":"Qwen3.7 Plus","name":"Alibaba"},"version":"3.3.60"}`
+
+---
+
+## Step 7：验证 @Value + @RefreshScope 注入
+
+```shell
 curl http://localhost:8761/config/value
-# 修改配置后再访问，观察动态刷新
+```
+
+**预期结果**：返回 `name:Trae CN,credits:2000000,enabled:true,model:Qwen3.7 Plus`
+
+---
+
+## Step 8：动态刷新验证
+
+修改 github.username 配置：
+```shell
+curl 'http://localhost:8761/nacos/publishConfig?dataId=github.username&content=javahongxi-new'
+```
+
+再次访问验证：
+```shell
+curl http://localhost:8761/config/hello
+```
+
+**预期结果**：返回 `Hello, javahongxi-new`（值已动态刷新）
+
+---
+
+## 清理
+
+```shell
+curl 'http://localhost:8761/nacos/removeConfig?dataId=github.username'
+curl 'http://localhost:8761/nacos/removeConfig?dataId=cloud-agent.properties'
 ```
