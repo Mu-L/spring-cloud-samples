@@ -8,6 +8,17 @@
 
 # 阶段一：Kafka 集群部署（首次或集群未运行时执行）
 
+> **AI 执行指引**：阶段一使用 `scripts/kafka.sh` 脚本一键完成，无需手动执行下方步骤。
+> ```shell
+> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start   # 自动检测/解压、创建配置、格式化、启动
+> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh status  # 查看集群状态
+> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh topics  # 列出所有 Topic
+> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh stop    # 停止集群
+> ```
+> 脚本会自动检测 `$HOME` 和 `$HOME/Downloads` 下的 Kafka 4.x 安装包（含 `.tgz` 自动解压），
+> 检查/创建 `server-{1,2,3}.properties` 配置，格式化 KRaft 存储，启动 3 节点集群。
+> Kafka 4.x 默认启用 Share Groups (KIP-932) 和事务消息，无需额外配置特性。
+
 如本地已安装 Kafka，直接进入 Kafka 安装目录；否则下载 `kafka_2.13-4.3.1.tgz` 并解压，进入 Kafka 解压目录。
 
 > kafka-sample 模块配置了 3 节点集群地址 `localhost:9092,localhost:9094,localhost:9096`，必须部署 3 节点 KRaft 集群。
