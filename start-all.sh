@@ -317,8 +317,9 @@ start_module() {
 }
 
 start_single() {
-  local -n arr=$1
-  IFS='|' read -r module_dir display_name port <<< "${arr[0]}"
+  local arr_name="$1"
+  eval "local first_elem=\"\${${arr_name}[0]}\""
+  IFS='|' read -r module_dir display_name port <<< "$first_elem"
   start_module "$module_dir" "$display_name" "$port"
 }
 
