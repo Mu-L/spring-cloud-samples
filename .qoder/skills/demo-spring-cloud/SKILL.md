@@ -32,16 +32,13 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 ## 项目介绍
 
-**GitHub**：https://github.com/javahongxi/spring-cloud-samples
-
 基于 **Spring Boot 4.x + Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目，涵盖服务发现、配置管理、网关路由、链路追踪、限流熔断、分布式事务、消息驱动、Spring AI 等核心能力，包含 16 个模块，支持 AI 一键演示。
 
 ## 30 秒快速体验
 
 只需两步：
-1. 克隆项目：`git clone https://github.com/javahongxi/spring-cloud-samples.git`
-2. 确保 Nacos 已运行（没有？告诉 AI "安装 Nacos"）
-3. 告诉 AI **"演示本项目"**
+1. 确保 Nacos 已运行（没有？告诉 AI "安装 Nacos"）
+2. 告诉 AI **"演示本项目"**
 
 AI 会自动完成：环境检查 → 依赖安装 → 服务启动 → 接口验证 → 结果汇总。无需手动操作。
 
