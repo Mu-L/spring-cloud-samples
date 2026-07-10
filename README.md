@@ -59,20 +59,14 @@
 #### 📜 一键脚本
 
 ```shell
-# 查看所有命令
-sh start-all.sh --help
-
-# 常用命令
-sh start-all.sh install  # 检查并安装中间件（Nacos/RocketMQ/MySQL/Seata）+ 打包模块
-sh start-all.sh          # 启动所有服务（自动检查前置条件、打包、启动、验证）
-sh start-all.sh seata    # 仅启动 Seata 分布式事务 (7个模块)
+sh start-all.sh install  # 检查并安装中间件 + 打包模块
+sh start-all.sh          # 启动所有服务（自动检查、打包、启动、验证）
 sh start-all.sh build    # 打包所有模块
-sh start-all.sh verify   # 执行验证（不启动，仅验证已运行的服务）
-sh start-all.sh status   # 查看服务状态
-sh start-all.sh logs <模块名>  # 查看模块日志（如 ai, stream, provider）
-sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
+sh start-all.sh stop     # 停止所有服务
 ```
 
+> 更多命令（seata / verify / status / logs 等）请参考 `sh start-all.sh --help`
+>
 > 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
 
 #### 🐳 Docker 部署
@@ -112,35 +106,14 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 **常用命令**
 
 ```shell
-./docker-build.sh build             # Maven 打包 + 构建所有 Docker 镜像
-./docker-build.sh build-one <mod>   # 构建指定模块 (如 cloud-provider-sample)
-./docker-build.sh up                # 启动核心微服务 (9个)
-./docker-build.sh up-stream         # 启动 Stream 消息模块
-./docker-build.sh up-ai             # 启动 Spring AI 模块 (2个)
-./docker-build.sh up-seata          # 启动 Seata 分布式事务 (7个)
-./docker-build.sh up-all            # 启动全部 (含 Stream/AI/Seata)
-./docker-build.sh down              # 停止所有微服务
-./docker-build.sh status            # 查看容器状态
-./docker-build.sh logs [svc]        # 查看日志
-./docker-build.sh clean             # 停止并清理
+./docker-build.sh build   # Maven 打包 + 构建所有 Docker 镜像
+./docker-build.sh up      # 启动核心微服务 (9个)
+./docker-build.sh up-all  # 启动全部 (含 Stream/AI/Seata)
+./docker-build.sh down    # 停止所有微服务
 ```
 
-**单模块部署**
-
-```shell
-# 打包 + 构建镜像 + 清理旧镜像（一条命令）
-./docker-build.sh build-one cloud-provider-sample
-
-# 启动对应服务
-docker compose --profile core up -d provider
-```
-
-Seata 子模块示例：
-```shell
-./docker-build.sh build-one cloud-seata-sample/business-service
-./docker-build.sh up-seata
-```
-
+> 更多命令（build-one / up-stream / up-ai / up-seata / status / logs / clean 等）请参考 `./docker-build.sh --help`
+>
 > Docker 需要 [OrbStack](https://orbstack.dev)（`brew install orbstack`），国内拉镜像需配置[镜像加速](https://docs.orbstack.dev/docker/registry-mirrors)。
 
 #### 🔧 手动启动
