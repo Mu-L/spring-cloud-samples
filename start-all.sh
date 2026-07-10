@@ -804,30 +804,6 @@ demo_urls() {
   verify_url "http://localhost:8761/actuator/health" "Nacos Config 模块健康检查"
   echo "=================================="
 
-  # AI 模块验证
-  if [ -f "$PID_DIR/ai.pid" ] && kill -0 "$(cat "$PID_DIR/ai.pid")" 2>/dev/null || curl -s -o /dev/null --connect-timeout 2 "http://localhost:8888/actuator/health" 2>/dev/null; then
-    echo ""
-    echo "========== Spring AI 模块验证 =========="
-    verify_url "http://localhost:8888/actuator/health" "AI 模块健康检查"
-    echo "=================================="
-  fi
-
-  # AI RAG 模块验证
-  if [ -f "$PID_DIR/ai-rag.pid" ] && kill -0 "$(cat "$PID_DIR/ai-rag.pid")" 2>/dev/null || curl -s -o /dev/null --connect-timeout 2 "http://localhost:8889/actuator/health" 2>/dev/null; then
-    echo ""
-    echo "========== Spring AI RAG 模块验证 =========="
-    verify_url "http://localhost:8889/actuator/health" "AI RAG 模块健康检查"
-    echo "=================================="
-  fi
-
-  # Kafka 模块验证
-  if [ -f "$PID_DIR/kafka-sample.pid" ] && kill -0 "$(cat "$PID_DIR/kafka-sample.pid")" 2>/dev/null; then
-    echo ""
-    echo "========== Kafka 4.x 模块验证 =========="
-    verify_url "http://localhost:8768/actuator/health" "Kafka 模块健康检查"
-    echo "=================================="
-  fi
-
   # Stream 模块验证
   if [ -f "$PID_DIR/stream.pid" ] && kill -0 "$(cat "$PID_DIR/stream.pid")" 2>/dev/null; then
     echo ""
@@ -857,6 +833,30 @@ demo_urls() {
     verify_log "$LOG_DIR/seata-account-dubbo.log" "Started" "account-dubbo-service 启动验证"
     echo "=================================="
   fi
+
+  # AI 模块验证
+    if [ -f "$PID_DIR/ai.pid" ] && kill -0 "$(cat "$PID_DIR/ai.pid")" 2>/dev/null || curl -s -o /dev/null --connect-timeout 2 "http://localhost:8888/actuator/health" 2>/dev/null; then
+      echo ""
+      echo "========== Spring AI 模块验证 =========="
+      verify_url "http://localhost:8888/actuator/health" "AI 模块健康检查"
+      echo "=================================="
+    fi
+
+    # AI RAG 模块验证
+    if [ -f "$PID_DIR/ai-rag.pid" ] && kill -0 "$(cat "$PID_DIR/ai-rag.pid")" 2>/dev/null || curl -s -o /dev/null --connect-timeout 2 "http://localhost:8889/actuator/health" 2>/dev/null; then
+      echo ""
+      echo "========== Spring AI RAG 模块验证 =========="
+      verify_url "http://localhost:8889/actuator/health" "AI RAG 模块健康检查"
+      echo "=================================="
+    fi
+
+    # Kafka 模块验证
+    if [ -f "$PID_DIR/kafka-sample.pid" ] && kill -0 "$(cat "$PID_DIR/kafka-sample.pid")" 2>/dev/null; then
+      echo ""
+      echo "========== Kafka 4.x 模块验证 =========="
+      verify_url "http://localhost:8768/actuator/health" "Kafka 模块健康检查"
+      echo "=================================="
+    fi
 
   # 汇总验证结果
   echo ""
