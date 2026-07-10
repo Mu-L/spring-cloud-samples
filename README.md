@@ -65,7 +65,7 @@ sh start-all.sh build    # 打包所有模块
 sh start-all.sh stop     # 停止所有服务
 ```
 
-> 更多命令（seata / verify / status / logs 等）请参考 `sh start-all.sh --help`
+> 更多命令（seata / verify / status / logs 等）请参考 `sh start-all.sh -h`
 >
 > 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
 
@@ -103,18 +103,9 @@ curl 'http://localhost:8766/hi?name=docker'
 curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 ```
 
-**常用命令**
-
-```shell
-./docker-build.sh build   # Maven 打包 + 构建所有 Docker 镜像
-./docker-build.sh up      # 启动核心微服务 (9个)
-./docker-build.sh up-all  # 启动全部 (含 Stream/AI/Seata)
-./docker-build.sh down    # 停止所有微服务
-```
-
-> 更多命令（build-one / up-stream / up-ai / up-seata / status / logs / clean 等）请参考 `./docker-build.sh --help`
+> 更多命令（build-one / up-stream / up-ai / up-seata / status / logs / clean 等）请参考 `./docker-build.sh --h`
 >
-> Docker 需要 [OrbStack](https://orbstack.dev)（`brew install orbstack`），国内拉镜像需配置[镜像加速](https://docs.orbstack.dev/docker/registry-mirrors)。
+> Docker 推荐 [OrbStack](https://orbstack.dev)（`brew install orbstack`），国内拉镜像需配置[镜像加速](https://docs.orbstack.dev/docker/registry-mirrors)。
 
 #### 🔧 手动启动
 
