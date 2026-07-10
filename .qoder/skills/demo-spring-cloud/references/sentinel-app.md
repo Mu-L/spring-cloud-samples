@@ -162,6 +162,7 @@ curl -s "http://localhost:8761/nacos/removeConfig?dataId=cloud.sample.provider.d
 ```shell
 curl 'http://localhost:8766/hi?name=test&version=2.0'
 curl 'http://localhost:8766/hi?name=test&version=1.0'
+curl 'http://localhost:8766/dubbo?name=test'
 ```
 
 **预期结果**：均正常返回 `Hi, test, Here is 8765`
