@@ -8,7 +8,7 @@
 
 # 阶段一：Kafka 集群部署（首次或集群未运行时执行）
 
-下载 `kafka_2.13-4.3.1.tgz` 并解压，进入 Kafka 解压目录。
+如本地已安装 Kafka，直接进入 Kafka 安装目录；否则下载 `kafka_2.13-4.3.1.tgz` 并解压，进入 Kafka 解压目录。
 
 > kafka-sample 模块配置了 3 节点集群地址 `localhost:9092,localhost:9094,localhost:9096`，必须部署 3 节点 KRaft 集群。
 
