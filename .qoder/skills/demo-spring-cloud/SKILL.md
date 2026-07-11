@@ -151,6 +151,7 @@ sed -i '' 's|^nacos.core.auth.server.identity.value=$|nacos.core.auth.server.ide
 "$NACOS_HOME/bin/startup.sh" -m standalone
 ```
 > 直接下载 zip 包方式全程非交互，无需用户手动 Ctrl+C。安装完成后已自动配置免密模式，Console 和所有 API 均无需登录鉴权。
+> 若下载或启动失败，提示用户手动执行一键安装：`curl -fsSL https://nacos.io/nacos-installer.sh | bash`
 
 **Step 4：切换 Nacos 为免密模式（AI 自动完成）**
 
