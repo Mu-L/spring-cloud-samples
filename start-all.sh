@@ -94,20 +94,25 @@ check_nacos() {
     echo " 就绪"
     return 0
   fi
-  echo " 未运行，正在尝试自动启动..."
+  echo " 未运行"
   local nacos_dir
   nacos_dir=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
-  if [ -n "$nacos_dir" ]; then
-    nacos_dir=$(dirname "$(dirname "$nacos_dir")")
-    bash "$nacos_dir/bin/startup.sh" -m standalone
-    printf '[Nacos] 等待启动就绪...'
-    wait_nacos_ready && return 0
+  if [ -z "$nacos_dir" ]; then
+    echo "[Nacos] ✗ 未找到 Nacos 安装目录 ($HOME/ai-infra/nacos)"
+    echo "[Nacos] 请先安装 Nacos:"
+    echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
+    echo "  nacos-setup  # 本地一键部署单机版 Nacos"
+    exit 1
+  fi
+  nacos_dir=$(dirname "$(dirname "$nacos_dir")")
+  printf '[Nacos] 正在自动启动...'
+  bash "$nacos_dir/bin/startup.sh" -m standalone > /dev/null 2>&1
+  printf ' 等待就绪...'
+  if wait_nacos_ready; then
+    return 0
   fi
   echo " 失败!"
-  echo "请先安装并启动 Nacos:"
-  echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
-  echo "  nacos-setup  # 本地一键部署单机版 Nacos"
-  echo "  bin/startup.sh -m standalone"
+  echo "[Nacos] 请检查启动日志: $nacos_dir/logs/start.out"
   exit 1
 }
 
