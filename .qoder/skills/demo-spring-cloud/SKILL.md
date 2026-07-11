@@ -175,6 +175,16 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 ./mvnw -pl <模块目录> spring-boot:run
 ```
 
+> 🔴 **后台启动规范（AI 必须遵守）**：
+> 后台启动模块时，Bash 工具调用**必须**设置 `is_background=true`，启动后用**独立的** Bash 命令轮询 `/actuator/health` 检查健康状态，不要对启动命令调用 `GetTerminalOutput`。
+>
+> 示例：
+> ```
+> Bash(command="cd /path && ./mvnw -pl module spring-boot:run > logs/xx.log 2>&1 & echo $! > .pids/xx.pid", is_background=true)
+> # 用独立命令轮询健康检查，不要用 GetTerminalOutput 等待启动命令的输出
+> Bash(command="sleep 10 && curl -s http://localhost:PORT/actuator/health")
+> ```
+
 **核心模块（按顺序）：**
 
 | 模块                             | 端口                   | 说明                |
@@ -389,7 +399,7 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 2. **摄入第二篇文档**（PgVector 介绍）→ 确认返回 chunks > 0
 3. **RAG 基础查询**（topK=3）→ AI 回答中应包含参考资料内容
 4. **topK 对比**（topK=1）→ 对比不同检索数量下的回答差异
-5. **跨文档语义检索**（topK=2）→ AI 应精确回答索引类型和距离度量
+5. **不同主题文档检索验证**（topK=2）→ 换一篇文档相关问题，AI 应精确回答索引类型和距离度量（验证不是固定返回同一篇）
 6. **删除文档后降级验证** → 回答中不应出现"参考资料"字样
 
 > 完整 curl 命令参考 [spring-ai-rag.md](references/spring-ai-rag.md)

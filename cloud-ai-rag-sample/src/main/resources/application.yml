@@ -2,7 +2,7 @@ server:
   port: 8889
 spring:
   profiles:
-    active: pgvector
+    active: redis
   application:
     name: ai-rag-sample
   ai:

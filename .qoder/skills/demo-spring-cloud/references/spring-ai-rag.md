@@ -18,6 +18,8 @@
 ```shell
 brew install postgresql
 brew install pgvector
+# 必须设置 postgres 为超级用户
+ALTER USER postgres WITH SUPERUSER;
 # 初始化数据库（创建用户 ai_user、数据库 ai_demo、启用 pgvector 扩展、建表）
 psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
 ```
@@ -25,6 +27,36 @@ psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
 **Redis 方式**
 
 需先启动 Redis Stack（含 RediSearch 模块），默认演示 PgVector 方式，Redis 仅作备选。
+
+**1. 检查 Redis 是否已运行**
+```shell
+redis-cli ping
+```
+> 返回 `PONG` 则已就绪。若未安装，执行 `brew install redis && brew services start redis` 后重试。
+
+**2. 检查 RediSearch 模块是否已加载**
+```shell
+redis-cli module list
+```
+> 若输出已包含 `redisearch`，直接跳到步骤 4。否则执行步骤 3 安装模块。
+
+**3. 安装 RediSearch 模块**
+```shell
+mkdir -p /opt/homebrew/lib/redis/modules
+open https://packages.redis.io/homebrew/redis-oss-8.8.0-arm64.zip
+unzip -o ~/Downloads/redis-oss-8.8.0-arm64.zip -d /tmp/redis-install
+cp /tmp/redis-install/redis-oss-8.8.0-arm64/lib/redis/modules/*.so /opt/homebrew/lib/redis/modules/
+echo "loadmodule /opt/homebrew/lib/redis/modules/redisearch.so" >> /opt/homebrew/etc/redis.conf
+echo "loadmodule /opt/homebrew/lib/redis/modules/rejson.so" >> /opt/homebrew/etc/redis.conf
+brew services restart redis
+rm -rf /tmp/redis-install
+```
+
+**4. 确认模块加载成功**
+```shell
+redis-cli module list
+```
+> 输出应包含 `redisearch` 和 `rejson`。
 
 ## 启动与切换
 
@@ -106,13 +138,16 @@ curl --max-time 60 --get --data-urlencode "question=What are the core features o
 
 ---
 
-## Step 5：跨文档语义检索（topK=2）
+## Step 5：不同主题文档检索验证（topK=2）
+
+> 与 Step 3 基础查询原理相同（都是语义搜索），此处换一个与第二篇文档（pgvector-docs）相关的问题，
+> 验证系统能根据问题语义精准命中不同主题的文档，而非固定返回同一篇。
 
 ```shell
 curl --max-time 60 --get --data-urlencode "question=What index types and distance metrics does the vector store support?" "http://localhost:8889/ai/rag/query?topK=2" | head -c 800
 ```
 
-**预期结果**：AI 应精确回答 IVFFlat、HNSW 索引类型和 cosine/inner product/Euclidean 距离度量（来自第二篇文档）。
+**预期结果**：AI 应精确回答 IVFFlat、HNSW 索引类型和 cosine/inner product/Euclidean 距离度量（来自第二篇文档），而非返回第一篇 Spring AI 的内容。
 
 ---
 
