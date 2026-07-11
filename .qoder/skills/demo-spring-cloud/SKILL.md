@@ -362,25 +362,18 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 ### 5. Stream 消息收发
 
-> 本模块演示 Spring Cloud Stream 六大核心场景：基础消费、定时消息源、消息处理管道、延迟消息、顺序消息、事务消息。
+> 🔴 **本场景必须且只需执行一键验证脚本，禁止手动逐步执行。**
+> verify-stream.sh 已覆盖全部 6 个场景（含 RocketMQ 检查/启动、Topic 创建、模块打包启动、消息收发验证、进程清理），AI 仅需执行脚本并展示输出。
 
-**按需准备 RocketMQ（演示前检查）：**
+**唯一必做步骤：**
+
 ```bash
-nc -z 127.0.0.1 9876 2>/dev/null && echo "✓ RocketMQ 已运行" || echo "✗ RocketMQ 未运行"
+bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
 ```
-若未运行，参考 [stream.md](references/stream.md) 中的安装和启动步骤。
 
-**执行流程：**
+> ⚠️ **禁止事项**：不可跳过脚本改为手动 curl、不可自行检查/启动 RocketMQ、不可手动创建 Topic、不可手动启动 Stream 模块。脚本内部已处理所有前置准备。
 
-1. **执行一键验证脚本**：
-   ```bash
-   bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
-   ```
-   > 脚本自动完成：检查/启动 RocketMQ → 创建 Topic 和 Consumer Group → 打包启动 Stream 模块 → 验证六大场景（基础消费、定时消息源、消息处理管道、延迟消息、顺序消息、事务消息）→ 清理进程
-
-3. 向用户展示脚本完整输出，用表格汇总六个场景验证结果
-
-> ⚠️ **禁止跳过一键脚本改为手动逐步执行**。verify-stream.sh 已覆盖所有验证步骤，必须直接执行。
+执行完成后，向用户展示脚本完整输出，用表格汇总六个场景验证结果。
 
 ### 6. Seata 分布式事务
 
