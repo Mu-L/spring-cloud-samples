@@ -67,9 +67,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 当用户说"演示本项目"时，按以下流程执行：
 
-1. **环境检查与准备**：分两阶段执行：
-   - **第一阶段（门控）**：检查 JDK → 检查 Nacos。若 Nacos 未就绪，**立即安装并启动 Nacos**，不做任何其他检查。Nacos 是所有模块的基建，未就绪前禁止继续后续流程
-   - **第二阶段**：Nacos 就绪后，再逐项检查并自动安装其余组件（MySQL → RocketMQ → Seata Server → Kafka → PostgreSQL → Redis → 依赖模块）
+1. **环境检查与准备**：仅检查 3 项基本前置条件：JDK → Nacos → 安装依赖模块。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL、Redis）不在启动前统一检查，而是在对应模块演示时按需准备
 2. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块
 3. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
 4. **深度演示**：按下方"演示与验证"章节的 9 个场景逐一执行（Trace → Nacos Config → Sentinel Gateway → Sentinel App → Stream → Seata → Spring AI → RAG → Kafka）
@@ -87,7 +85,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 ## 前置条件
 
-> 🔴 **Nacos 门控原则**：环境检查必须按 **JDK → Nacos → 其余组件** 的顺序执行。Nacos 是所有模块的注册中心，若 Nacos 未就绪，**立即安装并启动 Nacos**，不要继续检查或安装其他任何组件。只有 Nacos 就绪后，才能继续后续前置条件的检查与安装。
+> 🔴 **精简前置原则**：启动前仅检查 **JDK → Nacos → 安装依赖模块** 3 项基本前置条件。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL、Redis）**不在启动前统一检查**，而是在对应模块演示时按需准备，避免复杂的环境检查阻碍演示流程。
 
 ### 1. JDK 17+（必须）
 
@@ -135,7 +133,7 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 
 **已安装但未运行** → 查找并启动：
 ```bash
-NACOS_START=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
+NACOS_START=$(find "$HOME/nacos" "$HOME"/nacos-* "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
 if [ -n "$NACOS_START" ]; then
   NACOS_HOME=$(dirname "$(dirname "$NACOS_START")")
   cd "$NACOS_HOME" && bin/startup.sh -m standalone
@@ -143,13 +141,29 @@ fi
 ```
 启动完成后跳到 Step 4。
 
-**未安装** → 一键安装并部署：
+**未安装** → 下载二进制包并部署（全程非交互，AI 可自主完成）：
 ```bash
-curl -fsSL https://nacos.io/nacos-installer.sh | bash
-nacos-setup  # 本地一键部署单机版 Nacos
+# 1. 下载 Nacos Server zip 包
+curl -L -o /tmp/nacos-server-3.2.2.zip 'https://download.nacos.io/nacos-server/nacos-server-3.2.2.zip?file=nacos-server-3.2.2.zip'
+
+# 2. 解压到 $HOME/nacos（覆盖旧版本，方便升级）
+unzip -o /tmp/nacos-server-3.2.2.zip -d "$HOME" && rm -f /tmp/nacos-server-3.2.2.zip
+
+# 3. 定位 NACOS_HOME 并配置免密模式 + JWT 密钥 + 服务身份
+NACOS_HOME="$HOME/nacos"
+CONF="$NACOS_HOME/conf/application.properties"
+sed -i '' 's/^nacos.core.auth.enabled=true$/nacos.core.auth.enabled=false/' "$CONF"
+sed -i '' 's/^nacos.core.auth.admin.enabled=true$/nacos.core.auth.admin.enabled=false/' "$CONF"
+sed -i '' 's/^nacos.core.auth.console.enabled=true$/nacos.core.auth.console.enabled=false/' "$CONF"
+# Nacos 3.x 首次启动必须预配置 JWT 密钥和服务身份，否则会交互式提示
+sed -i '' 's|^nacos.core.auth.plugin.nacos.token.secret.key=$|nacos.core.auth.plugin.nacos.token.secret.key=VGhpc0lzTXlDdXN0b21TZWNyZXRLZXkwMTIzNDU2Nzg=|' "$CONF"
+sed -i '' 's|^nacos.core.auth.server.identity.key=$|nacos.core.auth.server.identity.key=nacosServerIdentityKey2024|' "$CONF"
+sed -i '' 's|^nacos.core.auth.server.identity.value=$|nacos.core.auth.server.identity.value=nacosServerIdentityValue2024|' "$CONF"
+
+# 4. 后台启动 Nacos
+"$NACOS_HOME/bin/startup.sh" -m standalone
 ```
-> nacos-setup 自动下载安装、生成鉴权配置、检测端口冲突和 Java 环境。部署后自动创建账号（用户名：nacos），密码是随机字符串。
-> 首次部署后会自动打开浏览器 http://127.0.0.1:8080/ 登录 Console。跳到 Step 4。
+> 直接下载 zip 包方式全程非交互，无需用户手动 Ctrl+C。安装完成后已自动配置免密模式，Console 和所有 API 均无需登录鉴权。
 
 **Step 4：切换 Nacos 为免密模式（AI 自动完成）**
 
@@ -158,7 +172,7 @@ nacos-setup  # 本地一键部署单机版 Nacos
 
 - **检查鉴权状态**：
 ```bash
-NACOS_DIR=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
+NACOS_DIR=$(find "$HOME/nacos" "$HOME"/nacos-* "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
 if [ -n "$NACOS_DIR" ]; then
   grep -q 'nacos.core.auth.enabled=false' "$NACOS_DIR" && echo "✓ 免密模式已启用" || echo "✗ 鉴权已启用，需切换"
 fi
@@ -168,7 +182,7 @@ fi
 - **若鉴权已启用** → 修改配置关闭鉴权：
 ```bash
 # 定位 Nacos 配置文件
-NACOS_DIR=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
+NACOS_DIR=$(find "$HOME/nacos" "$HOME"/nacos-* "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
 
 # 将三个鉴权开关从 true 改为 false
 sed -i '' 's/^nacos.core.auth.enabled=true$/nacos.core.auth.enabled=false/' "$NACOS_DIR"
@@ -196,125 +210,27 @@ NACOS_HOME=$(dirname "$(dirname "$NACOS_DIR")")
 **Step 5：验证**
 等待 Nacos 启动完成后再次检查健康状态，确认 `"status":"UP"` 后告知用户 Nacos 已就绪。
 
-### 3. MySQL（仅 Seata 模块需要）
-
-**检查 MySQL：**
-```bash
-mysql -u root -proot1234 -e "SELECT 1" &>/dev/null && echo "✓ MySQL 已运行" || echo "✗ MySQL 未运行"
-```
-
-**未安装** → Homebrew 安装并初始化：
-```bash
-brew install mysql
-mysql.server start
-mysqladmin -u root password 'root1234'
-```
-> 项目统一使用 root/root1234。若已有 MySQL 且密码不同，需修改各模块 application.yml 中的数据库配置。
-
-### 4. RocketMQ（仅 Stream 模块需要）
-
-**检查 RocketMQ：**
-```bash
-nc -z 127.0.0.1 9876 && echo "✓ RocketMQ NameServer 已运行" || echo "✗ RocketMQ 未运行"
-```
-
-**未安装** → 下载并启动：
-```bash
-curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
-unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
-```
-**启动 NameServer + Broker：**
-```bash
-ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
-cd "$ROCKETMQ_HOME"
-nohup bin/mqnamesrv > namesrv.log 2>&1 &
-sleep 5
-nohup bin/mqbroker -n localhost:9876 > broker.log 2>&1 &
-sleep 10
-nc -z 127.0.0.1 9876 && echo "✓ NameServer 已启动" || echo "✗ NameServer 启动失败"
-nc -z 127.0.0.1 10911 && echo "✓ Broker 已启动" || echo "✗ Broker 启动失败"
-```
-> Topic 和 Consumer Group 的创建由 verify-stream.sh 或 stream.md 演示步骤处理，此处仅确保中间件就绪。
-
-### 5. Seata Server（仅 Seata 模块需要）
-
-**检查 Seata Server（端口 8091）：**
-```bash
-nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
-```
-
-**未运行** → 源码构建并启动（二进制包的 nacos-client 版本过低，需源码构建）：
-```bash
-SEATA_SRC="$HOME/github/seata"
-if [ ! -d "$SEATA_SRC" ]; then
-  mkdir -p "$HOME/github"
-  curl -L -o /tmp/seata-2.x.zip https://github.com/javahongxi/seata/archive/refs/heads/2.x.zip
-  unzip -o /tmp/seata-2.x.zip -d "$HOME/github"
-  mv "$HOME/github/seata-2.x" "$SEATA_SRC"
-  rm -f /tmp/seata-2.x.zip
-fi
-cd "$SEATA_SRC" && ./mvnw clean install -DskipTests -q
-nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
-for i in $(seq 1 30); do
-  nc -z 127.0.0.1 8091 2>/dev/null && echo "✓ Seata Server 已启动" && break
-  sleep 1
-done
-```
-> Seata 依赖 Nacos，确保 Nacos 已运行。Seata 所需的 Nacos 配置（seata.properties）和数据库初始化由 verify-seata.sh 自动处理。
-
-### 6. Kafka 4.x 集群（仅 Kafka 模块需要）
-
-**检查 Kafka 集群：**
-```bash
-nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
-```
-
-**未运行** → 使用 kafka.sh 脚本一键部署（3 节点 KRaft 集群）：
-```bash
-bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start
-```
-> 脚本自动检测/下载 Kafka 4.x、创建集群配置、格式化 KRaft 存储、启动 3 节点集群。
-
-### 7. PostgreSQL + pgvector（仅 RAG 模块需要）
-
-**检查 PostgreSQL：**
-```bash
-psql -U postgres -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" || echo "✗ PostgreSQL 未运行"
-```
-
-**未安装** → Homebrew 安装并初始化：
-```bash
-brew install postgresql@17 pgvector
-brew services start postgresql@17
-# Homebrew PostgreSQL 默认用户为 macOS 用户名，需创建 postgres 角色
-createuser -s postgres 2>/dev/null || true
-# 初始化 RAG 演示数据库
-psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
-```
-> init_ai_demo.sql 创建 ai_user 用户、ai_demo 数据库、启用 pgvector 扩展并建表。
-
-### 8. Redis（仅 RAG 模块备选向量库需要）
-
-RAG 模块默认使用 pgvector，Redis 仅作备选向量库（`--spring.profiles.active=redis`）。
-
-**检查 Redis：**
-```bash
-redis-cli ping 2>/dev/null | grep -q PONG && echo "✓ Redis 已运行" || echo "✗ Redis 未运行"
-```
-
-**未安装** → Homebrew 安装并启动：
-```bash
-brew install redis
-brew services start redis
-```
-> 默认演示 pgvector 方式，Redis 仅在用户主动切换 Profile 时才需要。若需 RediSearch 向量检索，还需额外加载 RediSearch 模块（参考 spring-ai-rag.md）。
-
-### 9. 安装依赖模块
+### 3. 安装依赖模块
 
 部分模块依赖 `cloud-commons` 和 `cloud-sample-api`，启动前需先安装：
 ```bash
 ./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q
 ```
+
+### 4. 按需准备的中间件（演示时检查）
+
+以下中间件**不在启动前统一检查**，而是在对应模块演示时按需检查和准备：
+
+| 中间件 | 依赖模块 | 检查时机 |
+|--------|---------|--------|
+| MySQL | Seata 模块 | 演示 Seata 分布式事务前检查 |
+| RocketMQ | Stream 模块 | 演示 Stream 消息收发前检查 |
+| Seata Server | Seata 模块 | 演示 Seata 分布式事务前检查 |
+| Kafka 4.x | Kafka 模块 | 演示 Kafka 消息收发前检查 |
+| PostgreSQL + pgvector | RAG 模块 | 演示 Spring AI RAG 前检查 |
+| Redis | RAG 模块（备选） | 仅在用户切换 Redis 向量库时检查 |
+
+> 各中间件的检查和安装命令保留在对应场景的演示步骤中，演示到该场景时再执行。
 
 ## 启动方式
 
@@ -331,7 +247,7 @@ sh start-all.sh logs <模块名>  # 查看模块日志（如 ai, stream, provide
 sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 ```
 
-> 脚本流程：检查 Nacos → 检查 RocketMQ/MySQL/Seata Server（自动启动）→ 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
+> 脚本流程：检查 Nacos → 安装依赖模块 → 打包 → 按顺序启动所有模块 → 执行验证 → 汇总结果
 
 ### 手动逐个启动
 
@@ -444,18 +360,19 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 > 完整 curl 命令参考 [sentinel-app.md](references/sentinel-app.md)
 
-### 5. Stream 消息收发（需 RocketMQ）
+### 5. Stream 消息收发
 
 > 本模块演示 Spring Cloud Stream 六大核心场景：基础消费、定时消息源、消息处理管道、延迟消息、顺序消息、事务消息。
 
+**按需准备 RocketMQ（演示前检查）：**
+```bash
+nc -z 127.0.0.1 9876 2>/dev/null && echo "✓ RocketMQ 已运行" || echo "✗ RocketMQ 未运行"
+```
+若未运行，参考 [stream.md](references/stream.md) 中的安装和启动步骤。
+
 **执行流程：**
 
-1. **检查 RocketMQ**：
-   ```bash
-   nc -z 127.0.0.1 9876 2>/dev/null && echo "✓ RocketMQ 已运行" || echo "✗ RocketMQ 未运行"
-   ```
-
-2. **执行一键验证脚本**（无论 RocketMQ 是否已运行，都必须执行此脚本）：
+1. **执行一键验证脚本**：
    ```bash
    bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
    ```
@@ -465,45 +382,24 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 > ⚠️ **禁止跳过一键脚本改为手动逐步执行**。verify-stream.sh 已覆盖所有验证步骤，必须直接执行。
 
-### 6. Seata 分布式事务（需 MySQL + Seata Server）
+### 6. Seata 分布式事务
+
+**按需准备 MySQL + Seata Server（演示前检查）：**
+```bash
+mysql -u root -proot1234 -e "SELECT 1" &>/dev/null && echo "✓ MySQL 已运行" || echo "✗ MySQL 未运行"
+nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
+```
+若未就绪，参考 [seata.md](references/seata.md) 中的安装和启动步骤。
 
 **执行流程：**
 
-1. **检查前置条件**：
-   ```bash
-   # 检查 Nacos 是否运行
-   if curl -s -o /dev/null -w '' "http://127.0.0.1:8848/nacos/actuator/health" 2>/dev/null; then
-     echo "✓ Nacos 已运行"
-   else
-     echo "✗ Nacos 未运行，请先启动 Nacos"
-     return 1
-   fi
-
-   # 检查 MySQL 是否运行
-   if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
-     echo "✓ MySQL 已运行"
-   else
-     echo "✗ MySQL 未运行或连接失败"
-     return 1
-   fi
-   ```
-
-2. **询问用户是否需要 AI 自动完成环境准备**：
-   > "Seata 分布式事务示例需要以下环境：
-   > 1. MySQL 数据库（已检测到运行中 / 未检测到）
-   > 2. 初始化 seata 数据库及业务表
-   > 3. 配置 Nacos（创建 seata.properties）
-   > 4. 启动 Seata Server
-   > 5. 启动 7 个微服务并验证分布式事务
-   > 
-   > 是否需要我帮您自动完成以上操作？"
-
-   **如果用户同意**，直接执行一键验证脚本：
+1. **执行一键验证脚本**：
    ```bash
    bash .qoder/skills/demo-spring-cloud/scripts/verify-seata.sh
    ```
+   > 脚本自动完成：检查 MySQL/Seata Server → 初始化数据库 → 配置 Nacos → 启动 Seata Server → 启动 7 个微服务 → 验证分布式事务
 
-   **如果用户选择手动操作**，按 [seata.md](references/seata.md) 中的步骤逐一执行：
+   如一键脚本不可用，按 [seata.md](references/seata.md) 中的步骤逐一执行：
    - Step 1: 初始化 MySQL 数据库
    - Step 2: 配置 Nacos（seata.properties）
    - Step 3: 启动 Seata Server
@@ -541,10 +437,16 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 > 完整 curl 命令参考 [spring-ai.md](references/spring-ai.md)
 
-### 8. Spring AI RAG 模块（需 PostgreSQL + pgvector）
+### 8. Spring AI RAG 模块
 
 > ⏱️ AI 接口调用大模型 API，每次响应通常需 **5~30 秒**。建议所有 curl 命令加 `--max-time 60`。
 > 🔴 **RAG 全流程必须逐步演示，不可跳过。**
+
+**按需准备 PostgreSQL + pgvector（演示前检查）：**
+```bash
+psql -U postgres -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" || echo "✗ PostgreSQL 未运行"
+```
+若未安装：`brew install postgresql@17 pgvector && brew services start postgresql@17 && createuser -s postgres 2>/dev/null || true && psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql`
 
 > 前提：PostgreSQL + pgvector 已安装，OPENAI_API_KEY 已配置，cloud-ai-rag-sample（8889）已启动。
 
@@ -559,7 +461,13 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 > 完整 curl 命令参考 [spring-ai-rag.md](references/spring-ai-rag.md)
 
-### 9. Kafka 4.x 消息收发（需 Kafka 集群）
+### 9. Kafka 4.x 消息收发
+
+**按需准备 Kafka 集群（演示前检查）：**
+```bash
+nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
+```
+若未运行：`bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start`
 
 > 前提：Kafka 4.x 集群已部署，Topic 已创建，cloud-kafka-sample（8768）已启动。
 

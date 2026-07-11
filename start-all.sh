@@ -96,9 +96,9 @@ check_nacos() {
   fi
   echo " 未运行"
   local nacos_dir
-  nacos_dir=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
+  nacos_dir=$(find "$HOME/nacos" "$HOME"/nacos-* "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
   if [ -z "$nacos_dir" ]; then
-    echo "[Nacos] ✗ 未找到 Nacos 安装目录 ($HOME/ai-infra/nacos)"
+    echo "[Nacos] ✗ 未找到 Nacos 安装目录 (已搜索 \$HOME/nacos、\$HOME/nacos-* 和 \$HOME/ai-infra/nacos)"
     echo "[Nacos] 请先安装 Nacos:"
     echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
     echo "  nacos-setup  # 本地一键部署单机版 Nacos"
@@ -117,9 +117,8 @@ check_nacos() {
 }
 
 configure_nacos_noauth() {
-  local nacos_dir="$HOME/ai-infra/nacos"
   local props_file
-  props_file=$(find "$nacos_dir" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
+  props_file=$(find "$HOME/nacos" "$HOME"/nacos-* "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
   if [ -z "$props_file" ]; then
     echo "[Nacos] ⚠ 未找到 application.properties，跳过免密配置"
     return
