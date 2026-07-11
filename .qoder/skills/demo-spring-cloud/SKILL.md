@@ -67,12 +67,13 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 当用户说"演示本项目"时，按以下流程执行：
 
-1. **环境检查与准备**：按前置条件章节逐项检查并自动安装缺失组件（JDK → Nacos → MySQL → RocketMQ → Seata Server → Kafka → PostgreSQL → Redis → 依赖模块），每项均具备“检查→安装→启动→验证”闭环能力
-2. **依赖安装**：执行 `./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q`
-3. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块
-4. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
-5. **深度演示**：按下方"演示与验证"章节的 9 个场景逐一执行（Trace → Nacos Config → Sentinel Gateway → Sentinel App → Stream → Seata → Spring AI → RAG → Kafka）
-6. **结果汇总**：输出汇总表格，列出每个场景的执行状态（✅ 通过 / ❌ 失败）
+1. **环境检查与准备**：分两阶段执行：
+   - **第一阶段（门控）**：检查 JDK → 检查 Nacos。若 Nacos 未就绪，**立即安装并启动 Nacos**，不做任何其他检查。Nacos 是所有模块的基建，未就绪前禁止继续后续流程
+   - **第二阶段**：Nacos 就绪后，再逐项检查并自动安装其余组件（MySQL → RocketMQ → Seata Server → Kafka → PostgreSQL → Redis → 依赖模块）
+2. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块
+3. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
+4. **深度演示**：按下方"演示与验证"章节的 9 个场景逐一执行（Trace → Nacos Config → Sentinel Gateway → Sentinel App → Stream → Seata → Spring AI → RAG → Kafka）
+5. **结果汇总**：输出汇总表格，列出每个场景的执行状态（✅ 通过 / ❌ 失败）
 
 > 用户也可以只演示单个模块，例如："演示 Stream"、"验证 Seata 分布式事务"、"演示 Spring AI"、"演示 Kafka 消息收发"，此时仅执行对应场景的步骤。
 
@@ -85,6 +86,8 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 - Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、Spring AI 全功能、Spring AI RAG、Kafka 4.x 消息收发
 
 ## 前置条件
+
+> 🔴 **Nacos 门控原则**：环境检查必须按 **JDK → Nacos → 其余组件** 的顺序执行。Nacos 是所有模块的注册中心，若 Nacos 未就绪，**立即安装并启动 Nacos**，不要继续检查或安装其他任何组件。只有 Nacos 就绪后，才能继续后续前置条件的检查与安装。
 
 ### 1. JDK 17+（必须）
 
