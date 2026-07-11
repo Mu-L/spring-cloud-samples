@@ -284,31 +284,20 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 **执行流程：**
 
-1. **检查 RocketMQ 并询问用户**：
+1. **检查 RocketMQ**：
    ```bash
    nc -z 127.0.0.1 9876 2>/dev/null && echo "✓ RocketMQ 已运行" || echo "✗ RocketMQ 未运行"
    ```
 
-2. **询问用户是否需要 AI 自动完成环境准备**：
-   > "Stream 模块依赖 RocketMQ，但当前未检测到运行中的 RocketMQ 服务。是否需要我帮您自动完成以下操作？
-   > 1. 启动 NameServer 和 Broker
-   > 2. 创建所需的 Topic 和 Consumer Group
-   > 3. 启动 Stream 模块并验证消息收发"
-
-   **如果用户同意**，直接执行一键验证脚本：
+2. **执行一键验证脚本**（无论 RocketMQ 是否已运行，都必须执行此脚本）：
    ```bash
    bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
    ```
+   > 脚本自动完成：检查/启动 RocketMQ → 创建 Topic 和 Consumer Group → 打包启动 Stream 模块 → 验证六大场景（基础消费、定时消息源、消息处理管道、延迟消息、顺序消息、事务消息）→ 清理进程
 
-   **如果用户选择手动操作**，按 [stream.md](references/stream.md) 中的步骤逐一执行：
-   - Step 1: 启动 RocketMQ NameServer + Broker
-   - Step 2: 创建 6 个 Topic 和 Consumer Group
-   - Step 3: 启动 stream 模块，观察基础消费 + 定时消息源日志
-   - Step 4: 停止定时消息源（Actuator 端点）
-   - Step 5: 验证消息处理管道（发送消息观察大写转换）
-   - Step 6: 验证延迟消息（观察发送与接收时间差）
-   - Step 7: 验证顺序消息（发送 3 条相同 orderKey）
-   - Step 8: 验证事务消息（多次调用观察 commit/rollback）
+3. 向用户展示脚本完整输出，用表格汇总六个场景验证结果
+
+> ⚠️ **禁止跳过一键脚本改为手动逐步执行**。verify-stream.sh 已覆盖所有验证步骤，必须直接执行。
 
 ### 6. Seata 分布式事务（需 MySQL + Seata Server）
 
