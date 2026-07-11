@@ -16,7 +16,7 @@ import io.grpc.NameResolverProvider;
  * <p>
  * priority 设为 6，高于 DNS 的默认优先级 5，确保 "discovery" scheme 优先被使用。
  *
- * @author hongxi
+ * @author javahongxi
  */
 public class DiscoveryClientNameResolverProvider extends NameResolverProvider {
 

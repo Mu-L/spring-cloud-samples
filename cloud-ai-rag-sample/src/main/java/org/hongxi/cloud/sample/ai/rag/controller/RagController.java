@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * 3. DELETE /ai/rag/documents — 清除指定来源的文档
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/rag")

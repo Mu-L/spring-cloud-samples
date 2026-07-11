@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * 通过 Prometheus 端点暴露，演示 Micrometer 自定义指标能力。
  * 跟踪 Seata 分布式事务的提交与回滚次数。
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class MetricsConfig {
 
     @Bean

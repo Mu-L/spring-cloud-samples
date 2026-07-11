@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * ChatClient 高级用法控制器
@@ -18,7 +19,7 @@ import java.util.List;
  * 演示 System Message、Few-shot Prompting、多轮对话等高级特性
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/advanced")
@@ -29,9 +30,9 @@ public class AdvancedChatController {
     private final ChatClient chatClient;
 
     // 缓存最近的用户消息
-    private final List<UserMessage> userMessages = new ArrayList<>();
+    private final List<UserMessage> userMessages = new CopyOnWriteArrayList<>();
     // 缓存最近的 AI 回复
-    private final List<AssistantMessage> assistantMessages = new ArrayList<>();
+    private final List<AssistantMessage> assistantMessages = new CopyOnWriteArrayList<>();
 
     public AdvancedChatController(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();

@@ -14,9 +14,9 @@ public class Order implements Serializable {
 
     private String commodityCode;
 
-    private int count;
+    private Integer count;
 
-    private int money;
+    private Integer money;
 
     public Long getId() {
         return id;
@@ -42,19 +42,19 @@ public class Order implements Serializable {
         this.commodityCode = commodityCode;
     }
 
-    public int getCount() {
+    public Integer getCount() {
         return count;
     }
 
-    public void setCount(int count) {
+    public void setCount(Integer count) {
         this.count = count;
     }
 
-    public int getMoney() {
+    public Integer getMoney() {
         return money;
     }
 
-    public void setMoney(int money) {
+    public void setMoney(Integer money) {
         this.money = money;
     }
 

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * 这是 Spring AI 2.0 的新特性，替代了 1.x 版本的 @AiFunction 注解。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Component
 public class WeatherTools {

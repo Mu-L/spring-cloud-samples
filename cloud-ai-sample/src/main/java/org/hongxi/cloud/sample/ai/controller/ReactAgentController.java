@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * Agent 会根据任务需求，自主决定调用哪些工具来获取信息或执行操作。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/agent")

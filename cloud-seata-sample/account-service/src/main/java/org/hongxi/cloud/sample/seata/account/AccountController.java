@@ -1,6 +1,6 @@
 package org.hongxi.cloud.sample.seata.account;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.seata.core.context.RootContext;
 import org.slf4j.Logger;
@@ -21,18 +21,15 @@ public class AccountController {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final Random random;
-
     public AccountController(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.random = new Random();
     }
 
     @PostMapping("/account")
     public String account(String userId, int money) {
         log.info("Account Service Begin ... xid: {}", RootContext.getXID());
 
-        if (random.nextBoolean()) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
             throw new RuntimeException("This is a mock Exception");
         }
 

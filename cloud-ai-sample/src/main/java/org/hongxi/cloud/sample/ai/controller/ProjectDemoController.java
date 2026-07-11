@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
  * Agent 会根据用户指令自动调用工具，完成环境检查、服务验证等操作。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/demo")

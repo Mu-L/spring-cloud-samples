@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  *   <li>Consumer / Function / Supplier 三种函数式编程模型</li>
  * </ol>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @SpringBootApplication
 public class StreamApplication {

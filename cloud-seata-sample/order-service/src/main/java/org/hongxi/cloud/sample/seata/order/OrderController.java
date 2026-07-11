@@ -3,7 +3,7 @@ package org.hongxi.cloud.sample.seata.order;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.seata.core.context.RootContext;
 import org.slf4j.Logger;
@@ -40,12 +40,9 @@ public class OrderController {
 
     private final RestTemplate restTemplate;
 
-    private final Random random;
-
     public OrderController(JdbcTemplate jdbcTemplate, RestTemplate restTemplate) {
         this.jdbcTemplate = jdbcTemplate;
         this.restTemplate = restTemplate;
-        this.random = new Random();
     }
 
     @PostMapping("/order")
@@ -80,7 +77,7 @@ public class OrderController {
 
         order.setId(keyHolder.getKey().longValue());
 
-        if (random.nextBoolean()) {
+        if (ThreadLocalRandom.current().nextBoolean()) {
             throw new RuntimeException("This is a mock Exception");
         }
 
@@ -101,7 +98,7 @@ public class OrderController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("userId", USER_ID);
         map.add("money", orderMoney + "");
 

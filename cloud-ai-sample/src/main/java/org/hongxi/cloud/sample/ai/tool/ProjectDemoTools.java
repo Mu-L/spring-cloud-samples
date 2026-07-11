@@ -26,7 +26,7 @@ import java.util.Map;
  * 实现"让 AI 演示本项目"的能力。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Component
 public class ProjectDemoTools {

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * 5. AI 基于工具返回的结果生成最终回答
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/tool")

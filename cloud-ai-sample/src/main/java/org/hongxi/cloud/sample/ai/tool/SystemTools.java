@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * 也可通过 MCP 协议对外暴露给 MCP Client 调用。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Component
 public class SystemTools {

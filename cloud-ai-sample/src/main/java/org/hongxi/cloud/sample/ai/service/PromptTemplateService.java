@@ -21,7 +21,7 @@ import java.util.Map;
  * 相比硬编码字符串拼接，PromptTemplate 提供了更好的可读性、可维护性和复用性。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Service
 public class PromptTemplateService {

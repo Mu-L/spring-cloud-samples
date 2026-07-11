@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
  * </ul>
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Service
 public class ChatMemoryService {

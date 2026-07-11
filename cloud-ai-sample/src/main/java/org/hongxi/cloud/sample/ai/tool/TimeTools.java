@@ -18,7 +18,7 @@ import java.util.Map;
  * AI 模型在回答"现在几点"、"今天星期几"等问题时会自动调用这些工具。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Component
 public class TimeTools {

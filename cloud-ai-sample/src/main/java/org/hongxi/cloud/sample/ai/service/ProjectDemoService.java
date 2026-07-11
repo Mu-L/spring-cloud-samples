@@ -25,7 +25,7 @@ import java.util.Map;
  * - 服务发现：查看 Nacos 中已注册的服务列表
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Service
 public class ProjectDemoService {

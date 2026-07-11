@@ -101,6 +101,6 @@ public class NacosManagerController {
                 log.info("[Listen for configuration changes]: {} {}", dataId, configInfo);
             }
         });
-        return "Add Lister successfully!";
+        return "Add Listener successfully!";
     }
 }

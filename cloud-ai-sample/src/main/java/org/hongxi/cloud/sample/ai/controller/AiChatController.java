@@ -12,7 +12,7 @@ import reactor.core.publisher.Flux;
 /**
  * AI 基础聊天控制器
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai")

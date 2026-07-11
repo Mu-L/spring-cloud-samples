@@ -20,7 +20,7 @@ import java.nio.file.Path;
  * 注入预配置多模态模型的 visionChatClient，无需每次调用时覆盖模型。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Service
 public class VisionService {
@@ -72,8 +72,9 @@ public class VisionService {
     public String analyzeUploadedImage(MultipartFile file, String prompt) {
         log.info("上传并分析图片: {}", file.getOriginalFilename());
 
+        Path tempFile = null;
         try {
-            Path tempFile = Files.createTempFile("upload-", "-" + file.getOriginalFilename());
+            tempFile = Files.createTempFile("upload-", "-" + file.getOriginalFilename());
             file.transferTo(tempFile);
 
             Resource imageResource = new UrlResource(tempFile.toUri());
@@ -85,14 +86,20 @@ public class VisionService {
                     .call()
                     .content();
 
-            Files.deleteIfExists(tempFile);
-
             log.info("图片描述: {}", description);
 
             return description;
         } catch (IOException e) {
             log.error("处理上传文件失败", e);
             throw new RuntimeException("处理上传文件失败: " + e.getMessage(), e);
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    log.warn("删除临时文件失败: {}", tempFile, e);
+                }
+            }
         }
     }
 

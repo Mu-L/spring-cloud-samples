@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * redis 使用 StringRedisTemplate 按 key 前缀扫描（规避 RediSearch 保留字段限制）。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Service
 public class RagService {

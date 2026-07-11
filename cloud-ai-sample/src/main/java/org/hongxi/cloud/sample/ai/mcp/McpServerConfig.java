@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
  * 3. MCP Client 通过 /mcp 端点自动发现并调用这些工具
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Configuration
 public class McpServerConfig {

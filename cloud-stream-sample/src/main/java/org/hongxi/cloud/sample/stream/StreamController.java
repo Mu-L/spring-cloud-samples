@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 演示通过 REST API 交互式地向不同 Topic 发送消息，
  * 展示 StreamBridge 的编程式消息发布能力。
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/stream")

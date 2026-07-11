@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 注意：请将 model 改为支持多模态的模型，如 qwen3.7-plus
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/vision")

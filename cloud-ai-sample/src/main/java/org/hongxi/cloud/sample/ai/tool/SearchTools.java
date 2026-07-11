@@ -5,7 +5,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 搜索工具类
@@ -14,44 +13,37 @@ import java.util.concurrent.ConcurrentHashMap;
  * 在实际项目中，可以对接 Elasticsearch、向量数据库或第三方搜索 API。
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Component
 public class SearchTools {
 
-    private static final Map<String, String> KNOWLEDGE_BASE = new ConcurrentHashMap<>();
-
-    static {
-        KNOWLEDGE_BASE.put("Spring Boot",
-                "Spring Boot 是一个用于快速构建基于 Spring 框架的生产级应用程序的框架。" +
-                        "它简化了 Spring 应用的初始搭建和开发过程，提供了自动配置、嵌入式服务器、起步依赖等功能。" +
-                        "Spring Boot 4.x 基于 Spring Framework 7，要求 JDK 17+，支持虚拟线程和 AOT 编译。");
-
-        KNOWLEDGE_BASE.put("Spring AI",
-                "Spring AI 是 Spring 生态中的 AI 开发框架，为 Java 开发者提供统一的 AI 模型调用接口。" +
-                        "2.0 版本支持 Tool Calling（@Tool 注解）、Advisors 机制、MCP 协议、结构化输出等特性。" +
-                        "兼容 OpenAI、通义千问、Anthropic 等多种模型提供商。");
-
-        KNOWLEDGE_BASE.put("Apache Dubbo",
-                "Apache Dubbo 是一款高性能、轻量级的开源 Java RPC 框架。" +
-                        "它提供了三大核心能力：面向接口的远程方法调用、智能容错和负载均衡、服务自动注册和发现。" +
-                        "Dubbo 3.x 支持 Triple 协议，实现了与 gRPC 的互通。");
-
-        KNOWLEDGE_BASE.put("Nacos",
-                "Nacos 是一个动态服务发现、配置管理和服务管理平台。" +
-                        "它支持服务注册与发现、配置管理、服务健康监测等功能。" +
-                        "是 Spring Cloud Alibaba 的核心组件之一。");
-
-        KNOWLEDGE_BASE.put("Spring Cloud Gateway",
-                "Spring Cloud Gateway 是 Spring Cloud 生态中的 API 网关组件。" +
-                        "基于 WebFlux 构建，提供路由转发、过滤器链、限流、熔断等功能。" +
-                        "是微服务架构中统一入口的核心组件。");
-
-        KNOWLEDGE_BASE.put("RocketMQ",
-                "Apache RocketMQ 是一个分布式消息中间件，具有高吞吐量、低延迟的特点。" +
-                        "支持事务消息、顺序消息、延时消息等多种消息类型。" +
-                        "通过 Spring Cloud Stream 可以方便地与 Spring Boot 集成。");
-    }
+    private static final Map<String, String> KNOWLEDGE_BASE = Map.ofEntries(
+            Map.entry("Spring Boot",
+                    "Spring Boot 是一个用于快速构建基于 Spring 框架的生产级应用程序的框架。" +
+                            "它简化了 Spring 应用的初始搭建和开发过程，提供了自动配置、嵌入式服务器、起步依赖等功能。" +
+                            "Spring Boot 4.x 基于 Spring Framework 7，要求 JDK 17+，支持虚拟线程和 AOT 编译。"),
+            Map.entry("Spring AI",
+                    "Spring AI 是 Spring 生态中的 AI 开发框架，为 Java 开发者提供统一的 AI 模型调用接口。" +
+                            "2.0 版本支持 Tool Calling（@Tool 注解）、Advisors 机制、MCP 协议、结构化输出等特性。" +
+                            "兼容 OpenAI、通义千问、Anthropic 等多种模型提供商。"),
+            Map.entry("Apache Dubbo",
+                    "Apache Dubbo 是一款高性能、轻量级的开源 Java RPC 框架。" +
+                            "它提供了三大核心能力：面向接口的远程方法调用、智能容错和负载均衡、服务自动注册和发现。" +
+                            "Dubbo 3.x 支持 Triple 协议，实现了与 gRPC 的互通。"),
+            Map.entry("Nacos",
+                    "Nacos 是一个动态服务发现、配置管理和服务管理平台。" +
+                            "它支持服务注册与发现、配置管理、服务健康监测等功能。" +
+                            "是 Spring Cloud Alibaba 的核心组件之一。"),
+            Map.entry("Spring Cloud Gateway",
+                    "Spring Cloud Gateway 是 Spring Cloud 生态中的 API 网关组件。" +
+                            "基于 WebFlux 构建，提供路由转发、过滤器链、限流、熔断等功能。" +
+                            "是微服务架构中统一入口的核心组件。"),
+            Map.entry("RocketMQ",
+                    "Apache RocketMQ 是一个分布式消息中间件，具有高吞吐量、低延迟的特点。" +
+                            "支持事务消息、顺序消息、延时消息等多种消息类型。" +
+                            "通过 Spring Cloud Stream 可以方便地与 Spring Boot 集成。")
+    );
 
     /**
      * 搜索指定主题的信息

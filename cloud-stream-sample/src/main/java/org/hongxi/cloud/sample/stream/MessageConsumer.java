@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
  *   <li>Supplier - 定时消息源，自动生成消息（见 StreamApplication）</li>
  * </ul>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Configuration
 public class MessageConsumer {

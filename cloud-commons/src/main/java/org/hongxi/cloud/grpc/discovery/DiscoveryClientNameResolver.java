@@ -21,7 +21,7 @@ import io.grpc.StatusOr;
  * 使得 gRPC 客户端可以通过逻辑服务名（如 discovery:///grpc-server-sample）
  * 自动发现并负载均衡后端实例。
  *
- * @author hongxi
+ * @author javahongxi
  */
 public class DiscoveryClientNameResolver extends NameResolver {
 

@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Primary;
  * - deepSeekChatClient 使用 DeepSeek 模型
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Configuration
 public class AiConfig {

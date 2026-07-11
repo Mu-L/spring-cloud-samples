@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
  * 5. AI 基于工具返回的结果生成最终回答
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Service
 public class ToolCallingService {

@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>以上均无时随机决定，模拟 commit / rollback 两种场景</li>
  * </ol>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @Component("demoTransactionListener")
 public class DemoTransactionListener implements TransactionListener {
@@ -42,7 +43,7 @@ public class DemoTransactionListener implements TransactionListener {
 
     @Override
     public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
-        String body = new String(msg.getBody());
+        String body = new String(msg.getBody(), StandardCharsets.UTF_8);
         // 优先从消息属性读取 TX_ARG，其次使用方法参数 arg
         String txArg = msg.getProperty("TX_ARG");
         if (txArg == null && arg != null) {
@@ -72,7 +73,7 @@ public class DemoTransactionListener implements TransactionListener {
     @Override
     public LocalTransactionState checkLocalTransaction(MessageExt msg) {
         int count = checkCount.incrementAndGet();
-        String body = new String(msg.getBody());
+        String body = new String(msg.getBody(), StandardCharsets.UTF_8);
         log.info("[事务消息] 事务回查 #{}: msgId={}, body={}", count, msg.getMsgId(), body);
 
         // 默认返回 COMMIT，实际场景中应查询本地事务状态

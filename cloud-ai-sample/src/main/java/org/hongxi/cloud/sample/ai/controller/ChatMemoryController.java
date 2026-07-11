@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  * </ul>
  * </p>
  *
- * @author hongxi
+ * @author javahongxi
  */
 @RestController
 @RequestMapping("/ai/memory")
