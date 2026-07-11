@@ -47,19 +47,6 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
    - 🔴 演示每个功能时，**必须简要说明其背后的技术原理和项目代码实现**，不可只做"执行命令 → 展示结果"的操作工
    - 原理解读应包含：核心组件/注解的作用、数据流转过程、框架自动完成的魔法等
    - 🔴 **代码关联**：每个场景演示时，必须指出项目中使用了什么注解/类/方法来实现该功能（如："这个接口在 AiChatController 中通过 `.entity(PersonInfo.class)` 实现结构化输出"），让用户知其然也知其所以然
-   - 各场景必须覆盖的原理解读要点：
-     - **结构化输出**：说明 `.entity(PersonInfo.class)` 背后 Spring AI 的 BeanOutputConverter 如何从 Java 类型生成 JSON Schema、注入 prompt 引导模型输出结构化 JSON、再自动反序列化为 Java 对象；指出项目中 AiChatController 定义了 `record PersonInfo` 作为输出结构
-     - **流式输出**：说明 SSE（Server-Sent Events）协议、`.stream()` 与 `.call()` 的区别、Flux 响应式流；指出项目中 AiChatController 使用 `.stream().content()` 返回 `Flux<String>`
-     - **System Message**：说明 system/user message 的角色分工，system message 如何设定 AI 的行为边界；指出项目中 AdvancedChatController 通过 `.system(...)` 设置系统提示词
-     - **Tool Calling**：说明 `@Tool` 注解 → MethodToolCallbackProvider 注册 → 模型通过 function definition 选择工具 → Spring AI 自动执行 Java 方法 → 结果回传模型的完整链路；指出项目中 WeatherTools/TimeTools/SearchTools 使用 `@Tool` 注解定义工具方法
-     - **ReAct Agent**：说明 Agent 与普通 Tool Calling 的区别——Agent 具备多步推理和自主决策能力，可串联多个工具完成复杂任务；指出项目中 ReactAgentController 通过 `.tools(...)` 注入工具并设置 Agent 系统提示词
-     - **ChatMemory**：说明 JDBC ChatMemory 如何通过 conversationId 隔离会话、自动维护历史消息列表；指出项目中 ChatMemoryController 通过 `@PostMapping` 和 `@DeleteMapping` 提供对话和清除记忆接口
-     - **PromptTemplate**：说明模板变量替换机制，如何将结构化参数注入 prompt；指出项目中 PromptTemplateController 使用 `@RequestBody` 接收结构化参数
-     - **RAG**：说明文档切分 → Embedding 向量化 → pgvector 存储 → 语义检索 → 注入上下文 → 模型生成的完整 RAG 流水线
-     - **Sentinel 限流**：说明 QPS 计数、滑动窗口/令牌桶算法、Nacos 配置同步机制
-     - **Seata 分布式事务**：说明 AT 模式的 undo_log 机制、全局事务 ID（Xid）跨服务传递；指出项目中 `@GlobalTransactional` 注解开启全局事务
-     - **Nacos Config 动态刷新**：说明 `@RefreshScope` 代理机制、长轮询配置变更监听；指出项目中 `@NacosConfig`、`@ConfigurationProperties`、`@Value` 三种绑定方式
-     - **Kafka 事务消息**：说明 producer 事务的 commit/rollback 语义、消费者 read_committed 隔离级别
 
 ---
 
