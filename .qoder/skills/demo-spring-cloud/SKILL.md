@@ -128,12 +128,15 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 
 根据检查结果处理：
 
-**已运行 ✓** → 跳到 Step 4 设置环境变量
+**已运行 ✓** → 跳到 Step 4 切换免密
 
 **已安装但未运行** → 查找并启动：
 ```bash
-NACOS_DIR=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
-cd "$NACOS_DIR" && bin/startup.sh -m standalone
+NACOS_START=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
+if [ -n "$NACOS_START" ]; then
+  NACOS_HOME=$(dirname "$(dirname "$NACOS_START")")
+  cd "$NACOS_HOME" && bin/startup.sh -m standalone
+fi
 ```
 启动完成后跳到 Step 4。
 
@@ -142,34 +145,53 @@ cd "$NACOS_DIR" && bin/startup.sh -m standalone
 curl -fsSL https://nacos.io/nacos-installer.sh | bash
 nacos-setup  # 本地一键部署单机版 Nacos
 ```
-> nacos-setup 自动下载安装、生成鉴权配置、检测端口冲突和 Java 环境。部署后自动创建账号（用户名：nacos），密码是无规律字符串。
+> nacos-setup 自动下载安装、生成鉴权配置、检测端口冲突和 Java 环境。部署后自动创建账号（用户名：nacos），密码是随机字符串。
 > 首次部署后会自动打开浏览器 http://127.0.0.1:8080/ 登录 Console。跳到 Step 4。
 
-**Step 4：设置环境变量（AI 自动完成）**
+**Step 4：切换 Nacos 为免密模式（AI 自动完成）**
 
 > 🔴 **此步骤由 AI 自动执行，无需用户手动操作。**
+> Nacos 3.x 支持通过配置关闭鉴权，实现免密访问 Console 和所有 API，无需管理密码。
 
-- **若 Nacos 已运行**（非本次安装）：检查当前 shell 是否已设置 `SPRING_CLOUD_NACOS_USERNAME` 和 `SPRING_CLOUD_NACOS_PASSWORD`。若已设置则跳过；若未设置，尝试从 `~/.zshrc` 中读取已有配置并 export。
-- **若本次新安装了 Nacos**：从 `nacos-setup` 的输出中提取自动生成的密码，然后自动执行：
+- **检查鉴权状态**：
 ```bash
-export SPRING_CLOUD_NACOS_USERNAME=nacos
-export SPRING_CLOUD_NACOS_PASSWORD=<从nacos-setup输出中提取的密码>
+NACOS_DIR=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
+if [ -n "$NACOS_DIR" ]; then
+  grep -q 'nacos.core.auth.enabled=false' "$NACOS_DIR" && echo "✓ 免密模式已启用" || echo "✗ 鉴权已启用，需切换"
+fi
 ```
-- **持久化**：检查 `~/.zshrc` 中是否已包含 `SPRING_CLOUD_NACOS_USERNAME`，若未包含则追加写入，确保后续新终端也生效：
+
+- **若已是免密模式** → 跳过，直接到 Step 5 验证
+- **若鉴权已启用** → 修改配置关闭鉴权：
 ```bash
-grep -q 'SPRING_CLOUD_NACOS_USERNAME' ~/.zshrc 2>/dev/null || cat >> ~/.zshrc << 'EOF'
-export SPRING_CLOUD_NACOS_USERNAME=nacos
-export SPRING_CLOUD_NACOS_PASSWORD=<密码>
-EOF
+# 定位 Nacos 配置文件
+NACOS_DIR=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
+
+# 将三个鉴权开关从 true 改为 false
+sed -i '' 's/^nacos.core.auth.enabled=true$/nacos.core.auth.enabled=false/' "$NACOS_DIR"
+sed -i '' 's/^nacos.core.auth.admin.enabled=true$/nacos.core.auth.admin.enabled=false/' "$NACOS_DIR"
+sed -i '' 's/^nacos.core.auth.console.enabled=true$/nacos.core.auth.console.enabled=false/' "$NACOS_DIR"
 ```
+
+配置项说明：
+
+| 配置项 | 作用 | 免密值 |
+|--------|------|--------|
+| `nacos.core.auth.enabled` | SDK/gRPC API 鉴权 | `false` |
+| `nacos.core.auth.admin.enabled` | Admin API 鉴权 | `false` |
+| `nacos.core.auth.console.enabled` | Console UI 鉴权 | `false` |
+
+- **重启 Nacos 使配置生效**：
+```bash
+NACOS_HOME=$(dirname "$(dirname "$NACOS_DIR")")
+"$NACOS_HOME/bin/shutdown.sh" 2>/dev/null; sleep 2
+"$NACOS_HOME/bin/startup.sh" -m standalone
+```
+
+> 重启后 Console（http://127.0.0.1:8848/nacos）和所有 API 均无需登录鉴权，应用模块也无需配置 Nacos 用户名密码。
 
 **Step 5：验证**
 等待 Nacos 启动完成后再次检查健康状态，确认 `"status":"UP"` 后告知用户 Nacos 已就绪。
-
-**停止 Nacos**：
-```bash
-bin/shutdown.sh
-```
 
 ### 3. MySQL（仅 Seata 模块需要）
 
@@ -554,7 +576,7 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 
 | 问题                     | 解决方案                                                                                             |
 |------------------------|--------------------------------------------------------------------------------------------------|
-| 服务注册失败                 | 检查 Nacos 是否启动，环境变量是否设置                                                                           |
+| 服务注册失败                 | 检查 Nacos 是否启动，是否已切换为免密模式（`nacos.core.auth.enabled=false`）                                                      |
 | 端口冲突                   | 检查端口是否被占用，或修改 application.yml 中的端口                                                               |
 | gRPC 调用失败              | 确认 grpc-server 的 gRPC 端口 9090 可访问                                                                |
 | Sentinel 未限流           | 检查 Nacos 中是否配置了对应的 Sentinel 规则                                                                   |
@@ -567,3 +589,4 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 | ChatMemory 无记忆效果       | 确认 JDBC 表 `SPRING_AI_CHAT_MEMORY` 已自动创建（ai 模块端口 8888），检查 conversationId 是否一致                     |
 | Kafka 模块连接失败           | 确认 Kafka 集群已启动（端口 9092/9094/9096），已创建 share-demo-topic、share-demo-topic-explicit 和 tx-demo-topic |
 | Stream 发送消息报超时异常       | 重启 Broker                                                                                        |
+| Nacos Console 需要登录       | Nacos 应已切换为免密模式，检查 `application.properties` 中 `nacos.core.auth.console.enabled` 是否为 `false`，修改后重启 Nacos            |

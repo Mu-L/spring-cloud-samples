@@ -96,8 +96,9 @@ check_nacos() {
   fi
   echo " 未运行，正在尝试自动启动..."
   local nacos_dir
-  nacos_dir=$(find "$HOME" -maxdepth 1 -type d -name 'nacos-*' | sort -V | tail -1)
-  if [ -n "$nacos_dir" ] && [ -f "$nacos_dir/bin/startup.sh" ]; then
+  nacos_dir=$(find "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
+  if [ -n "$nacos_dir" ]; then
+    nacos_dir=$(dirname "$(dirname "$nacos_dir")")
     bash "$nacos_dir/bin/startup.sh" -m standalone
     printf '[Nacos] 等待启动就绪...'
     wait_nacos_ready && return 0
@@ -105,9 +106,37 @@ check_nacos() {
   echo " 失败!"
   echo "请先安装并启动 Nacos:"
   echo "  curl -fsSL https://nacos.io/nacos-installer.sh | bash"
-  echo "  nacos-setup"
+  echo "  nacos-setup  # 本地一键部署单机版 Nacos"
   echo "  bin/startup.sh -m standalone"
   exit 1
+}
+
+configure_nacos_noauth() {
+  local nacos_dir="$HOME/ai-infra/nacos"
+  local props_file
+  props_file=$(find "$nacos_dir" -maxdepth 4 -name 'application.properties' -path '*/conf/*' 2>/dev/null | head -1)
+  if [ -z "$props_file" ]; then
+    echo "[Nacos] ⚠ 未找到 application.properties，跳过免密配置"
+    return
+  fi
+  if grep -q 'nacos.core.auth.enabled=false' "$props_file"; then
+    echo "[Nacos] ✓ 免密模式已启用"
+    return
+  fi
+  echo "[Nacos] 正在切换为免密模式..."
+  sed -i '' 's/^nacos.core.auth.enabled=true$/nacos.core.auth.enabled=false/' "$props_file"
+  sed -i '' 's/^nacos.core.auth.admin.enabled=true$/nacos.core.auth.admin.enabled=false/' "$props_file"
+  sed -i '' 's/^nacos.core.auth.console.enabled=true$/nacos.core.auth.console.enabled=false/' "$props_file"
+  local nacos_home
+  nacos_home=$(dirname "$(dirname "$props_file")")
+  "$nacos_home/bin/shutdown.sh" 2>/dev/null; sleep 2
+  "$nacos_home/bin/startup.sh" -m standalone
+  printf '[Nacos] 等待重启就绪...'
+  if wait_nacos_ready; then
+    echo "[Nacos] ✓ 免密模式已启用（Console 和 API 无需登录）"
+  else
+    echo "[Nacos] ✗ 重启后未就绪，请检查日志"
+  fi
 }
 
 wait_nacos_ready() {
@@ -434,6 +463,7 @@ cmd_start() {
   check_java
   echo ""
   check_nacos
+  configure_nacos_noauth
   echo ""
   check_special_prerequisites
   echo ""
@@ -562,6 +592,7 @@ install_all() {
   # Nacos (复用 check_nacos)
   echo ""
   check_nacos
+  configure_nacos_noauth
 
   # RocketMQ
   echo ""
@@ -641,6 +672,7 @@ cmd_infra() {
   check_java
   echo ""
   check_nacos
+  configure_nacos_noauth
   echo ""
   check_special_prerequisites
   echo ""
@@ -996,6 +1028,7 @@ cmd_seata() {
   check_java
   echo ""
   check_nacos
+  configure_nacos_noauth
   echo ""
   echo "========== 检查 Seata 前置条件 =========="
   if ! mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then

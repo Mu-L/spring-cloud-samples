@@ -4,11 +4,7 @@
 
 ## 前置条件
 
-Nacos 已启动并设置环境变量：
-```shell
-export SPRING_CLOUD_NACOS_USERNAME=nacos
-export SPRING_CLOUD_NACOS_PASSWORD=<密码>
-```
+Nacos 已启动并已切换为免密模式（`nacos.core.auth.enabled=false`）。
 
 已启动模块：nacos-discovery(8760)、nacos-config(8761)、gateway(8764)、provider(8765)、consumer(8766)、provider-reactive(8762)、consumer-reactive(8763)、provider-dubbo(50051)、grpc-server(8090/9090)
 
