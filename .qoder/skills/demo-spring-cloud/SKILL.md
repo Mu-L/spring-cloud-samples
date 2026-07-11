@@ -86,6 +86,35 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 ## 前置条件
 
+### 0. JDK 17+（必须）
+
+所有模块基于 Spring Boot 4.x，要求 JDK 17 及以上。支持 JDK 17 ~ 21。
+
+**检查 JDK 状态（AI 自动执行）：**
+```bash
+java -version 2>&1 | grep -oE '"[0-9]+\.' | grep -oE '[0-9]+' | head -1
+```
+
+根据输出版本号判断：
+- **17 ~ 21** → ✓ JDK 已就绪，跳过安装
+- **< 17 或无输出** → 需要安装 JDK 17
+
+**安装 JDK 17（仅在需要时执行）：**
+```bash
+brew install openjdk@17
+sudo ln -sfn $(brew --prefix openjdk@17)/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+```
+- **持久化**：检查 `~/.zshrc` 中是否已包含 `JAVA_HOME`，若未包含则追加写入：
+```bash
+grep -q 'JAVA_HOME' ~/.zshrc 2>/dev/null || cat >> ~/.zshrc << 'EOF'
+export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:$PATH"
+EOF
+```
+
+> 若 Homebrew 未安装，先执行：`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+
 ### 1. Nacos 注册中心（必须）
 
 所有模块依赖 Nacos，启动前先确认 Nacos 已就绪。
@@ -116,11 +145,22 @@ nacos-setup  # 本地一键部署单机版 Nacos
 > nacos-setup 自动下载安装、生成鉴权配置、检测端口冲突和 Java 环境。部署后自动创建账号（用户名：nacos），密码是无规律字符串。
 > 首次部署后会自动打开浏览器 http://127.0.0.1:8080/ 登录 Console。跳到 Step 4。
 
-**Step 4：设置环境变量**
-提示用户设置环境变量（用户名/密码为安装时创建的凭证）：
+**Step 4：设置环境变量（AI 自动完成）**
+
+> 🔴 **此步骤由 AI 自动执行，无需用户手动操作。**
+
+- **若 Nacos 已运行**（非本次安装）：检查当前 shell 是否已设置 `SPRING_CLOUD_NACOS_USERNAME` 和 `SPRING_CLOUD_NACOS_PASSWORD`。若已设置则跳过；若未设置，尝试从 `~/.zshrc` 中读取已有配置并 export。
+- **若本次新安装了 Nacos**：从 `nacos-setup` 的输出中提取自动生成的密码，然后自动执行：
 ```bash
 export SPRING_CLOUD_NACOS_USERNAME=nacos
-export SPRING_CLOUD_NACOS_PASSWORD=<安装时设置的密码>
+export SPRING_CLOUD_NACOS_PASSWORD=<从nacos-setup输出中提取的密码>
+```
+- **持久化**：检查 `~/.zshrc` 中是否已包含 `SPRING_CLOUD_NACOS_USERNAME`，若未包含则追加写入，确保后续新终端也生效：
+```bash
+grep -q 'SPRING_CLOUD_NACOS_USERNAME' ~/.zshrc 2>/dev/null || cat >> ~/.zshrc << 'EOF'
+export SPRING_CLOUD_NACOS_USERNAME=nacos
+export SPRING_CLOUD_NACOS_PASSWORD=<密码>
+EOF
 ```
 
 **Step 5：验证**

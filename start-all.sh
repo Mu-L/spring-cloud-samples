@@ -602,9 +602,12 @@ install_all() {
   elif [ -d "$HOME/github/seata" ]; then
     echo "✓ Seata Server 源码已存在（未运行）"
   else
-    echo "正在克隆 Seata 源码..."
+    echo "正在下载 Seata 源码..."
     mkdir -p "$HOME/github"
-    git clone https://github.com/javahongxi/seata.git "$HOME/github/seata"
+    curl -L -o /tmp/seata-2.x.zip https://github.com/javahongxi/seata/archive/refs/heads/2.x.zip
+    unzip -o /tmp/seata-2.x.zip -d "$HOME/github"
+    mv "$HOME/github/seata-2.x" "$HOME/github/seata"
+    rm -f /tmp/seata-2.x.zip
     echo "正在构建 Seata Server（首次构建耗时较长）..."
     cd "$HOME/github/seata"
     ./mvnw clean install -DskipTests -q

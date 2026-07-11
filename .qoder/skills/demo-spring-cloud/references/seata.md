@@ -76,7 +76,13 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 
 ```shell
 SEATA_SRC="$HOME/github/seata"
-[ ! -d "$SEATA_SRC" ] && mkdir -p "$HOME/github" && git clone https://github.com/javahongxi/seata.git "$SEATA_SRC"
+if [ ! -d "$SEATA_SRC" ]; then
+  mkdir -p "$HOME/github"
+  curl -L -o /tmp/seata-2.x.zip https://github.com/javahongxi/seata/archive/refs/heads/2.x.zip
+  unzip -o /tmp/seata-2.x.zip -d "$HOME/github"
+  mv "$HOME/github/seata-2.x" "$SEATA_SRC"
+  rm -f /tmp/seata-2.x.zip
+fi
 cd "$SEATA_SRC" && ./mvnw clean install -DskipTests -q
 nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
 for i in $(seq 1 30); do
