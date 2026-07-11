@@ -67,7 +67,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 当用户说"演示本项目"时，按以下流程执行：
 
-1. **环境检查**：检查 Nacos 是否运行，未运行则引导安装
+1. **环境检查与准备**：按前置条件章节逐项检查并自动安装缺失组件（JDK → Nacos → MySQL → RocketMQ → Seata Server → Kafka → PostgreSQL → Redis → 依赖模块），每项均具备“检查→安装→启动→验证”闭环能力
 2. **依赖安装**：执行 `./mvnw -N install -q && ./mvnw -pl cloud-commons,cloud-sample-api install -DskipTests -q`
 3. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块
 4. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
@@ -81,7 +81,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 **基础验证**（`sh start-all.sh` 自动执行，无需额外操作）：
 - 服务注册发现、健康检查、基础调用链路（Web/Reactive/Dubbo/gRPC）、网关路由、Nacos Config 健康检查、AI/Stream/Seata/Kafka 模块健康检查
 
-**深度验证**（按下方场景逐一执行，每个场景的所有步骤不可跳过）：
+**深度演示**（按下方场景逐一执行，每个场景的所有步骤不可跳过）：
 - Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、Spring AI 全功能、Spring AI RAG、Kafka 4.x 消息收发
 
 ## 前置条件
@@ -171,19 +171,120 @@ EOF
 bin/shutdown.sh
 ```
 
-### 2. RocketMQ（仅 Stream 模块需要）
+### 2. MySQL（仅 Seata 模块需要）
 
-Stream 模块依赖 RocketMQ，安装和启动步骤参考 [stream.md](references/stream.md)。
+**检查 MySQL：**
+```bash
+mysql -u root -proot1234 -e "SELECT 1" &>/dev/null && echo "✓ MySQL 已运行" || echo "✗ MySQL 未运行"
+```
 
-### 3. MySQL + Seata Server（仅 Seata 模块需要）
+**未安装** → Homebrew 安装并初始化：
+```bash
+brew install mysql
+mysql.server start
+mysqladmin -u root password 'root1234'
+```
+> 项目统一使用 root/root1234。若已有 MySQL 且密码不同，需修改各模块 application.yml 中的数据库配置。
 
-Seata 分布式事务依赖 MySQL 和 Seata Server，安装和启动步骤参考 [seata.md](references/seata.md)。
+### 3. RocketMQ（仅 Stream 模块需要）
 
-### 4. Kafka 4.x 集群（仅 Kafka 模块需要）
+**检查 RocketMQ：**
+```bash
+nc -z 127.0.0.1 9876 && echo "✓ RocketMQ NameServer 已运行" || echo "✗ RocketMQ 未运行"
+```
 
-Kafka 消息收发依赖 Kafka 4.x 集群（KRaft 模式），部署步骤参考 [kafka.md](references/kafka.md)。
+**未安装** → 下载并启动：
+```bash
+curl -O https://dist.apache.org/repos/dist/release/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
+unzip rocketmq-all-5.5.0-bin-release.zip -d $HOME
+```
+**启动 NameServer + Broker：**
+```bash
+ROCKETMQ_HOME=$(find "$HOME" -maxdepth 1 -type d -name 'rocketmq-*' | sort -V | tail -1)
+cd "$ROCKETMQ_HOME"
+nohup bin/mqnamesrv > namesrv.log 2>&1 &
+sleep 5
+nohup bin/mqbroker -n localhost:9876 > broker.log 2>&1 &
+sleep 10
+nc -z 127.0.0.1 9876 && echo "✓ NameServer 已启动" || echo "✗ NameServer 启动失败"
+nc -z 127.0.0.1 10911 && echo "✓ Broker 已启动" || echo "✗ Broker 启动失败"
+```
+> Topic 和 Consumer Group 的创建由 verify-stream.sh 或 stream.md 演示步骤处理，此处仅确保中间件就绪。
 
-### 5. 安装依赖模块
+### 4. Seata Server（仅 Seata 模块需要）
+
+**检查 Seata Server（端口 8091）：**
+```bash
+nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
+```
+
+**未运行** → 源码构建并启动（二进制包的 nacos-client 版本过低，需源码构建）：
+```bash
+SEATA_SRC="$HOME/github/seata"
+if [ ! -d "$SEATA_SRC" ]; then
+  mkdir -p "$HOME/github"
+  curl -L -o /tmp/seata-2.x.zip https://github.com/javahongxi/seata/archive/refs/heads/2.x.zip
+  unzip -o /tmp/seata-2.x.zip -d "$HOME/github"
+  mv "$HOME/github/seata-2.x" "$SEATA_SRC"
+  rm -f /tmp/seata-2.x.zip
+fi
+cd "$SEATA_SRC" && ./mvnw clean install -DskipTests -q
+nohup ./mvnw -pl server spring-boot:run > /tmp/seata-server.log 2>&1 &
+for i in $(seq 1 30); do
+  nc -z 127.0.0.1 8091 2>/dev/null && echo "✓ Seata Server 已启动" && break
+  sleep 1
+done
+```
+> Seata 依赖 Nacos，确保 Nacos 已运行。Seata 所需的 Nacos 配置（seata.properties）和数据库初始化由 verify-seata.sh 自动处理。
+
+### 5. Kafka 4.x 集群（仅 Kafka 模块需要）
+
+**检查 Kafka 集群：**
+```bash
+nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
+```
+
+**未运行** → 使用 kafka.sh 脚本一键部署（3 节点 KRaft 集群）：
+```bash
+bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start
+```
+> 脚本自动检测/下载 Kafka 4.x、创建集群配置、格式化 KRaft 存储、启动 3 节点集群。
+
+### 6. PostgreSQL + pgvector（仅 RAG 模块需要）
+
+**检查 PostgreSQL：**
+```bash
+psql -U postgres -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" || echo "✗ PostgreSQL 未运行"
+```
+
+**未安装** → Homebrew 安装并初始化：
+```bash
+brew install postgresql@17 pgvector
+brew services start postgresql@17
+# Homebrew PostgreSQL 默认用户为 macOS 用户名，需创建 postgres 角色
+createuser -s postgres 2>/dev/null || true
+# 初始化 RAG 演示数据库
+psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
+```
+> init_ai_demo.sql 创建 ai_user 用户、ai_demo 数据库、启用 pgvector 扩展并建表。
+
+### 7. Redis（仅 RAG 模块备选向量库需要）
+
+RAG 模块默认使用 pgvector，Redis 仅作备选向量库（`--spring.profiles.active=redis`）。
+
+**检查 Redis：**
+```bash
+redis-cli ping 2>/dev/null | grep -q PONG && echo "✓ Redis 已运行" || echo "✗ Redis 未运行"
+```
+
+**未安装** → Homebrew 安装并启动：
+```bash
+brew install redis
+brew services start redis
+```
+> 默认演示 pgvector 方式，Redis 仅在用户主动切换 Profile 时才需要。若需 RediSearch 向量检索，还需额外加载 RediSearch 模块（参考 spring-ai-rag.md）。
+
+### 8. 安装依赖模块
 
 部分模块依赖 `cloud-commons` 和 `cloud-sample-api`，启动前需先安装：
 ```bash
