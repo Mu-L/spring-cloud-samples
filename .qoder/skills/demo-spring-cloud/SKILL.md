@@ -72,6 +72,11 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 ## 前置条件
 
+> 🔴 **环境变量清理（必须）**：部分 AI 沙盒环境会注入 `SERVER__PORT` 环境变量，该变量会覆盖所有 Spring Boot 应用（包括 Nacos）的 `server.port` 配置，导致端口错乱。**启动任何服务前，必须先执行：**
+> ```bash
+> unset SERVER__PORT
+> ```
+
 > 🔴 **精简前置原则**：启动前仅检查 **JDK → Nacos → 安装依赖模块** 3 项基本前置条件。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL、Redis）**不在启动前统一检查**，而是在对应模块演示时按需准备，避免复杂的环境检查阻碍演示流程。
 
 ### 1. JDK 17+（必须）

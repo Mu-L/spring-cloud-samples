@@ -7,6 +7,9 @@
 
 set -e
 
+# 清除 AI 沙盒环境可能注入的端口变量，避免覆盖各服务的 server.port 配置
+unset SERVER__PORT 2>/dev/null || true
+
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_DIR="$BASE_DIR/logs"
 PID_DIR="$BASE_DIR/.pids"
