@@ -44,7 +44,7 @@
 
 **Qoder / IDEA Qoder 插件**：克隆项目后打开，告诉 AI "演示本项目"
 
-**Qoder Work / 其他 AI**：告诉 AI 下面这句话即可
+**QoderWork / 其他 AI**：告诉 AI 下面这句话即可
 ```text
 克隆项目 https://github.com/javahongxi/spring-cloud-samples 并按其内置的 SKILL 演示该项目
 ```
