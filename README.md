@@ -40,8 +40,12 @@
 
 #### 🤖 AI 一键演示（推荐）
 
-> 本项目内置 Qoder Agent Skill，clone 后在 Qoder 中输入 `/demo-spring-cloud` 或告诉 AI "演示项目"，
-> 即可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
+> 本项目内置 Agent Skill，支持任意 AI 编程助手一键演示。
+>
+> - **Qoder / IDEA Qoder 插件**：克隆项目后打开，告诉 AI "演示本项目"
+> - **Qoder Work / 其他 AI**：告诉 AI "按照项目 https://github.com/javahongxi/spring-cloud-samples 内置的 SKILL 演示该项目"
+>
+> 均可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
 
 ```
 # 快速体验（仅需 Nacos）
