@@ -123,7 +123,7 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 
 **已运行 ✓** → 跳到 Step 2 切换免密
 
-**已安装但未运行** → 查找并启动：
+**查找本地有没有安装** → 已安装则启动：
 ```bash
 NACOS_START=$(find "$HOME/nacos" "$HOME"/nacos-* "$HOME/ai-infra/nacos" -maxdepth 4 -name 'startup.sh' -path '*/bin/*' 2>/dev/null | head -1)
 if [ -n "$NACOS_START" ]; then
