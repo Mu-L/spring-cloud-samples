@@ -116,7 +116,7 @@ curl -s http://127.0.0.1:8848/nacos/actuator/health | grep -q '"status":"UP"' &&
 
 根据检查结果处理：
 
-**已运行 ✓** → 跳到 Step 4 切换免密
+**已运行 ✓** → 跳到 Step 2 切换免密
 
 **已安装但未运行** → 查找并启动：
 ```bash
@@ -126,7 +126,7 @@ if [ -n "$NACOS_START" ]; then
   cd "$NACOS_HOME" && bin/startup.sh -m standalone
 fi
 ```
-启动完成后跳到 Step 4。
+启动完成后跳到 Step 2。
 
 **未安装** → 下载二进制包并部署（全程非交互，AI 可自主完成）：
 ```bash
@@ -153,7 +153,7 @@ sed -i '' 's|^nacos.core.auth.server.identity.value=$|nacos.core.auth.server.ide
 > 直接下载 zip 包方式全程非交互，无需用户手动 Ctrl+C。安装完成后已自动配置免密模式，Console 和所有 API 均无需登录鉴权。
 > 若下载或启动失败，提示用户手动执行一键安装：`curl -fsSL https://nacos.io/nacos-installer.sh | bash`
 
-**Step 4：切换 Nacos 为免密模式（AI 自动完成）**
+**Step 2：切换 Nacos 为免密模式（AI 自动完成）**
 
 > 🔴 **此步骤由 AI 自动执行，无需用户手动操作。**
 > Nacos 3.x 支持通过配置关闭鉴权，实现免密访问 Console 和所有 API，无需管理密码。
@@ -166,7 +166,7 @@ if [ -n "$NACOS_DIR" ]; then
 fi
 ```
 
-- **若已是免密模式** → 跳过，直接到 Step 5 验证
+- **若已是免密模式** → 跳过，直接到 Step 3 验证
 - **若鉴权已启用** → 修改配置关闭鉴权：
 ```bash
 # 定位 Nacos 配置文件
@@ -195,7 +195,7 @@ NACOS_HOME=$(dirname "$(dirname "$NACOS_DIR")")
 
 > 重启后 Console（http://127.0.0.1:8848/nacos）和所有 API 均无需登录鉴权，应用模块也无需配置 Nacos 用户名密码。
 
-**Step 5：验证**
+**Step 3：验证**
 等待 Nacos 启动完成后再次检查健康状态，确认 `"status":"UP"` 后告知用户 Nacos 已就绪。
 
 ### 3. 安装依赖模块
