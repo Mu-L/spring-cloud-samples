@@ -55,7 +55,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 当用户说"演示本项目"时，按以下流程执行：
 
 1. **环境检查与准备**：仅检查 3 项基本前置条件：JDK → Nacos → 安装依赖模块。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL、Redis）不在启动前统一检查，而是在对应模块演示时按需准备
-2. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块
+2. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块（🔴脚本执行时间较长，必须分阶段读取已完成的输出）
 3. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
 4. **深度演示**：按下方"演示与验证"章节的 9 个场景逐一执行（Trace → Nacos Config → Sentinel Gateway → Sentinel App → Stream → Seata → Spring AI → RAG → Kafka）
 5. **结果汇总**：输出汇总表格，列出每个场景的执行状态（✅ 通过 / ❌ 失败）
