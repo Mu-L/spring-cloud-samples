@@ -46,7 +46,7 @@
 
 **Qoder Work / 其他 AI**：告诉 AI 下面这句话即可
 ```text
-按照项目 https://github.com/javahongxi/spring-cloud-samples 内置的 SKILL 演示该项目
+克隆项目 https://github.com/javahongxi/spring-cloud-samples 并按其内置的 SKILL 演示该项目
 ```
 
 均可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
