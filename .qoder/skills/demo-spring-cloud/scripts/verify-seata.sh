@@ -94,9 +94,12 @@ if nc -z 127.0.0.1 8091 2>/dev/null; then
 else
   SEATA_SRC="$HOME/github/seata"
   if [ ! -d "$SEATA_SRC" ]; then
-    echo "Seata 源码不存在，正在克隆..."
+    echo "Seata 源码不存在，正在下载..."
     mkdir -p "$HOME/github"
-    git clone https://github.com/javahongxi/seata.git "$SEATA_SRC"
+    curl -L -o /tmp/seata-2.x.zip https://github.com/javahongxi/seata/archive/refs/heads/2.x.zip
+    unzip -o /tmp/seata-2.x.zip -d "$HOME/github"
+    mv "$HOME/github/seata-2.x" "$SEATA_SRC"
+    rm -f /tmp/seata-2.x.zip
   fi
 
   cd "$SEATA_SRC"

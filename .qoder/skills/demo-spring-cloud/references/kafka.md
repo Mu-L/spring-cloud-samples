@@ -17,7 +17,7 @@
 > ```
 > 脚本会自动检测 `$HOME` 和 `$HOME/Downloads` 下的 Kafka 4.x 安装包（含 `.tgz` 自动解压），
 > 检查/创建 `server-{1,2,3}.properties` 配置，格式化 KRaft 存储，启动 3 节点集群。
-> Kafka 4.x 默认启用 Share Groups (KIP-932) 和事务消息，无需额外配置特性。
+> Kafka 4.x 需在 broker 配置 `share.group.protocol=share` 以启用 Share Groups (KIP-932)，事务消息无需额外配置。
 
 如本地已安装 Kafka，直接进入 Kafka 安装目录；否则下载 `kafka_2.13-4.3.1.tgz` 并解压，进入 Kafka 解压目录。
 
@@ -44,6 +44,8 @@ listeners=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
 advertised.listeners=PLAINTEXT://localhost:9092
 listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 log.dirs=/tmp/kraft-logs-1
+auto.create.topics.enable=true
+share.group.protocol=share
 ```
 
 **config/server-2.properties**
@@ -56,6 +58,8 @@ listeners=PLAINTEXT://localhost:9094,CONTROLLER://localhost:9095
 advertised.listeners=PLAINTEXT://localhost:9094
 listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 log.dirs=/tmp/kraft-logs-2
+auto.create.topics.enable=true
+share.group.protocol=share
 ```
 
 **config/server-3.properties**
@@ -68,6 +72,8 @@ listeners=PLAINTEXT://localhost:9096,CONTROLLER://localhost:9097
 advertised.listeners=PLAINTEXT://localhost:9096
 listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 log.dirs=/tmp/kraft-logs-3
+auto.create.topics.enable=true
+share.group.protocol=share
 ```
 
 **1.3 格式化 3 个节点**（使用同一个 KAFKA_CLUSTER_ID）

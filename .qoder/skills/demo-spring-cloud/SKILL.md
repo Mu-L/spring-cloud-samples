@@ -223,7 +223,11 @@ NACOS_HOME=$(dirname "$(dirname "$NACOS_DIR")")
 | PostgreSQL + pgvector | RAG 模块 | 演示 Spring AI RAG 前检查 |
 | Redis | RAG 模块（备选） | 仅在用户切换 Redis 向量库时检查 |
 
-> 各中间件的检查和安装命令保留在对应场景的演示步骤中，演示到该场景时再执行。
+> 🔴 **重型中间件安装规范**：MySQL、RocketMQ、Kafka、PostgreSQL 等重型中间件**禁止 AI 自行下载安装**（下载耗时长、占用带宽）。若检查发现未安装，应提示用户执行：
+> ```bash
+> sh start-all.sh install  # 自动下载并安装所有中间件 + 打包模块
+> ```
+> **例外**：Seata Server 由 AI 自动从 GitHub 下载源码并构建，因其为项目专用定制版本。
 
 ## 启动方式
 

@@ -354,6 +354,47 @@ start_seata_server() {
   fi
 }
 
+publish_seata_nacos_config() {
+  # 检查 nacos-config-sample (8761) 是否可用来发布配置
+  if ! curl -s -o /dev/null --connect-timeout 2 "http://localhost:8761/actuator/health" 2>/dev/null; then
+    # 8761 未运行，自动启动 nacos-config-sample
+    echo "[Seata] nacos-config-sample (8761) 未运行，正在自动启动..."
+    local log_file="$LOG_DIR/nacos-config-sample.log"
+    cd "$BASE_DIR"
+    nohup ./mvnw -pl cloud-nacos-config-sample spring-boot:run > "$log_file" 2>&1 &
+    local cfg_pid=$!
+    echo "$cfg_pid" > "$PID_DIR/nacos-config-sample.pid"
+    local cfg_ready=false
+    for i in $(seq 1 60); do
+      if curl -s -o /dev/null --connect-timeout 1 "http://localhost:8761/actuator/health" 2>/dev/null; then
+        cfg_ready=true
+        break
+      fi
+      sleep 1
+    done
+    if ! $cfg_ready; then
+      echo "[Seata] ✗ nacos-config-sample 启动超时，请查看日志: $log_file"
+      return 1
+    fi
+    echo "[Seata] ✓ nacos-config-sample (8761) 已启动"
+  fi
+  local CONTENT="service.vgroupMapping.default_tx_group=default
+service.vgroupMapping.order-service-tx-group=default
+service.vgroupMapping.account-service-tx-group=default
+service.vgroupMapping.business-service-tx-group=default
+service.vgroupMapping.storage-service-tx-group=default
+service.vgroupMapping.order-dubbo-service-tx-group=default
+service.vgroupMapping.account-dubbo-service-tx-group=default
+service.vgroupMapping.business-dubbo-service-tx-group=default
+service.vgroupMapping.storage-dubbo-service-tx-group=default"
+  curl -s -X POST http://localhost:8761/nacos/publishConfig \
+    -d "dataId=seata.properties" \
+    -d "group=SEATA_GROUP" \
+    -d "type=properties" \
+    --data-urlencode "content=$CONTENT" > /dev/null
+  echo "[Seata] ✓ seata.properties 已发布到 Nacos (SEATA_GROUP)"
+}
+
 create_kafka_topics() {
   local kafka_home
   kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
@@ -375,6 +416,8 @@ start_single() {
 }
 
 start_seata_services() {
+  # 先发布 Seata Nacos 配置（seata 微服务启动时需要读取）
+  publish_seata_nacos_config
   # 按依赖顺序启动：account/storage（基础层）→ order（依赖 account）→ business（依赖 storage + order）
   echo "[Seata] 按依赖顺序启动 7 个微服务..."
 
@@ -589,8 +632,8 @@ stop_all() {
   pkill -f "seata.*spring-boot:run" 2>/dev/null || true
   sleep 1
   pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null || true
-  rm -rf "$LOG_DIR" "$PID_DIR"
-  echo "所有服务已停止，logs 和 .pids 目录已清理"
+  rm -rf "$LOG_DIR" "$PID_DIR" "$BASE_DIR/derby.log" "$BASE_DIR/work"
+  echo "所有服务已停止，logs、.pids、derby.log、work 目录已清理"
 }
 
 install_all() {
@@ -662,6 +705,37 @@ install_all() {
     echo "✓ Seata 数据库已初始化"
   else
     echo "✗ MySQL 未就绪，跳过数据库初始化"
+  fi
+
+  # Kafka 4.x
+  echo ""
+  echo "--- Kafka 4.x ---"
+  if nc -z 127.0.0.1 9092 2>/dev/null; then
+    echo "✓ Kafka 已运行"
+  elif find "$HOME" -maxdepth 1 -type d -name 'kafka_*' 2>/dev/null | grep -q .; then
+    echo "✓ Kafka 已安装（未运行）"
+  else
+    echo "正在下载 Kafka 4.3.1..."
+    cd "$HOME"
+    curl -O https://downloads.apache.org/kafka/4.3.1/kafka_2.13-4.3.1.tgz
+    tar -xzf kafka_2.13-4.3.1.tgz
+    rm -f kafka_2.13-4.3.1.tgz
+    echo "✓ Kafka 已安装到 $(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)"
+    cd "$BASE_DIR"
+  fi
+
+  # PostgreSQL
+  echo ""
+  echo "--- PostgreSQL ---"
+  if pg_isready -q 2>/dev/null; then
+    echo "✓ PostgreSQL 已运行"
+  elif command -v psql &>/dev/null; then
+    echo "✓ PostgreSQL 已安装（未运行），启动: brew services start postgresql@18"
+  else
+    echo "正在安装 PostgreSQL..."
+    brew install postgresql@18 pgvector
+    brew services start postgresql@18
+    echo "✓ PostgreSQL 已安装"
   fi
 
   echo ""

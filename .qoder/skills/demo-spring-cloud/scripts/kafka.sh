@@ -12,7 +12,7 @@
 #   Broker 2: PLAINTEXT=9094, CONTROLLER=9095
 #   Broker 3: PLAINTEXT=9096, CONTROLLER=9097
 #
-# Kafka 4.x 默认启用 Share Groups (KIP-932)，无需额外配置
+# Kafka 4.x 需在 broker 配置 share.group.protocol=share 以启用 Share Groups (KIP-932)
 
 set -e
 
@@ -97,6 +97,7 @@ advertised.listeners=PLAINTEXT://localhost:9092
 listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 log.dirs=/tmp/kraft-logs-1
 auto.create.topics.enable=true
+share.group.protocol=share
 CONF
 
   cat > "$config_dir/server-2.properties" << 'CONF'
@@ -109,6 +110,7 @@ advertised.listeners=PLAINTEXT://localhost:9094
 listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 log.dirs=/tmp/kraft-logs-2
 auto.create.topics.enable=true
+share.group.protocol=share
 CONF
 
   cat > "$config_dir/server-3.properties" << 'CONF'
@@ -121,6 +123,7 @@ advertised.listeners=PLAINTEXT://localhost:9096
 listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 log.dirs=/tmp/kraft-logs-3
 auto.create.topics.enable=true
+share.group.protocol=share
 CONF
 
   info "server-1.properties / server-2.properties / server-3.properties 已创建"
@@ -229,7 +232,7 @@ do_start() {
       echo "  Broker 2: localhost:9094 (Controller: 9095)"
       echo "  Broker 3: localhost:9096 (Controller: 9097)"
       echo ""
-      info "Kafka 4.x 默认启用 Share Groups (KIP-932) 和事务消息"
+      info "Kafka 4.x 已启用 Share Groups (KIP-932, share.group.protocol=share) 和事务消息"
       return 0
     fi
     printf "\r  等待中... %ds (已就绪 %s/3)" "$waited" "$running"
