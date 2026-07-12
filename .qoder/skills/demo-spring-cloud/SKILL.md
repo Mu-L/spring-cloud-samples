@@ -126,7 +126,7 @@ if [ -n "$NACOS_START" ]; then
   cd "$NACOS_HOME" && bin/startup.sh -m standalone
 fi
 ```
-启动完成后跳到 Step 2。
+如果启动失败，由AI自行排查处理。启动完成后跳到 Step 2。
 
 **未安装** → 下载二进制包并部署（全程非交互，AI 可自主完成）：
 ```bash
