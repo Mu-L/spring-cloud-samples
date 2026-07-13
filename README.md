@@ -1,6 +1,6 @@
 # ☁️ Spring Cloud Alibaba Samples
 > 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目 <br>
-> 涵盖 16 个模块，覆盖 HTTP / Dubbo / gRPC / Stream / Kafka 多协议通信与消息驱动、Spring AI 多模态集成及 Seata 分布式事务，支持一键演示与验证
+> 涵盖 16 个模块，覆盖 HTTP/Dubbo/gRPC 多协议、Seata 分布式事务、Stream 消息驱动、Kafka 4.x 及 AI 多模态与多供应商，支持 AI 一键演示
 
 ![poster](poster.png)
 
