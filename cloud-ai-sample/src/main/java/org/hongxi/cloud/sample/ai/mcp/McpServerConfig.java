@@ -18,10 +18,10 @@ import org.springframework.context.annotation.Configuration;
  * 使其可被 MCP Client 发现和调用。
  * </p>
  * <p>
- * 这是 Spring AI 2.0 MCP 的核心配置方式：
+ * 这是 Spring AI MCP 的核心配置方式（自 1.0.0 起支持）：
  * 1. 使用 @Tool 注解标注工具方法（统一放在 tool 包下）
  * 2. 使用 MethodToolCallbackProvider 将工具注册到 MCP Server
- * 3. MCP Client 通过 /mcp 端点自动发现并调用这些工具
+ * 3. MCP Client 通过 /sse 端点自动发现并调用这些工具
  * </p>
  *
  * @author javahongxi
