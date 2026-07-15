@@ -231,7 +231,10 @@ services:
     environment:
       JAVA_OPTS: "-Xmx256m -Xms128m"
       POSTGRES_HOST: host.docker.internal
+      AI_SAMPLE_HOST: host.docker.internal
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      - ai
     profiles:
       - ai
       - all

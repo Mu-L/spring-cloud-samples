@@ -16,6 +16,14 @@ spring:
       embedding:
         model: text-embedding-v3   # Embedding 模型（用于 RAG 向量化）
 
+    mcp:
+      client:
+        enabled: true
+        sse:
+          connections:
+            ai-sample:
+              url: http://${AI_SAMPLE_HOST:localhost}:8888
+
 management:
   endpoints:
     web:
