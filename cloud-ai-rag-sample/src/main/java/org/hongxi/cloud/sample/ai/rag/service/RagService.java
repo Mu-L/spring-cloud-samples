@@ -9,13 +9,14 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -169,24 +170,28 @@ public class RagService {
     }
 
     /**
-     * Redis 模式：通过 StringRedisTemplate 按 key 前缀扫描删除
+     * Redis 模式：通过 StringRedisTemplate 使用 SCAN 按 key 前缀增量扫描删除
+     * <p>
+     * 使用 SCAN 替代 KEYS，避免 O(N) 全量扫描阻塞 Redis 单线程。
+     * </p>
      */
     private void deleteBySourceRedis(String source) {
         String pattern = keyPrefix + "*";
-        Set<String> keys = redisTemplate.keys(pattern);
-        if (keys == null || keys.isEmpty()) {
+        ScanOptions scanOptions = ScanOptions.scanOptions().match(pattern).count(100).build();
+        List<String> idsToDelete = new ArrayList<>();
+        try (Cursor<String> cursor = redisTemplate.scan(scanOptions)) {
+            while (cursor.hasNext()) {
+                String key = cursor.next();
+                // key 格式为 prefix + uuid，提取 uuid 作为文档 ID
+                String id = key.substring(keyPrefix.length());
+                idsToDelete.add(id);
+            }
+        }
+        if (idsToDelete.isEmpty()) {
             log.info("[Redis] 未找到任何文档（prefix={}）", pattern);
             return;
         }
-        List<String> idsToDelete = new ArrayList<>();
-        for (String key : keys) {
-            // key 格式为 prefix + uuid，提取 uuid 作为文档 ID
-            String id = key.substring(keyPrefix.length());
-            idsToDelete.add(id);
-        }
-        if (!idsToDelete.isEmpty()) {
-            vectorStore.delete(idsToDelete);
-            log.info("[Redis] 已删除 {} 个文档（来源标识={}）", idsToDelete.size(), source);
-        }
+        vectorStore.delete(idsToDelete);
+        log.info("[Redis] 已删除 {} 个文档（来源标识={}）", idsToDelete.size(), source);
     }
 }
