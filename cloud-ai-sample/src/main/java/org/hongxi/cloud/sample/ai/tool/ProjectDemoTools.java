@@ -2,13 +2,12 @@ package org.hongxi.cloud.sample.ai.tool;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,22 +30,22 @@ import java.util.Map;
 @Component
 public class ProjectDemoTools {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    private RestTemplate restTemplate;
 
     /**
-     * 服务模块定义：名称 -> 端口
+     * 服务模块定义：显示名称 -> Nacos 服务名（spring.application.name）
      */
-    private static final Map<String, Integer> SERVICES = new LinkedHashMap<>();
+    private static final Map<String, String> SERVICES = new LinkedHashMap<>();
 
     static {
-        SERVICES.put("nacos-discovery", 8760);
-        SERVICES.put("nacos-config", 8761);
-        SERVICES.put("provider-reactive", 8762);
-        SERVICES.put("consumer-reactive", 8763);
-        SERVICES.put("gateway", 8764);
-        SERVICES.put("provider", 8765);
-        SERVICES.put("consumer", 8766);
-        SERVICES.put("ai", 8888);
+        SERVICES.put("nacos-discovery",    "nacos-discovery-sample");
+        SERVICES.put("provider-reactive", "provider-reactive-sample");
+        SERVICES.put("consumer-reactive", "consumer-reactive-sample");
+        SERVICES.put("gateway",           "gateway-sample");
+        SERVICES.put("provider",          "provider-sample");
+        SERVICES.put("consumer",          "consumer-sample");
+        SERVICES.put("ai",                "ai-sample");
     }
 
     // ==================== 服务健康检查 ====================
@@ -57,14 +56,14 @@ public class ProjectDemoTools {
      * @param moduleName 模块名称，如 provider、consumer、gateway、ai 等
      * @return 健康状态描述
      */
-    @Tool(description = "检查指定微服务模块的健康状态。可用模块：nacos-discovery, nacos-config, provider, provider-reactive, consumer, consumer-reactive, gateway, ai")
+    @Tool(description = "检查指定微服务模块的健康状态。可用模块：nacos-discovery, provider, provider-reactive, consumer, consumer-reactive, gateway, ai")
     public String checkServiceHealth(
-            @ToolParam(description = "模块名称，如 provider, consumer, gateway, ai, nacos-config 等") String moduleName) {
-        Integer port = SERVICES.get(moduleName);
-        if (port == null) {
+            @ToolParam(description = "模块名称，如 provider, consumer, gateway, ai 等") String moduleName) {
+        String serviceName = SERVICES.get(moduleName);
+        if (serviceName == null) {
             return "未知模块: " + moduleName + "。可用模块: " + String.join(", ", SERVICES.keySet());
         }
-        return doCheckHealth(moduleName, port);
+        return doCheckHealth(moduleName, serviceName);
     }
 
     /**
@@ -76,14 +75,13 @@ public class ProjectDemoTools {
     public String checkAllServices() {
         StringBuilder sb = new StringBuilder("=== 微服务健康检查 ===\n\n");
         int up = 0, down = 0;
-        for (Map.Entry<String, Integer> entry : SERVICES.entrySet()) {
-            String name = entry.getKey();
-            int port = entry.getValue();
-            boolean healthy = isPortOpen(port);
-            String status = healthy ? "✓ 运行中" : "✗ 未运行";
-            sb.append(String.format("  %-20s 端口 %-5d  %s\n", name, port, status));
-            if (healthy) up++;
-            else down++;
+        for (Map.Entry<String, String> entry : SERVICES.entrySet()) {
+            String displayName = entry.getKey();
+            String serviceName = entry.getValue();
+            String healthStatus = checkHealthViaLB(serviceName);
+            String status = "UP".equals(healthStatus) ? "✓ 运行中" : "✗ 未运行";
+            sb.append(String.format("  %-20s %-30s  %s\n", displayName, serviceName, status));
+            if ("UP".equals(healthStatus)) up++; else down++;
         }
         sb.append(String.format("\n共 %d 个模块，%d 个运行中，%d 个未运行", SERVICES.size(), up, down));
         return sb.toString();
@@ -101,7 +99,7 @@ public class ProjectDemoTools {
     public String verifyWebCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("Web 服务调用",
-                "http://localhost:8766/hi?name=" + name);
+                "http://consumer-sample/hi?name=" + name);
     }
 
     /**
@@ -114,7 +112,7 @@ public class ProjectDemoTools {
     public String verifyReactiveCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("Reactive 服务调用",
-                "http://localhost:8763/hi?name=" + name);
+                "http://consumer-reactive-sample/hi?name=" + name);
     }
 
     /**
@@ -127,7 +125,7 @@ public class ProjectDemoTools {
     public String verifyDubboCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("Dubbo 服务调用",
-                "http://localhost:8766/dubbo?name=" + name);
+                "http://consumer-sample/dubbo?name=" + name);
     }
 
     /**
@@ -140,7 +138,7 @@ public class ProjectDemoTools {
     public String verifyGrpcCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("gRPC 服务调用",
-                "http://localhost:8766/grpc?name=" + name);
+                "http://consumer-sample/grpc?name=" + name);
     }
 
     /**
@@ -153,33 +151,7 @@ public class ProjectDemoTools {
     public String verifyGatewayCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("网关路由调用",
-                "http://localhost:8764/consumer-sample/hi?name=" + name);
-    }
-
-    /**
-     * 验证 Nacos Config 配置管理功能
-     *
-     * @return 配置发布和获取的结果
-     */
-    @Tool(description = "验证 Nacos Config 配置管理功能：发布配置并读取验证")
-    public String verifyNacosConfig() {
-        try {
-            // 发布配置
-            String publishUrl = "http://localhost:8761/nacos/publishConfig?dataId=demo.test&content=hello-from-ai";
-            String publishResult = restTemplate.getForObject(publishUrl, String.class);
-
-            // 获取配置
-            String getUrl = "http://localhost:8761/nacos/getConfig?dataId=demo.test";
-            String configValue = restTemplate.getForObject(getUrl, String.class);
-
-            if ("hello-from-ai".equals(configValue)) {
-                return "✓ Nacos Config 验证通过\n  - 发布配置: dataId=demo.test, content=hello-from-ai\n  - 读取配置: " + configValue + "\n  - 配置读写一致";
-            } else {
-                return "✗ Nacos Config 验证失败\n  - 发布值: hello-from-ai\n  - 读取值: " + configValue;
-            }
-        } catch (Exception e) {
-            return "✗ Nacos Config 验证异常: " + e.getMessage();
-        }
+                "http://gateway-sample/consumer-sample/hi?name=" + name);
     }
 
     // ==================== Nacos 服务发现 ====================
@@ -192,7 +164,7 @@ public class ProjectDemoTools {
     @Tool(description = "查看 Nacos 注册中心中已注册的服务列表和实例信息")
     public String checkNacosServices() {
         try {
-            String url = "http://localhost:8760/discovery/services";
+            String url = "http://nacos-discovery-sample/discovery/services";
             String result = restTemplate.getForObject(url, String.class);
             return "=== Nacos 已注册服务 ===\n" + result;
         } catch (Exception e) {
@@ -221,6 +193,7 @@ public class ProjectDemoTools {
         // 环境变量
         sb.append("\n【环境变量】\n");
         sb.append("  OPENAI_API_KEY:              ").append(System.getenv("OPENAI_API_KEY") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
+        sb.append("  DEEPSEEK_API_KEY:              ").append(System.getenv("DEEPSEEK_API_KEY") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
         sb.append("  SPRING_CLOUD_NACOS_USERNAME:  ").append(System.getenv("SPRING_CLOUD_NACOS_USERNAME") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
         sb.append("  SPRING_CLOUD_NACOS_PASSWORD:  ").append(System.getenv("SPRING_CLOUD_NACOS_PASSWORD") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
 
@@ -276,19 +249,30 @@ public class ProjectDemoTools {
 
     // ==================== 内部方法 ====================
 
-    private String doCheckHealth(String name, int port) {
-        if (!isPortOpen(port)) {
-            return "✗ " + name + " (端口 " + port + ") 未运行";
+    private String doCheckHealth(String displayName, String serviceName) {
+        String healthStatus = checkHealthViaLB(serviceName);
+        if ("UP".equals(healthStatus)) {
+            return "✓ " + displayName + " (" + serviceName + ") 健康状态: UP";
+        } else if (healthStatus == null) {
+            return "✗ " + displayName + " (" + serviceName + ") 未注册或不可达";
+        } else {
+            return "⚠ " + displayName + " (" + serviceName + ") 健康状态: " + healthStatus;
         }
+    }
+
+    /**
+     * 通过负载均衡 RestTemplate 调用 actuator/health，返回状态字符串（如 UP），失败返回 null
+     */
+    private String checkHealthViaLB(String serviceName) {
         try {
-            String url = "http://localhost:" + port + "/actuator/health";
-            String result = restTemplate.getForObject(url, String.class);
+            String result = restTemplate.getForObject(
+                    "http://" + serviceName + "/actuator/health", String.class);
             if (result != null && result.contains("\"status\":\"UP\"")) {
-                return "✓ " + name + " (端口 " + port + ") 健康状态: UP";
+                return "UP";
             }
-            return "⚠ " + name + " (端口 " + port + ") 运行中，但健康状态异常: " + result;
+            return result != null ? result : "UNKNOWN";
         } catch (Exception e) {
-            return "⚠ " + name + " (端口 " + port + ") 端口开放，但 actuator 不可访问";
+            return null;
         }
     }
 
@@ -299,10 +283,6 @@ public class ProjectDemoTools {
         } catch (Exception e) {
             return "✗ " + callType + " 失败\n  请求: " + url + "\n  错误: " + e.getMessage();
         }
-    }
-
-    private boolean isPortOpen(int port) {
-        return checkPort("127.0.0.1", port);
     }
 
     private boolean checkPort(String host, int port) {

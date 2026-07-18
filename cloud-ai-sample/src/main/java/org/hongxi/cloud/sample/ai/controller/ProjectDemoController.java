@@ -45,9 +45,6 @@ public class ProjectDemoController {
      * # 查看 Nacos 服务列表
      * curl --get --data-urlencode "instruction=查看 Nacos 注册了哪些服务" "http://localhost:8888/ai/demo"
      *
-     * # 验证配置管理
-     * curl --get --data-urlencode "instruction=演示 Nacos Config 配置管理" "http://localhost:8888/ai/demo"
-     *
      * # 全面验证
      * curl --get --data-urlencode "instruction=全面验证本项目" "http://localhost:8888/ai/demo"
      *

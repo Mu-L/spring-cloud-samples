@@ -6,9 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * 项目演示 Agent 服务
  * <p>
@@ -21,7 +18,6 @@ import java.util.Map;
  * - 服务健康检查：检查各微服务模块的运行状态
  * - 接口验证：验证 Web/Reactive/Dubbo/gRPC 服务调用链路
  * - 网关路由：验证通过 Gateway 的服务调用
- * - 配置管理：验证 Nacos Config 配置发布和读取
  * - 服务发现：查看 Nacos 中已注册的服务列表
  * </p>
  *
@@ -52,7 +48,6 @@ public class ProjectDemoService {
      * - "验证 Web 服务调用链路"
      * - "验证 Dubbo 和 gRPC 调用"
      * - "查看 Nacos 中注册了哪些服务"
-     * - "演示 Nacos Config 配置管理"
      * - "全面验证本项目"
      * </p>
      *
@@ -78,7 +73,6 @@ public class ProjectDemoService {
                         - verifyDubboCall: 验证 Dubbo 服务调用链路
                         - verifyGrpcCall: 验证 gRPC 服务调用链路
                         - verifyGatewayCall: 验证通过网关的服务调用
-                        - verifyNacosConfig: 验证 Nacos Config 配置管理
                         - checkNacosServices: 查看 Nacos 注册中心的服务列表
                         - checkEnvironment: 检查运行环境（中间件、端口、环境变量）
                         - getProjectInfo: 获取项目架构和模块信息
@@ -100,7 +94,6 @@ public class ProjectDemoService {
                 .content();
 
         log.info("项目演示 Agent 完成");
-
         return response;
     }
 }

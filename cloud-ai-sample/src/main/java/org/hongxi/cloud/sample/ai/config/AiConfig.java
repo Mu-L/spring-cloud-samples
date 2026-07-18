@@ -6,9 +6,12 @@ import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * AI 配置类
@@ -23,6 +26,15 @@ import org.springframework.context.annotation.Primary;
  */
 @Configuration
 public class AiConfig {
+
+    /**
+     * 负载均衡 RestTemplate，通过服务名调用其他微服务模块
+     */
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder.build();
+    }
 
     /**
      * 标记 OpenAI ChatModel 为 Primary，解决多 Provider 共存时 ChatClient.Builder 的 Bean 歧义
