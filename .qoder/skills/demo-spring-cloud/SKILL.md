@@ -439,7 +439,7 @@ psql -U postgres -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" ||
 ```
 若未安装：`brew install postgresql@17 pgvector && brew services start postgresql@17 && createuser -s postgres 2>/dev/null || true && psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql`
 
-> 前提：PostgreSQL + pgvector 已安装，OPENAI_API_KEY 已配置，cloud-ai-sample（8888）已启动（RAG 模块通过 MCP Client 调用 ai-sample 的工具），cloud-ai-rag-sample（8889）已启动。
+> 前提：PostgreSQL + pgvector 已安装，OPENAI_API_KEY 已配置，cloud-ai-rag-sample（8889）已启动。
 
 **必做步骤（按顺序）：**
 

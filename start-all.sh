@@ -238,16 +238,10 @@ check_ai() {
 }
 
 check_rag() {
-  # RAG: PostgreSQL + OPENAI_API_KEY + AI 模块（MCP Server 依赖）
+  # RAG: PostgreSQL + OPENAI_API_KEY
   if [ -n "$OPENAI_API_KEY" ] && pg_isready -h localhost -p 5432 &>/dev/null; then
-    # 检查 AI 模块（MCP Server）是否已启动
-    if [ "$START_AI" = true ] || nc -z 127.0.0.1 8888 2>/dev/null; then
-      echo "[RAG] ✓ PostgreSQL 已运行，AI 模块 (MCP Server) 已就绪，将启动 AI RAG 模块 (端口 8889)"
-      START_RAG=true
-    else
-      echo "[RAG] ✗ AI 模块 (端口 8888) 未运行，RAG 模块依赖其 MCP Server，跳过 AI RAG 模块"
-      echo "[RAG]   请先启动 AI 模块: ./mvnw -pl cloud-ai-sample spring-boot:run"
-    fi
+    echo "[RAG] ✓ PostgreSQL 已运行，将启动 AI RAG 模块 (端口 8889)"
+    START_RAG=true
   elif [ -n "$OPENAI_API_KEY" ]; then
     echo "[RAG] ✗ PostgreSQL 未运行，跳过 AI RAG 模块"
     echo "[RAG]   如需启用，请安装: brew install postgresql pgvector && brew services start postgresql"

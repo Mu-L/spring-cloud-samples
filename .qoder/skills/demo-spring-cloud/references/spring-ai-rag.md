@@ -14,16 +14,6 @@
 
 ## 前置条件
 
-**AI 模块（必须）**
-
-RAG 模块通过 MCP Client 连接 ai-sample（端口 8888）调用其 Tool 方法，启动 RAG 前必须确保 ai-sample 已启动：
-```shell
-# 检查 AI 模块是否已运行
-curl -s http://localhost:8888/actuator/health | grep -q '"status":"UP"' && echo "✓ AI 模块已运行" || echo "✗ AI 模块未运行，请先启动"
-# 若未启动：
-./mvnw -pl cloud-ai-sample spring-boot:run
-```
-
 **PgVector 方式（默认）**
 ```shell
 brew install postgresql

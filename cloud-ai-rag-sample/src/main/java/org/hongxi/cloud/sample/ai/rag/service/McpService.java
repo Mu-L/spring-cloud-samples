@@ -1,5 +1,6 @@
 package org.hongxi.cloud.sample.ai.rag.service;
 
+import org.hongxi.cloud.sample.ai.rag.condition.ConditionalOnMcpClientEnabled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
  *
  * @author javahongxi
  */
+@ConditionalOnMcpClientEnabled
 @Service
 public class McpService {
 

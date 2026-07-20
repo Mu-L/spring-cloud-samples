@@ -1,5 +1,6 @@
 package org.hongxi.cloud.sample.ai.rag.config;
 
+import org.hongxi.cloud.sample.ai.rag.condition.ConditionalOnMcpClientEnabled;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author javahongxi
  */
+@ConditionalOnMcpClientEnabled
 @Configuration
 public class McpConfig {
 
