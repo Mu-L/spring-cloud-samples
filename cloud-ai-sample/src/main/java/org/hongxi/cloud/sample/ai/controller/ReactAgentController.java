@@ -1,5 +1,6 @@
 package org.hongxi.cloud.sample.ai.controller;
 
+import org.hongxi.cloud.sample.ai.advisor.ToolCallObservationAdvisor;
 import org.hongxi.cloud.sample.ai.tool.SearchTools;
 import org.hongxi.cloud.sample.ai.tool.TimeTools;
 import org.hongxi.cloud.sample.ai.tool.WeatherTools;
@@ -13,6 +14,11 @@ import org.springframework.web.bind.annotation.*;
  * <p>
  * ReAct (Reasoning + Acting) 是一种结合推理和行动的 Agent 模式。
  * Agent 会根据任务需求，自主决定调用哪些工具来获取信息或执行操作。
+ * </p>
+ * <p>
+ * Spring AI 2.0 核心架构升级：工具调用循环从 ChatModel 内部的"黑盒"
+ * 提升为 Advisor 链中的"一等公民"（ToolCallingAdvisor）。
+ * 开发者可以在工具调用前后插入自定义逻辑，实现完整的可观测性。
  * </p>
  *
  * @author javahongxi
@@ -45,10 +51,8 @@ public class ReactAgentController {
      * </p>
      * <p>
      * 测试示例：
-     * - "北京今天的天气怎么样？适合出门吗？"
-     * - "什么是 Apache Dubbo？它的最新版本支持什么协议？"
-     * - "现在是几号？距离春节还有多少天？"
-     * - "我想了解 Spring AI 的最新发展趋势"
+     * - "北京今天天气怎么样？现在几点了？"
+     * - "查一下杭州天气，再告诉我距离春节还有多少天"
      * </p>
      *
      * @param message 用户消息
@@ -59,19 +63,17 @@ public class ReactAgentController {
         log.info("Agent 收到问题: {}", message);
         String response = chatClient.prompt()
                 .system("""
-                        你是一个智能助手，可以使用各种工具来帮助用户解决问题。
+                        你是一个智能助手，必须通过调用工具来获取信息，禁止凭记忆直接回答。
                         
                         你可以使用的工具包括：
                         - 天气查询：获取城市当前天气和天气预报
                         - 时间查询：获取当前日期、时间，计算日期差
                         - 知识搜索：搜索技术主题的相关信息
-                        - 最新资讯：获取技术领域的最新动态
                         
                         回答要求：
-                        1. 根据问题需要，主动调用合适的工具获取信息
+                        1. 对于天气、时间等问题，必须调用对应工具获取实时数据，不要自行编造
                         2. 基于工具返回的结果给出完整、有用的回答
                         3. 如果一个问题需要多个工具配合，依次调用
-                        4. 保持回答简洁、准确、有用
                         """)
                 .user(message)
                 .tools(weatherTools, timeTools, searchTools)
@@ -82,41 +84,58 @@ public class ReactAgentController {
     }
 
     /**
-     * 复杂任务处理
+     * 展示 Advisor 链架构的工具调用
      * <p>
-     * 展示 Agent 如何处理需要多步推理和多个工具调用的复杂任务。
+     * 本接口显式演示 Spring AI 2.0 的 Advisor 链机制：
+     * <pre>
+     * ChatClient → [ToolCallingAdvisor(+300)] → [ToolCallObservationAdvisor(+400)] → ChatModel
+     *                ↑ 递归驱动工具调用循环       ↑ 位于 TCA 之后，每次迭代都被观测
+     * </pre>
+     * </p>
+     * <p>
+     * 与 {@link #agentChat(String)} 的区别：
+     * <ul>
+     *   <li>agentChat 使用 .tools() 隐式添加 ToolCallingAdvisor，工具调用过程不可见</li>
+     *   <li>本接口通过 .advisors() 显式添加自定义 Advisor，可观测工具调用循环的每次迭代</li>
+     * </ul>
      * </p>
      * <p>
      * 测试示例：
-     * - "我想去杭州旅游，帮我查一下杭州的天气，以及介绍一下杭州的著名景点"
-     * - "现在是几月？Spring AI 有什么新特性？帮我规划一个学习计划"
+     * - "北京今天天气怎么样？现在几点了？"
+     * - "查一下杭州天气，再告诉我距离春节还有多少天"
      * </p>
      *
-     * @param message 任务描述
-     * @return 任务执行结果
+     * @param message 用户消息
+     * @return Agent 的回答
      */
-    @RequestMapping("/complex-task")
-    public String handleComplexTask(@RequestParam String message) {
-        log.info("Agent 收到复杂任务: {}", message);
+    @RequestMapping("/chat-with-advisor")
+    public String chatWithAdvisorChain(@RequestParam String message) {
+        log.info("Advisor 链演示 - 收到问题: {}", message);
         String response = chatClient.prompt()
                 .system("""
-                        你是一个强大的 AI Agent，擅长解决复杂问题。
+                        你是一个智能助手，必须通过调用工具来获取信息，禁止凭记忆直接回答。
                         
-                        解决复杂问题的步骤：
-                        1. 理解任务目标
-                        2. 分解任务为多个子任务
-                        3. 对每个子任务选择合适的工具获取信息
-                        4. 整合所有信息给出最终答案
+                        你可以使用的工具包括：
+                        - 天气查询：获取城市当前天气和天气预报
+                        - 时间查询：获取当前日期、时间，计算日期差
+                        - 知识搜索：搜索技术主题的相关信息
                         
-                        可用的工具：天气查询、时间查询、知识搜索、最新资讯
-                        
-                        请详细展示你的思考过程和每一步的操作结果。
+                        回答要求：
+                        1. 对于天气、时间等问题，必须调用对应工具获取实时数据，不要自行编造
+                        2. 基于工具返回的结果给出完整、有用的回答
+                        3. 如果一个问题需要多个工具配合，依次调用
                         """)
                 .user(message)
                 .tools(weatherTools, timeTools, searchTools)
+                // 显式添加自定义 Advisor（order=400，位于 ToolCallingAdvisor 之后）
+                // Advisor 链执行顺序（按 order 升序）：
+                //   ToolCallingAdvisor(+300) → ToolCallObservationAdvisor(+400) → ChatModel
+                // TCA 递归时 chain.copy(this) 只包含 order>300 的 Advisor，
+                // 因此 observer 会在每次工具调用迭代中被触发
+                .advisors(new ToolCallObservationAdvisor())
                 .call()
                 .content();
-        log.info("Agent 完成复杂任务");
+        log.info("Advisor 链演示 - 完成");
         return response;
     }
 }
