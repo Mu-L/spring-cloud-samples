@@ -75,6 +75,7 @@
     <div class="tab-bar"><div class="tab-inner">
         <button class="tab-btn active" onclick="switchTab('demo')">项目演示</button>
         <button class="tab-btn" onclick="switchTab('chat')">AI 对话</button>
+        <button class="tab-btn" onclick="switchTab('memory')">对话记忆</button>
     </div></div>
 
     <!-- 项目演示 Agent -->
@@ -95,6 +96,29 @@
                 <button onclick="quickSend('demo','介绍本项目架构')">项目架构</button>
             </div>
             <div class="msg-area" id="msgs-demo"></div>
+        </div>
+    </div>
+
+    <!-- 对话记忆 -->
+    <div id="tab-memory" class="tab-content">
+        <div class="content-inner">
+            <div class="desc">
+                多轮对话记忆，调用 <code>POST /ai/memory/chat</code>，相同会话 ID 共享上下文，AI 能"记住"之前的对话。<br>
+                点击"清除记忆"可重置当前会话，开始全新对话。
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#555;">
+                <span>会话 ID：</span>
+                <code id="memory-session-id" style="background:#f0f4ff;padding:3px 10px;border-radius:4px;color:#1a73e8;"></code>
+                <button onclick="clearMemory()" style="background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;padding:4px 12px;font-size:12px;color:#e65100;cursor:pointer;">清除记忆</button>
+                <button onclick="newSession()" style="background:#f0f0f0;border:1px solid #ddd;border-radius:6px;padding:4px 12px;font-size:12px;color:#555;cursor:pointer;">新会话</button>
+            </div>
+            <div class="examples">
+                <button onclick="quickSend('memory','我叫小明，请记住')">告知姓名</button>
+                <button onclick="quickSend('memory','你还记得我叫什么吗？')">测试记忆</button>
+                <button onclick="quickSend('memory','我喜欢Java和Python')">告知偏好</button>
+                <button onclick="quickSend('memory','我喜欢的编程语言是什么？')">追问偏好</button>
+            </div>
+            <div class="msg-area" id="msgs-memory"></div>
         </div>
     </div>
 
@@ -139,8 +163,35 @@
 
         const tabConfig = {
             demo: { type: 'call', endpoint: '/ai/demo', param: 'instruction' },
-            chat: { type: 'stream', endpoint: '/ai/chat/stream', param: 'message' }
+            chat: { type: 'stream', endpoint: '/ai/chat/stream', param: 'message' },
+            memory: { type: 'memory', endpoint: '/ai/memory/chat' }
         };
+
+        // ChatMemory session
+        let memorySessionId = generateSessionId();
+        document.getElementById('memory-session-id').textContent = memorySessionId;
+
+        function generateSessionId() {
+            return 'session-' + Math.random().toString(36).substring(2, 8);
+        }
+
+        function newSession() {
+            memorySessionId = generateSessionId();
+            document.getElementById('memory-session-id').textContent = memorySessionId;
+            const msgArea = document.getElementById('msgs-memory');
+            if (msgArea) msgArea.innerHTML = '';
+        }
+
+        function clearMemory() {
+            fetch('/ai/memory/' + memorySessionId, { method: 'DELETE' })
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+                .then(() => {
+                    const msgArea = document.getElementById('msgs-memory');
+                    if (msgArea) msgArea.innerHTML = '';
+                    addMessage('memory', 'assistant', '✅ 会话记忆已清除，可以开始全新对话。');
+                })
+                .catch(err => addMessage('memory', 'error', '清除失败: ' + err.message));
+        }
 
         function switchTab(tab) {
             currentTab = tab;
@@ -204,6 +255,8 @@
 
             if (config.type === 'stream') {
                 sendGetStream(tab, url);
+            } else if (config.type === 'memory') {
+                sendMemoryRequest(tab, message);
             } else {
                 sendCallRequest(tab, url);
             }
@@ -223,6 +276,36 @@
                 .then(text => {
                     indicator.remove();
                     renderMarkdown(msgDiv, text);
+                    sendBtn.disabled = false;
+                    userInput.focus();
+                })
+                .catch(err => {
+                    indicator.remove();
+                    msgDiv.className = 'msg error';
+                    msgDiv.textContent = '⚠️ 请求失败: ' + err.message;
+                    sendBtn.disabled = false;
+                    userInput.focus();
+                });
+        }
+
+        // === ChatMemory POST request ===
+        function sendMemoryRequest(tab, message) {
+            const msgArea = document.getElementById('msgs-' + tab);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg assistant';
+            msgArea.appendChild(msgDiv);
+            const indicator = createIndicator();
+            msgDiv.appendChild(indicator);
+
+            fetch(tabConfig.memory.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conversationId: memorySessionId, message: message })
+            })
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(data => {
+                    indicator.remove();
+                    renderMarkdown(msgDiv, data.reply || JSON.stringify(data));
                     sendBtn.disabled = false;
                     userInput.focus();
                 })
