@@ -376,7 +376,7 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
 
 **按需准备 MySQL + Seata Server（演示前检查）：**
 ```bash
-mysql -u root -proot1234 -e "SELECT 1" &>/dev/null && echo "✓ MySQL 已运行" || echo "✗ MySQL 未运行"
+(mysql -u root -proot1234 -e "SELECT 1" &>/dev/null || nc -z 127.0.0.1 3306 &>/dev/null) && echo "✓ MySQL 已运行" || echo "✗ MySQL 未运行"
 nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Server 未运行"
 ```
 若未就绪，参考 [seata.md](references/seata.md) 中的安装和启动步骤。

@@ -192,7 +192,9 @@ check_seata() {
   # Seata: MySQL + Seata Server
   local mysql_ok=false
   local seata_server_ok=false
-  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+  local MYSQL_BIN
+  MYSQL_BIN=$(find_mysql 2>/dev/null) || true
+  if { [ -n "$MYSQL_BIN" ] && $MYSQL_BIN -u root -proot1234 -e "SELECT 1" &>/dev/null; } || nc -z 127.0.0.1 3306 &>/dev/null; then
     echo "[Seata] ✓ MySQL 已运行"
     mysql_ok=true
   else
@@ -663,10 +665,15 @@ install_all() {
   # MySQL
   echo ""
   echo "--- MySQL ---"
-  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+  local MYSQL_BIN
+  MYSQL_BIN=$(find_mysql 2>/dev/null) || true
+  if [ -n "$MYSQL_BIN" ] && $MYSQL_BIN -u root -proot1234 -e "SELECT 1" &>/dev/null; then
     echo "✓ MySQL 已运行且密码正确"
-  elif command -v mysql &>/dev/null; then
-    echo "✗ MySQL 已安装但密码不是 root1234，请手动执行: mysqladmin -u root password 'root1234'"
+  elif nc -z 127.0.0.1 3306 &>/dev/null; then
+    echo "✗ MySQL 已运行（端口 3306 可达）但 mysql 客户端不可用或密码不是 root1234"
+    [ -z "$MYSQL_BIN" ] && echo "  提示: DMG 安装的 MySQL 需手动添加 PATH: export PATH=/usr/local/mysql/bin:\$PATH"
+  elif [ -n "$MYSQL_BIN" ]; then
+    echo "✗ MySQL 已安装但未运行，请手动执行: mysql.server start 或 brew services start mysql"
   else
     echo "正在安装 MySQL..."
     brew install mysql
@@ -699,9 +706,11 @@ install_all() {
   # MySQL 数据库初始化
   echo ""
   echo "--- Seata 数据库初始化 ---"
-  if mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
-    mysql -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-    mysql -u root -proot1234 seata < "$BASE_DIR/cloud-seata-sample/all.sql"
+  local MYSQL_BIN
+  MYSQL_BIN=$(find_mysql 2>/dev/null) || true
+  if [ -n "$MYSQL_BIN" ] && ($MYSQL_BIN -u root -proot1234 -e "SELECT 1" &>/dev/null || nc -z 127.0.0.1 3306 &>/dev/null); then
+    $MYSQL_BIN -u root -proot1234 -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    $MYSQL_BIN -u root -proot1234 seata < "$BASE_DIR/cloud-seata-sample/all.sql"
     echo "✓ Seata 数据库已初始化"
   else
     echo "✗ MySQL 未就绪，跳过数据库初始化"
@@ -1112,7 +1121,15 @@ cmd_seata() {
   configure_nacos_noauth
   echo ""
   echo "========== 检查 Seata 前置条件 =========="
-  if ! mysql -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+  local MYSQL_BIN
+  MYSQL_BIN=$(find_mysql 2>/dev/null) || true
+  local mysql_ok=false
+  if [ -n "$MYSQL_BIN" ] && $MYSQL_BIN -u root -proot1234 -e "SELECT 1" &>/dev/null; then
+    mysql_ok=true
+  elif nc -z 127.0.0.1 3306 &>/dev/null; then
+    mysql_ok=true
+  fi
+  if ! $mysql_ok; then
     echo "[Seata] ✗ MySQL 未运行，请先运行: $0 install"
     exit 1
   fi
@@ -1147,6 +1164,19 @@ cmd_seata() {
   echo "  curl http://localhost:18081/seata/rest"
   echo "  curl http://localhost:18081/seata/feign"
   echo "  curl http://localhost:18081/seata/dubbo"
+}
+
+# 查找 mysql 客户端命令（支持 DMG 安装路径）
+find_mysql() {
+  if command -v mysql &>/dev/null; then
+    command -v mysql
+  elif [ -x /usr/local/mysql/bin/mysql ]; then
+    echo /usr/local/mysql/bin/mysql
+  elif [ -x /opt/homebrew/bin/mysql ]; then
+    echo /opt/homebrew/bin/mysql
+  else
+    return 1
+  fi
 }
 
 show_help() {
