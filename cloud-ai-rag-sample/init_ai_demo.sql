@@ -1,7 +1,10 @@
 -- 先安装 postgresql 和 pgvector
--- brew install postgresql pgvector
+-- brew install postgresql@18
+-- brew install pgvector
 -- 请先设置 postgres 为超级用户
--- ALTER USER postgres WITH SUPERUSER;
+-- psql postgres
+-- CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';
+-- exit
 -- psql -U postgres -f init_ai_demo.sql
 
 -- 1. 创建专属用户（如果不存在）

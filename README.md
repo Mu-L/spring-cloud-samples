@@ -129,7 +129,7 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 | 📨 Stream 消息驱动           | 基础消费、定时消息源、消息管道、延迟/顺序/事务消息                                    | [stream.md](.qoder/skills/demo-spring-cloud/references/stream.md)                     |
 | 🔄 Seata 分布式事务           | RestTemplate / Feign / Dubbo 三种调用链路                           | [seata.md](.qoder/skills/demo-spring-cloud/references/seata.md)                       |
 | 🤖 Spring AI             | 对话、Tool Calling、ReAct Agent、视觉识别、DeepSeek 集成                  | [spring-ai.md](.qoder/skills/demo-spring-cloud/references/spring-ai.md)               |
-| 🤖 Spring AI RAG         | PgVector / Redis 向量存储，检索增强生成                                  | [spring-ai-rag.md](.qoder/skills/demo-spring-cloud/references/spring-ai-rag.md)       |
+| 🤖 Spring AI RAG         | PgVector 向量存储，检索增强生成                                  | [spring-ai-rag.md](.qoder/skills/demo-spring-cloud/references/spring-ai-rag.md)       |
 | 📨 Kafka 4.x             | 传统 Consumer Group、Share Groups、事务消息                           | [kafka.md](.qoder/skills/demo-spring-cloud/references/kafka.md)                       |
 
 ### 🌿 分支说明

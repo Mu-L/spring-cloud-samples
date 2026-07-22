@@ -222,7 +222,6 @@ NACOS_HOME=$(dirname "$(dirname "$NACOS_DIR")")
 | Seata Server | Seata 模块 | 演示 Seata 分布式事务前检查 |
 | Kafka 4.x | Kafka 模块 | 演示 Kafka 消息收发前检查 |
 | PostgreSQL + pgvector | RAG 模块 | 演示 Spring AI RAG 前检查 |
-| Redis | RAG 模块（备选） | 仅在用户切换 Redis 向量库时检查 |
 
 > 🔴 **重型中间件安装规范**：MySQL、RocketMQ、Kafka、PostgreSQL 等重型中间件**禁止 AI 自行下载安装**（下载耗时长、占用带宽）。若检查发现未安装，应提示用户执行：
 > ```bash

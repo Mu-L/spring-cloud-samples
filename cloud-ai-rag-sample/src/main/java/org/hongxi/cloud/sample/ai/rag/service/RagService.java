@@ -8,14 +8,8 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,12 +17,10 @@ import java.util.stream.Collectors;
  * RAG（检索增强生成）服务
  * <p>
  * 演示基于向量数据库的知识库检索增强生成流程：
- * 1. 文档摄入：将文本分块后存入向量数据库（PgVector 或 Redis）
+ * 1. 文档摄入：将文本分块后存入 PgVector 向量数据库
  * 2. RAG 查询：检索相关文档片段，拼接上下文后交给 LLM 生成回答
  * <p>
- * 支持 pgvector / redis 两种 Profile，通过 spring.profiles.active 切换。
- * 删除文档时，pgvector 使用 FilterExpressionBuilder 按 metadata 过滤，
- * redis 使用 StringRedisTemplate 按 key 前缀扫描（规避 RediSearch 保留字段限制）。
+ * 删除文档时通过 FilterExpressionBuilder 按 metadata 过滤。
  * </p>
  *
  * @author javahongxi
@@ -41,21 +33,12 @@ public class RagService {
     private final ChatClient chatClient;
     private final VectorStore vectorStore;
     private final TokenTextSplitter textSplitter;
-    private final StringRedisTemplate redisTemplate;
-    private final String keyPrefix;
-    private final boolean isRedisProfile;
 
-    public RagService(ChatClient.Builder chatClientBuilder, VectorStore vectorStore,
-                      StringRedisTemplate redisTemplate,
-                      @Value("${spring.ai.vectorstore.redis.prefix:}") String keyPrefix,
-                      @Value("${spring.profiles.active:}") String activeProfile) {
+    public RagService(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
         this.chatClient = chatClientBuilder.build();
         this.vectorStore = vectorStore;
         // 使用 builder 创建分块器（Spring AI 2.0 构造函数已废弃）
         this.textSplitter = TokenTextSplitter.builder().build();
-        this.redisTemplate = redisTemplate;
-        this.keyPrefix = keyPrefix;
-        this.isRedisProfile = Arrays.asList(activeProfile.split(",")).contains("redis");
     }
 
     /**
@@ -128,28 +111,13 @@ public class RagService {
     /**
      * 删除指定来源的所有文档
      * <p>
-     * pgvector 模式：通过 FilterExpressionBuilder 构建 metadata 过滤条件，
+     * 通过 FilterExpressionBuilder 构建 metadata 过滤条件，
      * 使用 similaritySearch 查找匹配文档后调用 VectorStore.delete() 删除。
-     * <p>
-     * redis 模式：RediSearch 对 filter 表达式字段名有限制（source 为保留字段），
-     * 且 metadata 未存储在 ReJSON 文档中，因此改用 StringRedisTemplate
-     * 按 key 前缀扫描所有文档 key，提取 ID 后调用 VectorStore.delete() 删除。
      * </p>
      *
      * @param source 来源标识
      */
     public void deleteBySource(String source) {
-        if (isRedisProfile) {
-            deleteBySourceRedis(source);
-        } else {
-            deleteBySourcePgVector(source);
-        }
-    }
-
-    /**
-     * PgVector 模式：通过 FilterExpressionBuilder 按 metadata.source 过滤删除
-     */
-    private void deleteBySourcePgVector(String source) {
         FilterExpressionBuilder filterBuilder = new FilterExpressionBuilder();
         List<Document> docs = vectorStore.similaritySearch(
                 SearchRequest.builder()
@@ -163,35 +131,9 @@ public class RagService {
                 .toList();
         if (!idsToDelete.isEmpty()) {
             vectorStore.delete(idsToDelete);
-            log.info("[PgVector] 已删除来源为 {} 的 {} 个文档", source, idsToDelete.size());
+            log.info("已删除来源为 {} 的 {} 个文档", source, idsToDelete.size());
         } else {
-            log.info("[PgVector] 未找到来源为 {} 的文档", source);
+            log.info("未找到来源为 {} 的文档", source);
         }
-    }
-
-    /**
-     * Redis 模式：通过 StringRedisTemplate 使用 SCAN 按 key 前缀增量扫描删除
-     * <p>
-     * 使用 SCAN 替代 KEYS，避免 O(N) 全量扫描阻塞 Redis 单线程。
-     * </p>
-     */
-    private void deleteBySourceRedis(String source) {
-        String pattern = keyPrefix + "*";
-        ScanOptions scanOptions = ScanOptions.scanOptions().match(pattern).count(100).build();
-        List<String> idsToDelete = new ArrayList<>();
-        try (Cursor<String> cursor = redisTemplate.scan(scanOptions)) {
-            while (cursor.hasNext()) {
-                String key = cursor.next();
-                // key 格式为 prefix + uuid，提取 uuid 作为文档 ID
-                String id = key.substring(keyPrefix.length());
-                idsToDelete.add(id);
-            }
-        }
-        if (idsToDelete.isEmpty()) {
-            log.info("[Redis] 未找到任何文档（prefix={}）", pattern);
-            return;
-        }
-        vectorStore.delete(idsToDelete);
-        log.info("[Redis] 已删除 {} 个文档（来源标识={}）", idsToDelete.size(), source);
     }
 }

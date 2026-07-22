@@ -2,12 +2,7 @@
 
 > 🔴 **共 6 个步骤，必须逐一执行，不可跳过。每步执行后确认返回结果是否符合预期。**
 
-基于 **Spring AI 2.0** 的检索增强生成模块，支持 **PgVector** 和 **Redis (RediSearch)** 两种向量存储，通过 Profile 一键切换，业务代码零改动。
-
-| Profile    | 向量库                      | 前置条件                         | 特点                     |
-|------------|--------------------------|------------------------------|------------------------|
-| `pgvector` | PostgreSQL + pgvector    | PostgreSQL + pgvector 扩展     | 持久化存储，支持 SQL + 向量混合查询  |
-| `redis`    | Redis Stack (RediSearch) | Redis Stack（含 RediSearch 模块） | 内存级检索，HNSW/FLAT 索引，低延迟 |
+基于 **Spring AI 2.0** 的检索增强生成模块，使用 **PgVector** 作为向量存储。
 
 > ⏱️ **耗时提示**：AI 接口调用大模型 API，每次响应通常需 **5~30 秒**，完整演示约需 **5~10 分钟**。
 > 建议：所有 AI curl 命令加 `--max-time 60` 防止无限等待。
@@ -16,58 +11,22 @@
 
 **PgVector 方式（默认）**
 ```shell
-brew install postgresql
+brew install postgresql@18
 brew install pgvector
 # 必须设置 postgres 为超级用户
-ALTER USER postgres WITH SUPERUSER;
+psql postgres
+CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';
+exit
 # 初始化数据库（创建用户 ai_user、数据库 ai_demo、启用 pgvector 扩展、建表）
 psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
 ```
 
-**Redis 方式**
-
-需先启动 Redis Stack（含 RediSearch 模块），默认演示 PgVector 方式，Redis 仅作备选。
-
-**1. 检查 Redis 是否已运行**
-```shell
-redis-cli ping
-```
-> 返回 `PONG` 则已就绪。若未安装，执行 `brew install redis && brew services start redis` 后重试。
-
-**2. 检查 RediSearch 模块是否已加载**
-```shell
-redis-cli module list
-```
-> 若输出已包含 `redisearch`，直接跳到步骤 4。否则执行步骤 3 安装模块。
-
-**3. 安装 RediSearch 模块**
-```shell
-mkdir -p /opt/homebrew/lib/redis/modules
-open https://packages.redis.io/homebrew/redis-oss-8.8.0-arm64.zip
-unzip -o ~/Downloads/redis-oss-8.8.0-arm64.zip -d /tmp/redis-install
-cp /tmp/redis-install/redis-oss-8.8.0-arm64/lib/redis/modules/*.so /opt/homebrew/lib/redis/modules/
-echo "loadmodule /opt/homebrew/lib/redis/modules/redisearch.so" >> /opt/homebrew/etc/redis.conf
-echo "loadmodule /opt/homebrew/lib/redis/modules/rejson.so" >> /opt/homebrew/etc/redis.conf
-brew services restart redis
-rm -rf /tmp/redis-install
-```
-
-**4. 确认模块加载成功**
-```shell
-redis-cli module list
-```
-> 输出应包含 `redisearch` 和 `rejson`。
-
-## 启动与切换
+## 启动
 
 ```shell
 export OPENAI_API_KEY=your-api-key-here
 
-# 默认使用 pgvector
 ./mvnw -pl cloud-ai-rag-sample spring-boot:run
-
-# 切换到 redis 向量库
-./mvnw -pl cloud-ai-rag-sample spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=redis
 ```
 
 等待 RAG 模块就绪：
@@ -82,7 +41,7 @@ for i in $(seq 1 60); do
 done
 ```
 
-> 实现原理：两个 VectorStore starter 同时在 classpath，通过 `spring.autoconfigure.exclude` 在每个 Profile 中互斥排除对方的自动配置类，保证同一时刻只有一个 `VectorStore` Bean。
+> 实现原理：使用 PgVector 作为向量存储，通过 `spring-ai-starter-vector-store-pgvector` 自动配置。
 
 ## RAG 接口
 
