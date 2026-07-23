@@ -10,9 +10,8 @@ spring:
       api-key: ${OPENAI_API_KEY}
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
-        options:
-          model: qwen-plus
-          temperature: 0.2
+        model: qwen-plus
+        temperature: 0.2
       embedding:
         model: text-embedding-v3   # Embedding 模型（用于 RAG 向量化）
 
