@@ -38,11 +38,19 @@ public class AiChatController {
                 .content();
     }
 
+    @RequestMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatStream(@RequestParam String message) {
+        return chatClient.prompt()
+                .user(message)
+                .stream()
+                .content();
+    }
+
     /**
      * 流式聊天接口（SSE）
      */
-    @RequestMapping("/chat/stream")
-    public ResponseEntity<Flux<String>> chatStream(@RequestParam String message) {
+    @RequestMapping("/chat/stream2")
+    public ResponseEntity<Flux<String>> chatStream2(@RequestParam String message) {
         log.info("开始流式对话: {}", message);
         Flux<String> flux = chatClient.prompt()
                 .user(message)

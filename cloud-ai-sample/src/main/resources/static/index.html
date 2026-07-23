@@ -73,14 +73,14 @@
     </div></header>
 
     <div class="tab-bar"><div class="tab-inner">
-        <button class="tab-btn active" onclick="switchTab('demo')">项目演示</button>
-        <button class="tab-btn" onclick="switchTab('chat')">AI 对话</button>
+        <button class="tab-btn active" onclick="switchTab('chat')">AI 对话</button>
         <button class="tab-btn" onclick="switchTab('deepseek')">DeepSeek</button>
         <button class="tab-btn" onclick="switchTab('memory')">对话记忆</button>
+        <button class="tab-btn" onclick="switchTab('demo')">项目演示</button>
     </div></div>
 
     <!-- 项目演示 Agent -->
-    <div id="tab-demo" class="tab-content active">
+    <div id="tab-demo" class="tab-content">
         <div class="content-inner">
             <div class="desc">
                 AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>，流式输出。<br>
@@ -138,7 +138,7 @@
     </div>
 
     <!-- AI 对话 -->
-    <div id="tab-chat" class="tab-content">
+    <div id="tab-chat" class="tab-content active">
         <div class="content-inner">
             <div class="desc">基础 AI 对话，调用 <code>GET /ai/chat/stream?message=...</code>，流式输出。</div>
             <div class="examples">
@@ -161,7 +161,7 @@
     </div>
 
     <script>
-        let currentTab = 'demo';
+        let currentTab = 'chat';
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
 
