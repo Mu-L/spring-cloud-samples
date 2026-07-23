@@ -13,12 +13,8 @@
 ```shell
 brew install postgresql@18
 brew install pgvector
-# 必须设置 postgres 为超级用户
-psql postgres
-CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';
-exit
-# 初始化数据库（创建用户 ai_user、数据库 ai_demo、启用 pgvector 扩展、建表）
-psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql
+createdb $USER
+psql -f init_ai_demo.sql
 ```
 
 ## 启动

@@ -43,5 +43,5 @@ spring:
     vectorstore:
       pgvector:
         dimensions: 1024           # text-embedding-v3 向量维度
-        initialize-schema: false   # 设为false，手动执行 psql -U postgres -f init_ai_demo.sql
+        initialize-schema: false   # 设为false，手动执行 psql -f init_ai_demo.sql
 
