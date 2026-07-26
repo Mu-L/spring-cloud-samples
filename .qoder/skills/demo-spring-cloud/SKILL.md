@@ -405,7 +405,9 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 > ⏱️ AI 接口调用大模型 API，每次响应通常需 **5~30 秒**。建议所有 curl 命令加 `--max-time 60`。
 > 🔴 **以下所有子场景必须逐一演示，不可跳过任何一项。**
 
-> 前提：OPENAI_API_KEY 已配置，cloud-ai-sample（8888）已启动。
+> 前提：PostgreSQL 已安装，OPENAI_API_KEY 已配置，cloud-ai-sample（8888）已启动。
+
+> PostgreSQL 检查及准备参考章节“Spring AI RAG 模块”
 
 **必做步骤（按顺序）：**
 
