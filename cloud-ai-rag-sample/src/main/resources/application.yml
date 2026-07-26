@@ -5,6 +5,12 @@ spring:
     active: pgvector
   application:
     name: ai-rag-sample
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
@@ -15,8 +21,14 @@ spring:
       embedding:
         model: text-embedding-v3   # Embedding 模型（用于 RAG 向量化）
 
-
 management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
