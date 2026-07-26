@@ -1,6 +1,6 @@
 # 🤖 Spring AI 演示
 
-> 🔴 **以下 11 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
+> 🔴 **以下 6 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
 > 🔴 **禁止用“同理”、“省略”、“以此类推”等理由跳过任何 curl 命令。**
 
 基于 **Spring AI 2.0**，集成阿里云百炼（DashScope）兼容 OpenAI 协议。
@@ -177,34 +177,7 @@ curl --max-time 60 -X POST "http://localhost:8888/ai/vision/compare" \
 >   -d "imageUrl=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
 > ```
 
-## Step 5：DeepSeek 多提供商集成
-
-同一模块内集成 DashScope + DeepSeek 两个提供商，验证 Spring AI 的多模型管理能力。需额外配置 `export DEEPSEEK_API_KEY=your-key`，未配置时跳过此节。
-
-| 接口                         | 说明                  |
-|----------------------------|---------------------|
-| `/deepseek/chat`           | 简单聊天                |
-| `/deepseek/chat/stream`    | 流式输出                |
-| `/deepseek/system-message` | System Message 设定角色 |
-| `/deepseek/creative`       | 创意性对话               |
-| `/deepseek/agent/chat`     | ReAct Agent         |
-
-以下 5 个 curl 必须全部执行（未配置 DEEPSEEK_API_KEY 时跳过并说明）：
-
-```shell
-# 5.1 简单聊天
-curl --max-time 60 --get --data-urlencode "message=你好" "http://localhost:8888/deepseek/chat" | head -c 500
-# 5.2 流式输出
-curl --max-time 60 --get --data-urlencode "message=武汉简介" "http://localhost:8888/deepseek/chat/stream" | head -c 500
-# 5.3 System Message
-curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/deepseek/system-message" | head -c 500
-# 5.4 创意性对话
-curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/deepseek/creative" | head -c 500
-# 5.5 ReAct Agent
-curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/deepseek/agent/chat" | head -c 500
-```
-
-## Step 6：ChatMemory 多轮对话记忆
+## Step 5：ChatMemory 多轮对话记忆
 
 基于 `spring-ai-starter-model-chat-memory-repository-jdbc`，对话历史持久化到 PostgreSQL，支持会话隔离。需前置 PostgreSQL（同 RAG 模块）。
 
@@ -216,32 +189,32 @@ curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适�
 以下 4 个 curl 必须全部执行：
 
 ```shell
-# 6.1 第 1 轮：告诉 AI 你的名字
+# 5.1 第 1 轮：告诉 AI 你的名字
 curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
   -H "Content-Type: application/json" \
   -d '{"conversationId":"session-001","message":"你好，我叫小明"}' | head -c 500
 
-# 6.2 第 2 轮：追问，AI 应记住上下文
+# 5.2 第 2 轮：追问，AI 应记住上下文
 curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
   -H "Content-Type: application/json" \
   -d '{"conversationId":"session-001","message":"我叫什么名字？"}' | head -c 500
 # AI 应回答“小明”，证明记住了上一轮对话
 
-# 6.3 不同会话完全隔离
+# 5.3 不同会话完全隔离
 curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
   -H "Content-Type: application/json" \
   -d '{"conversationId":"session-002","message":"我叫什么名字？"}' | head -c 500
 # AI 不应知道“小明”，证明会话隔离生效
 
-# 6.4 清除会话记忆
+# 5.4 清除会话记忆
 curl --max-time 60 -X DELETE http://localhost:8888/ai/memory/session-001
 ```
 
 **预期结果**：
-- 6.2 AI 回答“小明”
-- 6.3 AI 不知道“小明”
+- 5.2 AI 回答“小明”
+- 5.3 AI 不知道“小明”
 
-## Step 7：PromptTemplate 提示词模板
+## Step 6：PromptTemplate 提示词模板
 
 使用 Spring AI 的 `PromptTemplate` 进行 `{variable}` 占位符替换，演示三种模板场景。
 
@@ -254,17 +227,17 @@ curl --max-time 60 -X DELETE http://localhost:8888/ai/memory/session-001
 以下 3 个 curl 必须全部执行：
 
 ```shell
-# 7.1 产品描述生成
+# 6.1 产品描述生成
 curl --max-time 60 -X POST http://localhost:8888/ai/prompt/product \
   -H "Content-Type: application/json" \
   -d '{"product":"Spring AI 实战手册","category":"技术书籍","tone":"专业且幽默"}' | head -c 500
 
-# 7.2 代码解释
+# 6.2 代码解释
 curl --max-time 60 -X POST http://localhost:8888/ai/prompt/code \
   -H "Content-Type: application/json" \
   -d '{"code":"public record Point(int x, int y) {}","language":"Java","level":"初学者"}' | head -c 500
 
-# 7.3 自定义模板（通用入口，支持任意变量）
+# 6.3 自定义模板（通用入口，支持任意变量）
 curl --max-time 60 -X POST http://localhost:8888/ai/prompt/custom \
   -H "Content-Type: application/json" \
   -d '{"template":"请用{language}写一个{function}的示例代码","variables":{"language":"Python","function":"快速排序"}}' | head -c 500

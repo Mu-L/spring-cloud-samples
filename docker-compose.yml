@@ -214,7 +214,6 @@ services:
       JAVA_OPTS: "-Xmx256m -Xms128m"
       POSTGRES_HOST: host.docker.internal
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
     profiles:
       - ai
       - all

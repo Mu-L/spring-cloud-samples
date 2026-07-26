@@ -5,7 +5,7 @@ description: >
   验证微服务调用、测试网关路由、查看服务注册、执行集成测试、一键部署、环境检查、
   排查微服务问题、了解 Spring Cloud 组件用法、学习 Nacos/Sentinel/Seata/Dubbo/gRPC/Stream/Kafka 时
   使用此技能。也支持演示特定功能：ChatMemory 多轮对话记忆、PromptTemplate 提示词模板、
-  RAG 检索增强生成、Spring AI 视觉识别、Tool Calling、ReAct Agent、DeepSeek 集成、
+  RAG 检索增强生成、Spring AI 视觉识别、Tool Calling、ReAct Agent、
   Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、
   Kafka 4.x 集群消息收发。
   涵盖 16 个模块的完整演示流程。
@@ -423,7 +423,6 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
    - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
 10. **PromptTemplate 提示词模板**（3 个接口）：
     - 产品描述生成、代码解释、自定义模板
-11. **DeepSeek 多提供商**（如已配置 DEEPSEEK_API_KEY）：至少演示 chat + agent
 
 > 完整 curl 命令参考 [spring-ai.md](references/spring-ai.md)
 

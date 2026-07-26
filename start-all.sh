@@ -222,20 +222,17 @@ check_seata() {
 }
 
 check_ai() {
-  # AI: OPENAI_API_KEY / DEEPSEEK_API_KEY + PostgreSQL (ChatMemory JDBC)
-  if [ -n "$OPENAI_API_KEY" ] || [ -n "$DEEPSEEK_API_KEY" ]; then
-    local keys=""
-    [ -n "$OPENAI_API_KEY" ] && keys="OPENAI_API_KEY"
-    [ -n "$DEEPSEEK_API_KEY" ] && keys="${keys:+$keys, }DEEPSEEK_API_KEY"
+  # AI: OPENAI_API_KEY + PostgreSQL (ChatMemory JDBC)
+  if [ -n "$OPENAI_API_KEY" ]; then
     if pg_isready -h localhost -p 5432 &>/dev/null; then
-      echo "[AI] ✓ 已配置: $keys，PostgreSQL 已运行"
+      echo "[AI] ✓ 已配置: OPENAI_API_KEY，PostgreSQL 已运行"
       START_AI=true
     else
-      echo "[AI] ✗ 已配置: $keys，但 PostgreSQL 未运行，跳过 AI 模块"
+      echo "[AI] ✗ 已配置: OPENAI_API_KEY，但 PostgreSQL 未运行，跳过 AI 模块"
       echo "[AI]   ChatMemory JDBC 需要 PostgreSQL，请启动: brew services start postgresql"
     fi
   else
-    echo "[AI] ✗ OPENAI_API_KEY 和 DEEPSEEK_API_KEY 均未设置，跳过 AI 模块"
+    echo "[AI] ✗ OPENAI_API_KEY 未设置，跳过 AI 模块"
   fi
 }
 
@@ -1035,7 +1032,6 @@ demo_urls() {
     echo "     • 聊天对话、流式输出、结构化提取"
     echo "     • Tool Calling、ReAct Agent"
     echo "     • 多模态视觉识别 (6种场景)"
-    echo "     • DeepSeek 多提供商集成 (需配置 DEEPSEEK_API_KEY)"
     echo "     • ChatMemory 多轮对话记忆 (JDBC 持久化到 PostgreSQL)"
     echo "     • PromptTemplate 提示词模板 (产品描述/代码解释/自定义模板)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"

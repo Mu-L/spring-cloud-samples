@@ -1,16 +1,12 @@
 package org.hongxi.cloud.sample.ai.config;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.deepseek.DeepSeekChatModel;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -19,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
  * 定义不同场景的 ChatClient：
  * - 默认的 chatClient 使用 OpenAI（DashScope）模型
  * - visionChatClient 使用支持多模态的模型，用于图像识别
- * - deepSeekChatClient 使用 DeepSeek 模型
  * </p>
  *
  * @author javahongxi
@@ -37,15 +32,6 @@ public class AiConfig {
     }
 
     /**
-     * 标记 OpenAI ChatModel 为 Primary，解决多 Provider 共存时 ChatClient.Builder 的 Bean 歧义
-     */
-    @Bean
-    @Primary
-    public ChatModel primaryChatModel(OpenAiChatModel openAiChatModel) {
-        return openAiChatModel;
-    }
-
-    /**
      * 多模态视觉 ChatClient
      */
     @Bean
@@ -54,14 +40,5 @@ public class AiConfig {
         return builder
                 .defaultOptions(OpenAiChatOptions.builder().model(visionModel))
                 .build();
-    }
-
-    /**
-     * 使用 ChatClient.builder(deepSeekChatModel) 直接基于 DeepSeekChatModel 构建，
-     * 避免使用共享的 ChatClient.Builder（底层绑定 @Primary 的 OpenAiChatModel）。
-     */
-    @Bean
-    public ChatClient deepSeekChatClient(DeepSeekChatModel deepSeekChatModel) {
-        return ChatClient.builder(deepSeekChatModel).build();
     }
 }

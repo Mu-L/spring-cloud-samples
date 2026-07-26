@@ -1,28 +1,28 @@
 # ☁️ Spring Cloud Alibaba Samples
 > 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目 <br>
-> 涵盖 16 个模块，覆盖 HTTP/Dubbo/gRPC 多协议、Seata 分布式事务、Stream 消息驱动、Kafka 4.x 及 AI 多模态与多供应商，支持 AI 一键演示
+> 涵盖 16 个模块，覆盖 HTTP/Dubbo/gRPC 多协议、Seata 分布式事务、Stream 消息驱动、Kafka 4.x 及 AI 多模态，支持 AI 一键演示
 
 ![poster](poster.jpg)
 
 ### 📦 模块介绍
-| 模块                               | 简称                | 端口    | 说明                    |
-|----------------------------------|-------------------|-------|-----------------------|
-| 🔍 cloud-nacos-discovery-sample  | discovery         | 8760  | Nacos Discovery       |
-| ⚙️ cloud-nacos-config-sample     | config            | 8761  | Nacos Config          |
+| 模块                              | 简称              | 端口  | 说明                  |
+|-----------------------------------|-------------------|-------|-----------------------|
+| 🔍 cloud-nacos-discovery-sample   | discovery         | 8760  | Nacos Discovery       |
+| ⚙️ cloud-nacos-config-sample      | config            | 8761  | Nacos Config          |
 | ⚡ cloud-provider-reactive-sample | provider-reactive | 8762  | Reactive Web Provider |
 | ⚡ cloud-consumer-reactive-sample | consumer-reactive | 8763  | Reactive Web Consumer |
-| 🌐 cloud-gateway-sample          | gateway           | 8764  | Spring Cloud Gateway  |
-| 📤 cloud-provider-sample         | provider          | 8765  | Web Provider          |
-| 📥 cloud-consumer-sample         | consumer          | 8766  | Web Consumer          |
-| 🚀 cloud-provider-dubbo-sample   | provider-dubbo    | 50051 | Dubbo Provider        |
-| 🔌 cloud-grpc-server-sample      | grpc-server       | 9090  | gRPC Server           |
-| 📋 cloud-sample-api              | api               | -     | Interface & Proto     |
-| 🧩 cloud-commons                 | commons           | -     | Cloud Commons         |
-| 📨 cloud-stream-sample           | stream            | 8767  | Spring Cloud Stream   |
-| 🔄 cloud-seata-sample            | seata             | ...   | Seata (含 7 个子模块)      |
-| 🤖 cloud-ai-sample               | ai                | 8888  | Spring AI             |
-| 🤖 cloud-ai-rag-sample           | rag               | 8889  | Spring AI · RAG       |
-| 📨 cloud-kafka-sample            | kafka             | 8768  | Kafka 4.x             |
+| 🌐 cloud-gateway-sample           | gateway           | 8764  | Spring Cloud Gateway  |
+| 📤 cloud-provider-sample          | provider          | 8765  | Web Provider          |
+| 📥 cloud-consumer-sample          | consumer          | 8766  | Web Consumer          |
+| 🚀 cloud-provider-dubbo-sample    | provider-dubbo    | 50051 | Dubbo Provider        |
+| 🔌 cloud-grpc-server-sample       | grpc-server       | 9090  | gRPC Server           |
+| 📋 cloud-sample-api               | api               | -     | Interface & Proto     |
+| 🧩 cloud-commons                  | commons           | -     | Cloud Commons         |
+| 📨 cloud-stream-sample            | stream            | 8767  | Spring Cloud Stream   |
+| 🔄 cloud-seata-sample             | seata             | ...   | Seata (含 7 个子模块) |
+| 🤖 cloud-ai-sample                | ai                | 8888  | Spring AI             |
+| 🤖 cloud-ai-rag-sample            | rag               | 8889  | Spring AI · RAG       |
+| 📨 cloud-kafka-sample             | kafka             | 8768  | Kafka 4.x             |
 
 <picture>
   <source srcset="arch.svg" type="image/svg+xml">
@@ -128,7 +128,7 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 | 🛡️ Sentinel 熔断（App）     | 应用级熔断降级（Feign / RestTemplate）                                 | [sentinel-app.md](.qoder/skills/demo-spring-cloud/references/sentinel-app.md)         |
 | 📨 Stream 消息驱动           | 基础消费、定时消息源、消息管道、延迟/顺序/事务消息                                    | [stream.md](.qoder/skills/demo-spring-cloud/references/stream.md)                     |
 | 🔄 Seata 分布式事务           | RestTemplate / Feign / Dubbo 三种调用链路                           | [seata.md](.qoder/skills/demo-spring-cloud/references/seata.md)                       |
-| 🤖 Spring AI             | 对话、Tool Calling、ReAct Agent、视觉识别、DeepSeek 集成                  | [spring-ai.md](.qoder/skills/demo-spring-cloud/references/spring-ai.md)               |
+| 🤖 Spring AI             | 对话、Tool Calling、ReAct Agent、视觉识别、ChatMemory、PromptTemplate                  | [spring-ai.md](.qoder/skills/demo-spring-cloud/references/spring-ai.md)               |
 | 🤖 Spring AI RAG         | PgVector 向量存储，检索增强生成                                  | [spring-ai-rag.md](.qoder/skills/demo-spring-cloud/references/spring-ai-rag.md)       |
 | 📨 Kafka 4.x             | 传统 Consumer Group、Share Groups、事务消息                           | [kafka.md](.qoder/skills/demo-spring-cloud/references/kafka.md)                       |
 

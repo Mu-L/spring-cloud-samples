@@ -193,7 +193,6 @@ public class ProjectDemoTools {
         // 环境变量
         sb.append("\n【环境变量】\n");
         sb.append("  OPENAI_API_KEY:              ").append(System.getenv("OPENAI_API_KEY") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
-        sb.append("  DEEPSEEK_API_KEY:              ").append(System.getenv("DEEPSEEK_API_KEY") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
         sb.append("  SPRING_CLOUD_NACOS_USERNAME:  ").append(System.getenv("SPRING_CLOUD_NACOS_USERNAME") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
         sb.append("  SPRING_CLOUD_NACOS_PASSWORD:  ").append(System.getenv("SPRING_CLOUD_NACOS_PASSWORD") != null ? "✓ 已设置" : "✗ 未设置").append("\n");
 
