@@ -436,7 +436,7 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 ```bash
 psql -U postgres -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" || echo "✗ PostgreSQL 未运行"
 ```
-若未安装：`brew install postgresql@17 pgvector && brew services start postgresql@17 && createuser -s postgres 2>/dev/null || true && psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql`
+若未安装：`brew install postgresql@18 pgvector && brew services start postgresql@18 && createdb $USER 2>/dev/null || true && psql -f init_ai_demo.sql`
 
 > 前提：PostgreSQL + pgvector 已安装，OPENAI_API_KEY 已配置，cloud-ai-rag-sample（8889）已启动。
 

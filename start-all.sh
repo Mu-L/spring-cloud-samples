@@ -246,8 +246,9 @@ check_rag() {
     START_RAG=true
   elif [ -n "$OPENAI_API_KEY" ]; then
     echo "[RAG] ✗ PostgreSQL 未运行，跳过 AI RAG 模块"
-    echo "[RAG]   如需启用，请安装: brew install postgresql pgvector && brew services start postgresql"
-    echo "[RAG]   然后初始化: psql -U postgres -f cloud-ai-rag-sample/init_ai_demo.sql"
+    echo "[RAG]   如需启用，请安装: brew install postgresql@18 pgvector && brew services start postgresql@18"
+    echo "[RAG]   创建系统用户数据库: createdb $USER"
+    echo "[RAG]   然后初始化: psql -f init_ai_demo.sql"
   else
     echo "[RAG] ✗ 未配置 OPENAI_API_KEY，跳过 AI RAG 模块"
   fi
