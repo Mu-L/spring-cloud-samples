@@ -10,6 +10,14 @@ app:
     tx-topic: tx-demo-topic
 
 spring:
+  application:
+    name: kafka-sample
+  cloud:
+    nacos:
+      username: nacos
+      password: 7fDJZBbiLzO2
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
   kafka:
     bootstrap-servers: localhost:9092,localhost:9094,localhost:9096
     consumer:
@@ -22,6 +30,13 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
 management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:

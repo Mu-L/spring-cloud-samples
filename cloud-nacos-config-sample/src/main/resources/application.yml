@@ -10,6 +10,21 @@ spring:
       password: 7fDJZBbiLzO2
       config:
         serverAddr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
   config:
     import:
       - nacos:cloud-agent.properties?refreshEnabled=true&group=DEFAULT_GROUP
+
+management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info
