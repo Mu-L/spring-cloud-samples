@@ -433,7 +433,7 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 
 **按需准备 PostgreSQL + pgvector（演示前检查）：**
 ```bash
-psql -U postgres -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" || echo "✗ PostgreSQL 未运行"
+psql -c "SELECT 1" &>/dev/null && echo "✓ PostgreSQL 已运行" || echo "✗ PostgreSQL 未运行"
 ```
 若未安装：`brew install postgresql@18 pgvector && brew services start postgresql@18 && createdb $USER 2>/dev/null || true && psql -f init_ai_demo.sql`
 
