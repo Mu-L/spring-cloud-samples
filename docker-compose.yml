@@ -7,7 +7,7 @@
 # 前置条件 (本地中间件):
 #   Nacos:      localhost:8848
 #   RocketMQ:   localhost:9876
-#   PostgreSQL: localhost:5432
+#   PostgreSQL: localhost:5432 (仅 RAG 模块需要)
 #   MySQL:      localhost:3306
 #
 # 使用:
@@ -212,7 +212,6 @@ services:
       - "8888:8888"
     environment:
       JAVA_OPTS: "-Xmx256m -Xms128m"
-      POSTGRES_HOST: host.docker.internal
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     profiles:
       - ai

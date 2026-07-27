@@ -1,8 +1,6 @@
 server:
   port: 8889
 spring:
-  profiles:
-    active: pgvector
   application:
     name: ai-rag-sample
   cloud:
@@ -11,6 +9,10 @@ spring:
       password: 7fDJZBbiLzO2
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/ai_demo
+    username: ai_user
+    password: ai_user
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
@@ -20,6 +22,15 @@ spring:
         temperature: 0.2
       embedding:
         model: text-embedding-v3   # Embedding 模型（用于 RAG 向量化）
+    vectorstore:
+      pgvector:
+        dimensions: 1024           # text-embedding-v3 向量维度
+        initialize-schema: false   # 设为false，手动在项目根目录执行 psql -f init_ai_demo.sql
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always  # 自动创建 spring_ai_chat_memory 表
 
 management:
   otlp:
@@ -33,19 +44,3 @@ management:
     web:
       exposure:
         include: health,info
-
----
-spring:
-  config:
-    activate:
-      on-profile: pgvector
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/ai_demo
-    username: ai_user
-    password: ai_user
-  ai:
-    vectorstore:
-      pgvector:
-        dimensions: 1024           # text-embedding-v3 向量维度
-        initialize-schema: false   # 设为false，手动在项目根目录执行 psql -f init_ai_demo.sql
-

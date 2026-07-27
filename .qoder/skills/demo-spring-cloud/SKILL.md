@@ -54,7 +54,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 
 当用户说"演示本项目"时，按以下流程执行：
 
-1. **环境检查与准备**：仅检查 3 项基本前置条件：JDK → Nacos → 安装依赖模块。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL、Redis）不在启动前统一检查，而是在对应模块演示时按需准备
+1. **环境检查与准备**：仅检查 3 项基本前置条件：JDK → Nacos → 安装依赖模块。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL）不在启动前统一检查，而是在对应模块演示时按需准备
 2. **服务启动**：执行 `sh start-all.sh` 启动所有核心模块（🔴脚本执行时间较长，必须分阶段读取已完成的输出）
 3. **基础验证**：start-all.sh 自动执行服务注册、健康检查、基础调用链路、网关路由验证
 4. **深度演示**：按下方"演示与验证"章节的 9 个场景逐一执行（Trace → Nacos Config → Sentinel Gateway → Sentinel App → Stream → Seata → Spring AI → RAG → Kafka）
@@ -77,7 +77,7 @@ tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, 
 > unset SERVER__PORT
 > ```
 
-> 🔴 **精简前置原则**：启动前仅检查 **JDK → Nacos → 安装依赖模块** 3 项基本前置条件。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL、Redis）**不在启动前统一检查**，而是在对应模块演示时按需准备，避免复杂的环境检查阻碍演示流程。
+> 🔴 **精简前置原则**：启动前仅检查 **JDK → Nacos → 安装依赖模块** 3 项基本前置条件。其他中间件（MySQL、RocketMQ、Seata Server、Kafka、PostgreSQL）**不在启动前统一检查**，而是在对应模块演示时按需准备，避免复杂的环境检查阻碍演示流程。
 
 ### 1. JDK 17+（必须）
 
@@ -282,7 +282,7 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 
 | 模块                  | 端口                    | 说明                                                       |
 |---------------------|-----------------------|----------------------------------------------------------|
-| cloud-ai-sample     | 8888                  | Spring AI，需配置 OPENAI_API_KEY                             |
+| cloud-ai-sample     | 8888                  | Spring AI，仅需 OPENAI_API_KEY（内存 ChatMemory）                 |
 | cloud-ai-rag-sample | 8889                  | Spring AI · RAG，需 PostgreSQL + pgvector + OPENAI_API_KEY |
 | cloud-stream-sample | 8767                  | 需先安装并启动 RocketMQ                                         |
 | cloud-seata-sample  | 18081-18084 + 3 Dubbo | 需 MySQL + Seata Server，含 7 个子模块                          |
@@ -405,9 +405,7 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 > ⏱️ AI 接口调用大模型 API，每次响应通常需 **5~30 秒**。建议所有 curl 命令加 `--max-time 60`。
 > 🔴 **以下所有子场景必须逐一演示，不可跳过任何一项。**
 
-> 前提：PostgreSQL 已安装，OPENAI_API_KEY 已配置，cloud-ai-sample（8888）已启动。
-
-> PostgreSQL 检查及准备参考章节“Spring AI RAG 模块”
+> 前提：OPENAI_API_KEY 已配置，cloud-ai-sample（8888）已启动。
 
 **必做步骤（按顺序）：**
 
@@ -418,13 +416,13 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 5. **多轮对话**（2 轮即可）：发送 2 次 `/ai/advanced/conversation` 请求，第 2 轮追问验证上下文记忆
 6. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"`
 7. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"`
-8. **视觉识别**（6 个接口全部演示，不可跳过）：
+8. **ChatMemory 多轮对话记忆**（内存存储）：
+   - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
+9. **PromptTemplate 提示词模板**（3 个接口）：
+   - 产品描述生成、代码解释、自定义模板
+10. **视觉识别**（6 个接口全部演示，不可跳过）：
    - 先预检查 6 个图片 URL 可用性
    - URL 图片分析、图片上传分析、OCR 文字识别、图表分析、代码截图转代码、多图片对比
-9. **ChatMemory 多轮对话记忆**（需 PostgreSQL）：
-   - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
-10. **PromptTemplate 提示词模板**（3 个接口）：
-    - 产品描述生成、代码解释、自定义模板
 
 > 完整 curl 命令参考 [spring-ai.md](references/spring-ai.md)
 
@@ -489,7 +487,7 @@ nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
 | RAG 模块连接 PostgreSQL 失败 | 确认 PostgreSQL 已运行（`pg_isready`），已执行 `init_ai_demo.sql` 初始化数据库                                    |
 | RAG 摄入返回 0 chunks      | 检查 content 是否为空，确认 PgVector 扩展已启用（`\connect ai_demo` 后 `CREATE EXTENSION vector`）                |
 | RAG 查询回答未引用参考资料        | 确认文档已成功摄入（ingest 返回 chunks > 0），检查 topK 参数是否合理                                                   |
-| ChatMemory 无记忆效果       | 确认 JDBC 表 `SPRING_AI_CHAT_MEMORY` 已自动创建（ai 模块端口 8888），检查 conversationId 是否一致                     |
+| ChatMemory 无记忆效果       | 确认 conversationId 是否一致，AI 模块使用内存存储，重启后记忆会清空                                                     |
 | Kafka 模块连接失败           | 确认 Kafka 集群已启动（端口 9092/9094/9096），已创建 share-demo-topic、share-demo-topic-explicit 和 tx-demo-topic |
 | Stream 发送消息报超时异常       | 重启 Broker                                                                                        |
 | Nacos Console 需要登录       | Nacos 应已切换为免密模式，检查 `application.properties` 中 `nacos.core.auth.console.enabled` 是否为 `false`，修改后重启 Nacos            |

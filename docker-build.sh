@@ -16,7 +16,7 @@
 #   ./docker-build.sh status      # 查看容器状态
 #   ./docker-build.sh logs [svc]  # 查看日志
 #
-# 前置条件: 本地中间件已启动 (Nacos/RocketMQ/MySQL/PostgreSQL)
+# 前置条件: 本地中间件已启动 (Nacos/RocketMQ/MySQL，RAG 模块还需 PostgreSQL)
 #
 
 set -e
@@ -291,7 +291,7 @@ case "${1:-help}" in
     echo "  logs [svc]  查看日志"
     echo ""
     echo "快速开始:"
-    echo "  1. 确保本地中间件已启动 (Nacos/RocketMQ/MySQL/PostgreSQL)"
+    echo "  1. 确保本地中间件已启动 (Nacos/RocketMQ/MySQL，RAG 模块还需 PostgreSQL)"
     echo "  2. $0 build    # 首次构建"
     echo "  3. $0 up       # 启动核心服务"
     echo "  4. $0 down     # 停止"

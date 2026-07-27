@@ -114,7 +114,75 @@ curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适�
 
 通过 SSE 端点 `http://localhost:8888/sse` 暴露工具，支持跨进程 Agent 通信。
 
-## Step 4：多模态视觉识别
+## Step 4：ChatMemory 多轮对话记忆
+
+使用内存存储（`InMemoryChatMemoryRepository`），支持会话隔离。无需数据库，重启后记忆清空。
+
+| 接口                                   | 说明       |
+|--------------------------------------|----------|
+| `POST /ai/memory/chat`               | 带记忆的多轮对话 |
+| `DELETE /ai/memory/{conversationId}` | 清除会话记忆   |
+
+以下 4 个 curl 必须全部执行：
+
+```shell
+# 5.1 第 1 轮：告诉 AI 你的名字
+curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"session-001","message":"你好，我叫小明"}' | head -c 500
+
+# 5.2 第 2 轮：追问，AI 应记住上下文
+curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"session-001","message":"我叫什么名字？"}' | head -c 500
+# AI 应回答“小明”，证明记住了上一轮对话
+
+# 5.3 不同会话完全隔离
+curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"session-002","message":"我叫什么名字？"}' | head -c 500
+# AI 不应知道“小明”，证明会话隔离生效
+
+# 5.4 清除会话记忆
+curl --max-time 60 -X DELETE http://localhost:8888/ai/memory/session-001
+```
+
+**预期结果**：
+- 5.2 AI 回答“小明”
+- 5.3 AI 不知道“小明”
+
+## Step 5：PromptTemplate 提示词模板
+
+使用 Spring AI 的 `PromptTemplate` 进行 `{variable}` 占位符替换，演示三种模板场景。
+
+| 接口                        | 说明          |
+|---------------------------|-------------|
+| `POST /ai/prompt/product` | 产品描述生成      |
+| `POST /ai/prompt/code`    | 代码解释        |
+| `POST /ai/prompt/custom`  | 自定义模板（通用入口） |
+
+以下 3 个 curl 必须全部执行：
+
+```shell
+# 6.1 产品描述生成
+curl --max-time 60 -X POST http://localhost:8888/ai/prompt/product \
+  -H "Content-Type: application/json" \
+  -d '{"product":"Spring AI 实战手册","category":"技术书籍","tone":"专业且幽默"}' | head -c 500
+
+# 6.2 代码解释
+curl --max-time 60 -X POST http://localhost:8888/ai/prompt/code \
+  -H "Content-Type: application/json" \
+  -d '{"code":"public record Point(int x, int y) {}","language":"Java","level":"初学者"}' | head -c 500
+
+# 6.3 自定义模板（通用入口，支持任意变量）
+curl --max-time 60 -X POST http://localhost:8888/ai/prompt/custom \
+  -H "Content-Type: application/json" \
+  -d '{"template":"请用{language}写一个{function}的示例代码","variables":{"language":"Python","function":"快速排序"}}' | head -c 500
+```
+
+**预期结果**：每个接口返回基于模板生成的文本内容。
+
+## Step 6：多模态视觉识别
 
 > 🔴 **以下 6 个视觉识别接口必须全部演示，不可跳过任何一个。**
 
@@ -176,71 +244,3 @@ curl --max-time 60 -X POST "http://localhost:8888/ai/vision/compare" \
 > curl -s -X POST "http://localhost:8888/ai/vision/analyze-url" \
 >   -d "imageUrl=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
 > ```
-
-## Step 5：ChatMemory 多轮对话记忆
-
-基于 `spring-ai-starter-model-chat-memory-repository-jdbc`，对话历史持久化到 PostgreSQL，支持会话隔离。需前置 PostgreSQL（同 RAG 模块）。
-
-| 接口                                   | 说明       |
-|--------------------------------------|----------|
-| `POST /ai/memory/chat`               | 带记忆的多轮对话 |
-| `DELETE /ai/memory/{conversationId}` | 清除会话记忆   |
-
-以下 4 个 curl 必须全部执行：
-
-```shell
-# 5.1 第 1 轮：告诉 AI 你的名字
-curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
-  -H "Content-Type: application/json" \
-  -d '{"conversationId":"session-001","message":"你好，我叫小明"}' | head -c 500
-
-# 5.2 第 2 轮：追问，AI 应记住上下文
-curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
-  -H "Content-Type: application/json" \
-  -d '{"conversationId":"session-001","message":"我叫什么名字？"}' | head -c 500
-# AI 应回答“小明”，证明记住了上一轮对话
-
-# 5.3 不同会话完全隔离
-curl --max-time 60 -X POST http://localhost:8888/ai/memory/chat \
-  -H "Content-Type: application/json" \
-  -d '{"conversationId":"session-002","message":"我叫什么名字？"}' | head -c 500
-# AI 不应知道“小明”，证明会话隔离生效
-
-# 5.4 清除会话记忆
-curl --max-time 60 -X DELETE http://localhost:8888/ai/memory/session-001
-```
-
-**预期结果**：
-- 5.2 AI 回答“小明”
-- 5.3 AI 不知道“小明”
-
-## Step 6：PromptTemplate 提示词模板
-
-使用 Spring AI 的 `PromptTemplate` 进行 `{variable}` 占位符替换，演示三种模板场景。
-
-| 接口                        | 说明          |
-|---------------------------|-------------|
-| `POST /ai/prompt/product` | 产品描述生成      |
-| `POST /ai/prompt/code`    | 代码解释        |
-| `POST /ai/prompt/custom`  | 自定义模板（通用入口） |
-
-以下 3 个 curl 必须全部执行：
-
-```shell
-# 6.1 产品描述生成
-curl --max-time 60 -X POST http://localhost:8888/ai/prompt/product \
-  -H "Content-Type: application/json" \
-  -d '{"product":"Spring AI 实战手册","category":"技术书籍","tone":"专业且幽默"}' | head -c 500
-
-# 6.2 代码解释
-curl --max-time 60 -X POST http://localhost:8888/ai/prompt/code \
-  -H "Content-Type: application/json" \
-  -d '{"code":"public record Point(int x, int y) {}","language":"Java","level":"初学者"}' | head -c 500
-
-# 6.3 自定义模板（通用入口，支持任意变量）
-curl --max-time 60 -X POST http://localhost:8888/ai/prompt/custom \
-  -H "Content-Type: application/json" \
-  -d '{"template":"请用{language}写一个{function}的示例代码","variables":{"language":"Python","function":"快速排序"}}' | head -c 500
-```
-
-**预期结果**：每个接口返回基于模板生成的文本内容。

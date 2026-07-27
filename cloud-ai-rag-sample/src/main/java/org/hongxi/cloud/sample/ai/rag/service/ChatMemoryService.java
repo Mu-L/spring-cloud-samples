@@ -1,18 +1,18 @@
-package org.hongxi.cloud.sample.ai.service;
+package org.hongxi.cloud.sample.ai.rag.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.stereotype.Service;
 
 /**
  * ChatMemory 多轮对话服务
  * <p>
- * 演示基于内存的对话记忆能力：
+ * 演示基于 JDBC（PostgreSQL）持久化的对话记忆能力：
  * <ul>
  *   <li>通过 {@link MessageWindowChatMemory} 管理滑动窗口大小的对话历史</li>
  *   <li>通过 {@link MessageChatMemoryAdvisor} 自动拦截 ChatClient 请求/响应，完成记忆的加载与保存</li>
@@ -30,16 +30,17 @@ public class ChatMemoryService {
     private final ChatClient chatClient;
     private final ChatMemory chatMemory;
 
-    public ChatMemoryService(ChatClient.Builder chatClientBuilder) {
-        // 构建基于内存的对话记忆（滑动窗口保留最近 20 条消息）
+    public ChatMemoryService(ChatClient.Builder chatClientBuilder,
+                             ChatMemoryRepository chatMemoryRepository) {
+        // 构建基于 JDBC 的对话记忆（滑动窗口保留最近 20 条消息）
         this.chatMemory = MessageWindowChatMemory.builder()
-                .chatMemoryRepository(new InMemoryChatMemoryRepository())
+                .chatMemoryRepository(chatMemoryRepository)
                 .maxMessages(20)
                 .build();
 
         // 通过 Advisor 机制自动管理对话历史：
-        // 请求前 → 从内存加载历史消息并注入 Prompt
-        // 响应后 → 将本轮 user + assistant 消息写回内存
+        // 请求前 → 从 DB 加载历史消息并注入 Prompt
+        // 响应后 → 将本轮 user + assistant 消息写回 DB
         this.chatClient = chatClientBuilder
                 .defaultAdvisors(
                         MessageChatMemoryAdvisor.builder(chatMemory).build()

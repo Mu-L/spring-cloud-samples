@@ -1,8 +1,8 @@
-package org.hongxi.cloud.sample.ai.controller;
+package org.hongxi.cloud.sample.ai.rag.controller;
 
-import org.hongxi.cloud.sample.ai.service.ChatMemoryService;
-import org.hongxi.cloud.sample.ai.vo.ChatRequest;
-import org.hongxi.cloud.sample.ai.vo.ChatResponse;
+import org.hongxi.cloud.sample.ai.rag.service.ChatMemoryService;
+import org.hongxi.cloud.sample.ai.rag.vo.ChatRequest;
+import org.hongxi.cloud.sample.ai.rag.vo.ChatResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * ChatMemory 多轮对话控制器
  * <p>
- * 提供基于内存对话记忆的 REST 接口：
+ * 提供基于 JDBC 持久化对话记忆的 REST 接口：
  * <ul>
  *   <li>POST /ai/memory/chat  — 带记忆的多轮对话（相同 conversationId 共享上下文）</li>
  *   <li>DELETE /ai/memory/{conversationId} — 清除指定会话的历史记忆</li>

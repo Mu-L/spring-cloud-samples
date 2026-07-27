@@ -222,15 +222,10 @@ check_seata() {
 }
 
 check_ai() {
-  # AI: OPENAI_API_KEY + PostgreSQL (ChatMemory JDBC)
+  # AI: OPENAI_API_KEY（默认内存 ChatMemory，无需数据库）
   if [ -n "$OPENAI_API_KEY" ]; then
-    if pg_isready -h localhost -p 5432 &>/dev/null; then
-      echo "[AI] ✓ 已配置: OPENAI_API_KEY，PostgreSQL 已运行"
-      START_AI=true
-    else
-      echo "[AI] ✗ 已配置: OPENAI_API_KEY，但 PostgreSQL 未运行，跳过 AI 模块"
-      echo "[AI]   ChatMemory JDBC 需要 PostgreSQL，请启动: brew services start postgresql"
-    fi
+    echo "[AI] ✓ 已配置: OPENAI_API_KEY，将启动 AI 模块 (端口 8888)"
+    START_AI=true
   else
     echo "[AI] ✗ OPENAI_API_KEY 未设置，跳过 AI 模块"
   fi
@@ -731,9 +726,9 @@ install_all() {
     cd "$BASE_DIR"
   fi
 
-  # PostgreSQL
+  # PostgreSQL（仅 RAG 模块需要）
   echo ""
-  echo "--- PostgreSQL ---"
+  echo "--- PostgreSQL (仅 AI RAG 模块需要) ---"
   if pg_isready -q 2>/dev/null; then
     echo "✓ PostgreSQL 已运行"
   elif command -v psql &>/dev/null; then
@@ -1031,9 +1026,9 @@ demo_urls() {
     echo "  6️⃣  Spring AI 深度功能 (端口 8888):"
     echo "     • 聊天对话、流式输出、结构化提取"
     echo "     • Tool Calling、ReAct Agent"
-    echo "     • 多模态视觉识别 (6种场景)"
-    echo "     • ChatMemory 多轮对话记忆 (JDBC 持久化到 PostgreSQL)"
+    echo "     • ChatMemory 多轮对话记忆 (内存)"
     echo "     • PromptTemplate 提示词模板 (产品描述/代码解释/自定义模板)"
+    echo "     • 多模态视觉识别 (6种场景)"
     echo "     → 使用 demo-spring-cloud skill 进行验证"
     echo ""
     echo "  7️⃣  Spring AI RAG 模块 (端口 8889):"

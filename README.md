@@ -85,7 +85,7 @@ sh start-all.sh stop     # 停止所有服务
 
 ```
 Mac 宿主机
-├── 本地中间件: Nacos(8848) / RocketMQ(9876) / MySQL(3306) / PostgreSQL(5432)
+├── 本地中间件: Nacos(8848) / RocketMQ(9876) / MySQL(3306) / PostgreSQL(5432, 仅 RAG 模块)
 │
 └── Docker 容器 (通过 host.docker.internal 连宿主机)
     ├── 核心微服务 (9个): gateway / consumer / provider / grpc-server ...
@@ -97,7 +97,7 @@ Mac 宿主机
 **快速开始**
 
 ```shell
-# 1. 启动本地中间件（Nacos / RocketMQ / MySQL / PostgreSQL）
+# 1. 启动本地中间件（Nacos / RocketMQ / MySQL，RAG 模块还需 PostgreSQL）
 ./start-all.sh infra
 
 # 2. Maven 打包 + 构建所有 Docker 镜像
