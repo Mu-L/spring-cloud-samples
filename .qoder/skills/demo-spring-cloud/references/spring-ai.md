@@ -67,27 +67,21 @@ curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件
 |-------------------------------|-------------------------|
 | `/ai/advanced/system-message` | System Message 设定 AI 角色 |
 | `/ai/advanced/few-shot`       | Few-shot Prompting 示例引导 |
-| `/ai/advanced/conversation`   | 多轮对话（连续发送，AI 记住上下文）     |
 | `/ai/advanced/creative`       | 带温度参数的创意性对话             |
 
-以下 5 个 curl 必须全部执行：
+以下 3 个 curl 必须全部执行：
 
 ```shell
 # 2.1 System Message 设定 AI 角色
 curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message" | head -c 500
 # 2.2 Few-shot 示例引导
 curl --max-time 60 --get --data-urlencode "message=创建一个列表，包含 1, 2, 3" "http://localhost:8888/ai/advanced/few-shot"
-# 2.3 多轮对话 - 第 1 轮
-curl --max-time 60 --get --data-urlencode "message=我喜欢Java和Spring Boot" "http://localhost:8888/ai/advanced/conversation" | head -c 500
-# 2.4 多轮对话 - 第 2 轮（验证上下文记忆）
-curl --max-time 60 --get --data-urlencode "message=那我应该用什么技术栈来做微服务" "http://localhost:8888/ai/advanced/conversation" | head -c 500
-# 2.5 带温度参数的创意性对话
+# 2.3 带温度参数的创意性对话
 curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故事，不超过300字" "http://localhost:8888/ai/advanced/creative" | head -c 500
 ```
 
 **预期结果**：
-- 2.3 + 2.4 第 2 轮回答应体现对第 1 轮内容的记忆
-- 其他接口返回 AI 回复文本
+- 各接口返回 AI 回复文本
 
 ## Step 3：Tool Calling & MCP Server
 

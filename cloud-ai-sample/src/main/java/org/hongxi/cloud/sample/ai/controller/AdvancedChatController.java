@@ -3,20 +3,15 @@ package org.hongxi.cloud.sample.ai.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * ChatClient 高级用法控制器
  * <p>
- * 演示 System Message、Few-shot Prompting、多轮对话等高级特性
+ * 演示 System Message、Few-shot Prompting、结构化提取、温度参数等高级特性
  * </p>
  *
  * @author javahongxi
@@ -28,11 +23,6 @@ public class AdvancedChatController {
     private static final Logger log = LoggerFactory.getLogger(AdvancedChatController.class);
 
     private final ChatClient chatClient;
-
-    // 缓存最近的用户消息
-    private final List<UserMessage> userMessages = new CopyOnWriteArrayList<>();
-    // 缓存最近的 AI 回复
-    private final List<AssistantMessage> assistantMessages = new CopyOnWriteArrayList<>();
 
     public AdvancedChatController(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
@@ -118,40 +108,6 @@ public class AdvancedChatController {
                 .user(message)
                 .call()
                 .entity(UserInfo.class);
-    }
-
-    /**
-     * 多轮对话（手动维护上下文）
-     *
-     * @param message 当前用户消息
-     * @return AI 回复
-     */
-    @RequestMapping("/conversation")
-    public String conversation(@RequestParam String message) {
-        log.info("多轮对话 - 当前消息: {}", message);
-
-        List<Message> messages = new ArrayList<>();
-        messages.addAll(userMessages);
-        messages.addAll(assistantMessages);
-
-        String response = chatClient.prompt()
-                .messages(messages)
-                .user(message)
-                .call()
-                .content();
-        log.info("AI 回复: {}", response);
-
-        if (userMessages.size() > 10) {
-            userMessages.remove(0);
-            assistantMessages.remove(0);
-        } else {
-            userMessages.add(UserMessage.builder().text(message).build());
-            String summary = response == null ? "" : response.length() > 100 ?
-                                                     response.substring(0, 100) + "..." : response;
-            assistantMessages.add(AssistantMessage.builder().content(summary).build());
-        }
-
-        return response;
     }
 
     /**

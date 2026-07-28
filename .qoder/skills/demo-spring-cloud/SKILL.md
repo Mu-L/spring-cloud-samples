@@ -413,14 +413,13 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 2. **流式输出**：`curl --max-time 60 --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"`
 3. **结构化输出**：`curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"`
 4. **System Message**：`curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"`
-5. **多轮对话**（2 轮即可）：发送 2 次 `/ai/advanced/conversation` 请求，第 2 轮追问验证上下文记忆
-6. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"`
-7. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"`
-8. **ChatMemory 多轮对话记忆**（内存存储）：
+5. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"`
+6. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"`
+7. **ChatMemory 多轮对话记忆**（内存存储）：
    - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
-9. **PromptTemplate 提示词模板**（3 个接口）：
+8. **PromptTemplate 提示词模板**（3 个接口）：
    - 产品描述生成、代码解释、自定义模板
-10. **视觉识别**（6 个接口全部演示，不可跳过）：
+9. **视觉识别**（6 个接口全部演示，不可跳过）：
    - 先预检查 6 个图片 URL 可用性
    - URL 图片分析、图片上传分析、OCR 文字识别、图表分析、代码截图转代码、多图片对比
 
