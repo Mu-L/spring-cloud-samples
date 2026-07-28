@@ -275,14 +275,24 @@ check_rag() {
 }
 
 check_kafka() {
-  # Kafka: 检查集群是否运行
+  # Kafka: 检查集群是否运行，未运行则尝试自动启动
   if nc -z 127.0.0.1 9092 2>/dev/null; then
     echo "[Kafka] ✓ Kafka 集群已运行 (端口 9092)"
     START_KAFKA=true
     create_kafka_topics
+  elif find "$HOME" -maxdepth 1 -type d -name 'kafka_*' 2>/dev/null | grep -q .; then
+    echo "[Kafka] Kafka 集群未运行，正在自动启动..."
+    local kafka_script="$BASE_DIR/.qoder/skills/demo-spring-cloud/scripts/kafka.sh"
+    if [ -f "$kafka_script" ] && bash "$kafka_script" start > "$LOG_DIR/kafka-cluster.log" 2>&1; then
+      echo "[Kafka] ✓ Kafka 集群已启动"
+      START_KAFKA=true
+      create_kafka_topics
+    else
+      echo "[Kafka] ✗ Kafka 集群启动失败，跳过 Kafka 模块"
+    fi
   else
-    echo "[Kafka] ✗ Kafka 集群未运行，跳过 Kafka 模块"
-    echo "[Kafka]   如需启用，请参考 references/kafka.md 部署 Kafka 4.x 集群"
+    echo "[Kafka] ✗ Kafka 集群未运行且未安装，跳过 Kafka 模块"
+    echo "[Kafka]   如需启用，请执行: bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start"
   fi
 }
 
@@ -322,6 +332,12 @@ create_rocketmq_topics() {
     echo "[Stream] ✗ 未找到 mqadmin，跳过 Topic 创建"
     return
   fi
+  # 标记文件：RocketMQ 安装路径变化时会重新创建
+  local marker_file="$BASE_DIR/.rocketmq-topics-created-$(basename "$rocketmq_home")"
+  if [ -f "$marker_file" ]; then
+    echo "[Stream] ✓ Topic 和消费组已就绪（跳过重复创建）"
+    return
+  fi
   echo "[Stream] 检查并创建 RocketMQ Topic 和消费组 ..."
   local mqadmin="$rocketmq_home/bin/mqadmin"
   # NORMAL Topics
@@ -350,6 +366,8 @@ create_rocketmq_topics() {
     && echo "  ✓ Topic [stream-tx-topic] (TRANSACTION)" || true
   $mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g stream-tx-group &>/dev/null \
     && echo "  ✓ Group [stream-tx-group]" || true
+  # 写入标记文件，下次跳过
+  echo "$(date)" > "$marker_file"
 }
 
 start_seata_server() {
@@ -421,14 +439,22 @@ service.vgroupMapping.storage-dubbo-service-tx-group=default"
 create_kafka_topics() {
   local kafka_home
   kafka_home=$(find "$HOME" -maxdepth 1 -type d -name 'kafka_*' | sort -V | tail -1)
-  if [ -n "$kafka_home" ] && [ -x "$kafka_home/bin/kafka-topics.sh" ]; then
-    echo "[Kafka] 检查并创建 Topic (3分区 3副本) ..."
-    for topic in share-demo-topic share-demo-topic-explicit tx-demo-topic; do
-      "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 \
-        --create --topic "$topic" --partitions 3 --replication-factor 3 --if-not-exists 2>/dev/null \
-        && echo "  ✓ Topic [$topic] 已就绪" || true
-    done
+  if [ -z "$kafka_home" ] || [ ! -x "$kafka_home/bin/kafka-topics.sh" ]; then
+    return
   fi
+  # 标记文件：Kafka 安装路径变化时会重新创建
+  local marker_file="$BASE_DIR/.kafka-topics-created-$(basename "$kafka_home")"
+  if [ -f "$marker_file" ]; then
+    echo "[Kafka] ✓ Topic 已就绪（跳过重复创建）"
+    return
+  fi
+  echo "[Kafka] 检查并创建 Topic (3分区 3副本) ..."
+  for topic in share-demo-topic share-demo-topic-explicit tx-demo-topic; do
+    "$kafka_home/bin/kafka-topics.sh" --bootstrap-server localhost:9092 \
+      --create --topic "$topic" --partitions 3 --replication-factor 3 --if-not-exists 2>/dev/null \
+      && echo "  ✓ Topic [$topic] 已就绪" || true
+  done
+  echo "$(date)" > "$marker_file"
 }
 
 start_single() {
@@ -650,9 +676,13 @@ stop_all() {
     echo "未发现外部启动的模块进程"
   fi
 
-  # 停止 RocketMQ 和 Seata Server
+  # 停止 RocketMQ、Seata Server 和 Kafka
   pkill -f "rocketmq" 2>/dev/null || true
   pkill -f "seata.*spring-boot:run" 2>/dev/null || true
+  local kafka_script="$BASE_DIR/.qoder/skills/demo-spring-cloud/scripts/kafka.sh"
+  if [ -f "$kafka_script" ] && nc -z 127.0.0.1 9092 2>/dev/null; then
+    bash "$kafka_script" stop > /dev/null 2>&1 || true
+  fi
   sleep 1
   pgrep -f "rocketmq" 2>/dev/null | xargs kill -9 2>/dev/null || true
   rm -rf "$LOG_DIR" "$PID_DIR" "$BASE_DIR/derby.log" "$BASE_DIR/work"
@@ -819,11 +849,48 @@ cmd_infra() {
 }
 
 build_all() {
+  local force="$1"
   echo "========== 打包所有模块 =========="
   cd "$BASE_DIR"
+  local build_marker="$BASE_DIR/.last-build-hash"
+  local source_changed=true
+
+  if [ "$force" = "true" ]; then
+    : # 强制打包，跳过检测
+  elif command -v git &>/dev/null && git rev-parse --git-dir &>/dev/null; then
+    # 策略 1：Git 可用 — 比较 HEAD + 未提交变更
+    local current_hash
+    current_hash=$(git rev-parse HEAD 2>/dev/null)
+    if [ -f "$build_marker" ] && [ "$(cat "$build_marker")" = "$current_hash" ]; then
+      local dirty
+      dirty=$(git diff --name-only 2>/dev/null | grep -E '\.(java|yml|yaml|xml|properties|proto)$' || true)
+      [ -z "$dirty" ] && source_changed=false
+    fi
+  elif [ -f "$build_marker" ]; then
+    # 策略 2：无 Git — 比较标记文件时间与源码文件时间
+    local marker_time source_time
+    marker_time=$(stat -f %m "$build_marker" 2>/dev/null || stat -c %Y "$build_marker" 2>/dev/null || echo 0)
+    # 查找所有源码模块中最新的源文件时间
+    source_time=$(find cloud-*-sample cloud-seata-sample cloud-sample-api cloud-commons \
+      -name '*.java' -o -name '*.yml' -o -name '*.yaml' -o -name '*.xml' -o -name '*.properties' -o -name '*.proto' \
+      2>/dev/null | xargs stat -f %m 2>/dev/null | sort -rn | head -1)
+    [ -z "$source_time" ] && source_time=0
+    [ "$marker_time" -gt "$source_time" ] && source_changed=false
+  fi
+
+  if [ "$source_changed" = false ]; then
+    echo "✓ 源码无变更，跳过打包（如需强制重新打包: $0 build）"
+    return
+  fi
   ./mvnw clean package -DskipTests -q
   if [ $? -eq 0 ]; then
     echo "✓ 所有模块打包成功"
+    # 写入标记：Git 可用时写 commit hash，否则写时间戳
+    if command -v git &>/dev/null && git rev-parse --git-dir &>/dev/null; then
+      git rev-parse HEAD 2>/dev/null > "$build_marker"
+    else
+      date +%s > "$build_marker"
+    fi
   else
     echo "✗ 打包失败"
     exit 1
@@ -1249,7 +1316,7 @@ case "${1:-start}" in
   stop)          stop_all ;;
   install)       install_all ;;
   infra)         cmd_infra ;;
-  build)         build_all ;;
+  build)         build_all true ;;
   verify)        demo_urls ;;
   logs)          logs_all "$2" ;;
   status)        status_all ;;

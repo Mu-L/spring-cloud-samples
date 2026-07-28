@@ -35,6 +35,9 @@ target/
 Thumbs.db
 logs/
 .pids
+.rocketmq-topics-created-*
+.kafka-topics-created-*
+.last-build-hash
 output/
 
 # vscode ignore
