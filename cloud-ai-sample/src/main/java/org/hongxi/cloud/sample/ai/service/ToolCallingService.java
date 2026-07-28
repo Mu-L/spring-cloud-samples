@@ -1,8 +1,8 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import org.hongxi.cloud.sample.ai.tool.SearchTools;
-import org.hongxi.cloud.sample.ai.tool.TimeTools;
-import org.hongxi.cloud.sample.ai.tool.WeatherTools;
+import org.hongxi.cloud.sample.ai.tool.HttpRequestTool;
+import org.hongxi.cloud.sample.ai.tool.TimeTool;
+import org.hongxi.cloud.sample.ai.tool.WebSearchTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -28,42 +28,19 @@ public class ToolCallingService {
     private static final Logger log = LoggerFactory.getLogger(ToolCallingService.class);
 
     private final ChatClient chatClient;
-    private final WeatherTools weatherTools;
-    private final TimeTools timeTools;
-    private final SearchTools searchTools;
+    private final TimeTool timeTool;
+    private final HttpRequestTool httpRequestTool;
+    private final WebSearchTool webSearchTool;
 
     public ToolCallingService(
             ChatClient.Builder builder,
-            WeatherTools weatherTools,
-            TimeTools timeTools,
-            SearchTools searchTools) {
+            TimeTool timeTool,
+            HttpRequestTool httpRequestTool,
+            WebSearchTool webSearchTool) {
         this.chatClient = builder.build();
-        this.weatherTools = weatherTools;
-        this.timeTools = timeTools;
-        this.searchTools = searchTools;
-    }
-
-    /**
-     * 天气查询 - AI 自动调用天气工具
-     * <p>
-     * 测试示例: "北京今天的天气怎么样？"
-     * </p>
-     *
-     * @param message 用户问题
-     * @return AI 回复
-     */
-    public String getWeather(String message) {
-        log.info("天气查询: {}", message);
-
-        String response = chatClient.prompt()
-                .user(message)
-                .tools(weatherTools)
-                .call()
-                .content();
-
-        log.info("AI 回复: {}", response);
-
-        return response;
+        this.timeTool = timeTool;
+        this.httpRequestTool = httpRequestTool;
+        this.webSearchTool = webSearchTool;
     }
 
     /**
@@ -80,7 +57,7 @@ public class ToolCallingService {
 
         String response = chatClient.prompt()
                 .user(message)
-                .tools(timeTools)
+                .tools(timeTool)
                 .call()
                 .content();
 
@@ -93,9 +70,9 @@ public class ToolCallingService {
      * 智能助手 - 自动选择合适的工具
      * <p>
      * AI 会根据问题自动选择调用哪些工具：
-     * - "帮我查一下上海的天气" → 调用 WeatherTools
-     * - "现在几点了？" → 调用 TimeTools
-     * - "什么是 Spring AI？" → 调用 SearchTools
+     * - "现在几点了？" → 调用 TimeTool
+     * - "搜索一下最近有什么新上映的电影" → 调用 WebSearchTool
+     * - "帮我请求一下 https://httpbin.org/get" → 调用 HttpRequestTool
      * </p>
      *
      * @param message 用户问题
@@ -107,7 +84,7 @@ public class ToolCallingService {
         String response = chatClient.prompt()
                 .system("你是一个智能助手，可以根据用户的问题自动调用合适的工具来获取信息。请用中文回答。")
                 .user(message)
-                .tools(weatherTools, timeTools, searchTools)
+                .tools(timeTool, httpRequestTool, webSearchTool)
                 .call()
                 .content();
 

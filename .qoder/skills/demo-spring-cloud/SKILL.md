@@ -413,8 +413,8 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 2. **流式输出**：`curl --max-time 60 --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"`
 3. **结构化输出**：`curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"`
 4. **System Message**：`curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"`
-5. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather"`
-6. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat"`
+5. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=现在几点了？距离国庆节还有多少天？" "http://localhost:8888/ai/tool/time"`
+6. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜索一下最近有什么新上映的电影" "http://localhost:8888/ai/agent/chat"`
 7. **ChatMemory 多轮对话记忆**（内存存储）：
    - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
 8. **PromptTemplate 提示词模板**（3 个接口）：

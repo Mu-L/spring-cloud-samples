@@ -28,7 +28,7 @@ import java.util.Map;
  * @author javahongxi
  */
 @Component
-public class ProjectDemoTools {
+public class ProjectDemoTool {
 
     @Autowired
     private RestTemplate restTemplate;

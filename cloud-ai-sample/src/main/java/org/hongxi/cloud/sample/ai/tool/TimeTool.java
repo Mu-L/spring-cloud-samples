@@ -14,14 +14,13 @@ import java.util.Map;
 /**
  * 时间工具类
  * <p>
- * 使用 @Tool 注解定义 AI 可调用的时间查询函数。
- * AI 模型在回答"现在几点"、"今天星期几"等问题时会自动调用这些工具。
+ * 提供当前时间查询和日期计算功能，AI 模型在回答时间相关问题时会自动调用。
  * </p>
  *
  * @author javahongxi
  */
 @Component
-public class TimeTools {
+public class TimeTool {
 
     private static final Map<DayOfWeek, String> WEEK_DAY_MAP = Map.of(
             DayOfWeek.MONDAY, "星期一",
@@ -36,23 +35,13 @@ public class TimeTools {
     /**
      * 获取当前的日期和时间
      *
-     * @return 当前时间字符串
+     * @return 当前时间字符串，格式：yyyy-MM-dd HH:mm:ss 星期X
      */
-    @Tool(description = "获取当前的日期和时间，精确到秒")
-    public String getCurrentTime() {
+    @Tool(description = "获取当前的日期和时间，精确到秒，包含星期信息")
+    public String getCurrentDateTime() {
         LocalDateTime now = LocalDateTime.now();
         String weekDay = WEEK_DAY_MAP.get(now.getDayOfWeek());
         return now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " " + weekDay;
-    }
-
-    /**
-     * 获取当前日期
-     *
-     * @return 当前日期
-     */
-    @Tool(description = "获取当前日期，格式为 yyyy-MM-dd")
-    public String getCurrentDate() {
-        return LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
 
     /**

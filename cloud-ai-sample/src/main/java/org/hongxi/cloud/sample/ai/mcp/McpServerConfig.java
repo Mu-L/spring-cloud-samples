@@ -1,11 +1,9 @@
 package org.hongxi.cloud.sample.ai.mcp;
 
-import org.hongxi.cloud.sample.ai.tool.ConversionTools;
-import org.hongxi.cloud.sample.ai.tool.ProjectDemoTools;
-import org.hongxi.cloud.sample.ai.tool.SearchTools;
-import org.hongxi.cloud.sample.ai.tool.SystemTools;
-import org.hongxi.cloud.sample.ai.tool.TimeTools;
-import org.hongxi.cloud.sample.ai.tool.WeatherTools;
+import org.hongxi.cloud.sample.ai.tool.HttpRequestTool;
+import org.hongxi.cloud.sample.ai.tool.ProjectDemoTool;
+import org.hongxi.cloud.sample.ai.tool.TimeTool;
+import org.hongxi.cloud.sample.ai.tool.WebSearchTool;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
@@ -37,14 +35,12 @@ public class McpServerConfig {
      */
     @Bean
     public ToolCallbackProvider mcpToolProvider(
-            WeatherTools weatherTools,
-            TimeTools timeTools,
-            SearchTools searchTools,
-            SystemTools systemTools,
-            ConversionTools conversionTools,
-            ProjectDemoTools projectDemoTools) {
+            TimeTool timeTool,
+            HttpRequestTool httpRequestTool,
+            WebSearchTool webSearchTool,
+            ProjectDemoTool projectDemoTool) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(weatherTools, timeTools, searchTools, systemTools, conversionTools, projectDemoTools)
+                .toolObjects(timeTool, httpRequestTool, webSearchTool, projectDemoTool)
                 .build();
     }
 }

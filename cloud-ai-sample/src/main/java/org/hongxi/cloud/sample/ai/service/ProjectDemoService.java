@@ -1,6 +1,6 @@
 package org.hongxi.cloud.sample.ai.service;
 
-import org.hongxi.cloud.sample.ai.tool.ProjectDemoTools;
+import org.hongxi.cloud.sample.ai.tool.ProjectDemoTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -29,11 +29,11 @@ public class ProjectDemoService {
     private static final Logger log = LoggerFactory.getLogger(ProjectDemoService.class);
 
     private final ChatClient chatClient;
-    private final ProjectDemoTools projectDemoTools;
+    private final ProjectDemoTool projectDemoTool;
 
-    public ProjectDemoService(ChatClient.Builder builder, ProjectDemoTools projectDemoTools) {
+    public ProjectDemoService(ChatClient.Builder builder, ProjectDemoTool projectDemoTool) {
         this.chatClient = builder.build();
-        this.projectDemoTools = projectDemoTools;
+        this.projectDemoTool = projectDemoTool;
     }
 
     /**
@@ -89,7 +89,7 @@ public class ProjectDemoService {
                         - 如有异常，给出具体的错误信息和建议
                         """)
                 .user(instruction)
-                .tools(projectDemoTools)
+                .tools(projectDemoTool)
                 .call()
                 .content();
 

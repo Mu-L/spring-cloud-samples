@@ -85,26 +85,27 @@ curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故�
 
 ## Step 3：Tool Calling & MCP Server
 
-| 接口                         | 说明                         |
-|----------------------------|----------------------------|
-| `/ai/tool/weather`         | 天气查询（AI 自动调用 WeatherTools） |
-| `/ai/tool/time`            | 时间查询（AI 自动调用 TimeTools）    |
-| `/ai/tool/smart-assistant` | 智能助手（自动选择合适的工具）            |
-| `/ai/agent/chat`           | ReAct Agent（多步推理 + 工具组合）   |
-| `/ai/demo`                 | 项目演示 Agent（自主调用工具验证本项目）    |
+| 接口                         | 说明                                                      |
+|----------------------------|-----------------------------------------------------------|
+| `/ai/tool/time`            | 时间查询（AI 自动调用 TimeTool）                                   |
+| `/ai/tool/ask`             | 智能助手（自动选择合适工具：时间/Web搜索/HTTP请求）                         |
+| `/ai/agent/chat`           | ReAct Agent（多步推理 + 工具组合）                                |
+| `/ai/demo`                 | 项目演示 Agent（自主调用工具验证本项目）                                  |
+
+> 可选：配置 `TAVILY_API_KEY` 环境变量启用 Web 搜索功能（免费额度 1000 次/月，申请地址：https://tavily.com）
 
 以下 2 个 curl 必须全部执行：
 
 ```shell
-# 3.1 Tool Calling
-curl --max-time 60 --get --data-urlencode "message=北京今天天气怎么样？" "http://localhost:8888/ai/tool/weather" | head -c 500
-# 3.2 ReAct Agent
-curl --max-time 60 --get --data-urlencode "message=北京天气怎么样？适合出门吗？" "http://localhost:8888/ai/agent/chat" | head -c 500
+# 3.1 Tool Calling - 时间查询
+curl --max-time 60 --get --data-urlencode "message=现在几点了？距离国庆节还有多少天？" "http://localhost:8888/ai/tool/time" | head -c 500
+# 3.2 ReAct Agent - 多工具组合
+curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜索一下 Spring AI 2.0 的最新特性" "http://localhost:8888/ai/agent/chat" | head -c 500
 ```
 
 **预期结果**：
-- 3.1 AI 自动调用天气工具，返回天气信息
-- 3.2 Agent 多步推理，组合天气和时间工具
+- 3.1 AI 自动调用时间工具，返回当前时间和日期差
+- 3.2 Agent 多步推理，组合时间工具和 Web 搜索工具
 
 通过 SSE 端点 `http://localhost:8888/sse` 暴露工具，支持跨进程 Agent 通信。
 
