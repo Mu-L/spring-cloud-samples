@@ -47,7 +47,7 @@ public class ToolCallingController {
      * AI 会根据问题自动选择调用哪些工具：
      * - "现在几点了？" → 调用 TimeTool
      * - "搜索一下最近有什么新上映的电影" → 调用 WebSearchTool
-     * - "帮我请求一下 https://httpbin.org/get" → 调用 HttpRequestTool
+     * - "帮我请求一下 https://jsonplaceholder.typicode.com/posts/1" → 调用 HttpRequestTool
      * </p>
      *
      * @param message 用户问题

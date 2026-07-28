@@ -100,7 +100,7 @@ curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故�
 # 3.1 Tool Calling - 时间查询
 curl --max-time 60 --get --data-urlencode "message=现在几点了？距离国庆节还有多少天？" "http://localhost:8888/ai/tool/time" | head -c 500
 # 3.2 ReAct Agent - 多工具组合
-curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜索一下 Spring AI 2.0 的最新特性" "http://localhost:8888/ai/agent/chat" | head -c 500
+curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜索一下最近有什么新上映的电影" "http://localhost:8888/ai/agent/chat" | head -c 500
 ```
 
 **预期结果**：

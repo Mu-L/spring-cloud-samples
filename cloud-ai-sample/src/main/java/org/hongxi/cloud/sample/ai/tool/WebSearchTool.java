@@ -1,5 +1,8 @@
 package org.hongxi.cloud.sample.ai.tool;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,12 +29,14 @@ public class WebSearchTool {
 
     private final HttpClient httpClient;
     private final String apiKey;
+    private final ObjectMapper objectMapper;
 
     public WebSearchTool(@Value("${TAVILY_API_KEY:}") String apiKey) {
         this.apiKey = apiKey != null && !apiKey.isEmpty() ? apiKey : System.getenv("TAVILY_API_KEY");
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
+        this.objectMapper = new ObjectMapper();
     }
 
     /**
@@ -55,16 +60,17 @@ public class WebSearchTool {
         int results = (maxResults != null && maxResults >= 1 && maxResults <= 10) ? maxResults : 5;
 
         try {
-            String requestBody = String.format(
-                    "{\"query\":\"%s\",\"max_results\":%d,\"include_answer\":true}",
-                    escapeJson(query), results);
+            ObjectNode requestBody = objectMapper.createObjectNode()
+                    .put("query", query)
+                    .put("max_results", results)
+                    .put("include_answer", true);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://api.tavily.com/search"))
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + apiKey)
                     .timeout(Duration.ofSeconds(30))
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -81,84 +87,49 @@ public class WebSearchTool {
     }
 
     private String parseSearchResults(String responseBody) {
-        // 简单解析 JSON 响应，提取关键信息
-        StringBuilder result = new StringBuilder();
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            StringBuilder sb = new StringBuilder();
 
-        // 提取 answer（如果有）
-        String answer = extractJsonValue(responseBody, "answer");
-        if (answer != null && !answer.isEmpty()) {
-            result.append("【AI 摘要】\n").append(answer).append("\n\n");
-        }
+            // AI 摘要
+            String answer = root.path("answer").asText("");
+            if (!answer.isEmpty()) {
+                sb.append("【AI 摘要】\n").append(answer).append("\n\n");
+            }
 
-        // 提取 results 数组中的标题和摘要
-        result.append("【搜索结果】\n");
-        int idx = responseBody.indexOf("\"results\"");
-        if (idx >= 0) {
-            String resultsSection = responseBody.substring(idx);
-            int count = 0;
-            int pos = 0;
-            while (count < 10) {
-                int titleIdx = resultsSection.indexOf("\"title\"", pos);
-                if (titleIdx < 0) break;
-
-                String title = extractJsonValue(resultsSection.substring(titleIdx), "title");
-                String content = extractJsonValue(resultsSection.substring(titleIdx), "content");
-                String url = extractJsonValue(resultsSection.substring(titleIdx), "url");
-
-                if (title != null) {
-                    count++;
-                    result.append(count).append(". ").append(title).append("\n");
+            // 搜索结果列表
+            JsonNode results = root.path("results");
+            if (results.isArray() && !results.isEmpty()) {
+                sb.append("【搜索结果】\n");
+                int count = 0;
+                for (JsonNode item : results) {
+                    if (count >= 10) break;
+                    String title = textOf(item, "title");
+                    if (title == null) continue;
+                    sb.append(++count).append(". ").append(title).append('\n');
+                    String content = textOf(item, "content");
                     if (content != null) {
-                        result.append("   ").append(truncate(content, 200)).append("\n");
+                        sb.append("   ").append(truncate(content, 200)).append('\n');
                     }
+                    String url = textOf(item, "url");
                     if (url != null) {
-                        result.append("   链接: ").append(url).append("\n");
+                        sb.append("   链接: ").append(url).append('\n');
                     }
                 }
-                pos = titleIdx + 1;
             }
-        }
 
-        return result.length() > 0 ? result.toString() : "未找到相关搜索结果";
+            return sb.length() > 0 ? sb.toString() : "未找到相关搜索结果";
+        } catch (Exception e) {
+            return "解析搜索结果失败: " + e.getMessage();
+        }
     }
 
-    private String extractJsonValue(String json, String key) {
-        String searchKey = "\"" + key + "\"";
-        int keyIdx = json.indexOf(searchKey);
-        if (keyIdx < 0) return null;
-
-        int colonIdx = json.indexOf(":", keyIdx + searchKey.length());
-        if (colonIdx < 0) return null;
-
-        int startIdx = colonIdx + 1;
-        while (startIdx < json.length() && json.charAt(startIdx) == ' ') startIdx++;
-
-        if (startIdx >= json.length()) return null;
-
-        if (json.charAt(startIdx) == '"') {
-            int endIdx = startIdx + 1;
-            while (endIdx < json.length()) {
-                if (json.charAt(endIdx) == '"' && json.charAt(endIdx - 1) != '\\') break;
-                endIdx++;
-            }
-            return json.substring(startIdx + 1, endIdx)
-                    .replace("\\\"", "\"")
-                    .replace("\\n", " ")
-                    .replace("\\\\", "\\");
-        }
-        return null;
+    private static String textOf(JsonNode node, String field) {
+        JsonNode child = node.path(field);
+        return child.isMissingNode() || child.isNull() ? null : child.asText();
     }
 
-    private String truncate(String text, int maxLen) {
-        if (text == null) return "";
+    private static String truncate(String text, int maxLen) {
         return text.length() > maxLen ? text.substring(0, maxLen) + "..." : text;
-    }
-
-    private String escapeJson(String text) {
-        return text.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 }

@@ -53,7 +53,7 @@ public class ReactAgentController {
      * 测试示例：
      * - "现在几点了？"
      * - "搜索一下最近有什么新上映的电影"
-     * - "帮我请求 https://httpbin.org/get 看看返回什么"
+     * - "帮我请求 https://jsonplaceholder.typicode.com/posts/1 看看返回什么"
      * </p>
      *
      * @param message 用户消息
@@ -105,7 +105,8 @@ public class ReactAgentController {
      * <p>
      * 测试示例：
      * - "现在几点了？"
-     * - "搜索一下 Spring AI 2.0 的最新特性"
+     * - "搜索一下最近有什么新上映的电影"
+     * - "帮我请求 https://jsonplaceholder.typicode.com/posts/1 看看返回什么"
      * </p>
      *
      * @param message 用户消息
