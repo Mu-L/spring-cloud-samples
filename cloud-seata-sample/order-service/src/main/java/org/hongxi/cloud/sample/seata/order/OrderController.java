@@ -1,8 +1,6 @@
 package org.hongxi.cloud.sample.seata.order;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.seata.core.context.RootContext;
@@ -12,9 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.LinkedMultiValueMap;
@@ -61,18 +57,14 @@ public class OrderController {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        int result = jdbcTemplate.update(new PreparedStatementCreator() {
-            @Override
-            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement pst = con.prepareStatement(
-                        "insert into order_tbl (user_id, commodity_code, count, money) values (?, ?, ?, ?)",
-                        PreparedStatement.RETURN_GENERATED_KEYS);
-                pst.setObject(1, order.getUserId());
-                pst.setObject(2, order.getCommodityCode());
-                pst.setObject(3, order.getCount());
-                pst.setObject(4, order.getMoney());
-                return pst;
-            }
+        String sql = "insert into order_tbl (user_id, commodity_code, count, money) values (?, ?, ?, ?)";
+        int result = jdbcTemplate.update(con -> {
+            PreparedStatement pst = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            pst.setObject(1, order.getUserId());
+            pst.setObject(2, order.getCommodityCode());
+            pst.setObject(3, order.getCount());
+            pst.setObject(4, order.getMoney());
+            return pst;
         }, keyHolder);
 
         order.setId(keyHolder.getKey().longValue());

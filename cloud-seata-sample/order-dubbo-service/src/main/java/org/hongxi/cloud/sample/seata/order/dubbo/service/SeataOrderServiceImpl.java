@@ -1,8 +1,6 @@
 package org.hongxi.cloud.sample.seata.order.dubbo.service;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Random;
 
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -13,7 +11,6 @@ import org.hongxi.cloud.sample.api.seata.SeataOrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
@@ -47,18 +44,14 @@ public class SeataOrderServiceImpl implements SeataOrderService {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        int result = jdbcTemplate.update(new PreparedStatementCreator() {
-            @Override
-            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement pst = con.prepareStatement(
-                        "insert into order_tbl (user_id, commodity_code, count, money) values (?, ?, ?, ?)",
-                        PreparedStatement.RETURN_GENERATED_KEYS);
-                pst.setObject(1, userId);
-                pst.setObject(2, commodityCode);
-                pst.setObject(3, orderCount);
-                pst.setObject(4, orderMoney);
-                return pst;
-            }
+        String sql = "insert into order_tbl (user_id, commodity_code, count, money) values (?, ?, ?, ?)";
+        int result = jdbcTemplate.update(con -> {
+            PreparedStatement pst = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            pst.setObject(1, userId);
+            pst.setObject(2, commodityCode);
+            pst.setObject(3, orderCount);
+            pst.setObject(4, orderMoney);
+            return pst;
         }, keyHolder);
 
         if (random.nextBoolean()) {
