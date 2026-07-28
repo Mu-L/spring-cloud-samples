@@ -56,7 +56,7 @@ public class ProjectDemoTool {
      * @param moduleName 模块名称，如 provider、consumer、gateway、ai 等
      * @return 健康状态描述
      */
-    @Tool(description = "检查指定微服务模块的健康状态。可用模块：nacos-discovery, provider, provider-reactive, consumer, consumer-reactive, gateway, ai")
+    @Tool(name = "check_service_health", description = "检查指定微服务模块的健康状态。可用模块：nacos-discovery, provider, provider-reactive, consumer, consumer-reactive, gateway, ai")
     public String checkServiceHealth(
             @ToolParam(description = "模块名称，如 provider, consumer, gateway, ai 等") String moduleName) {
         String serviceName = SERVICES.get(moduleName);
@@ -71,7 +71,7 @@ public class ProjectDemoTool {
      *
      * @return 所有模块的健康状态汇总
      */
-    @Tool(description = "检查所有微服务模块的健康状态，返回每个模块的运行状态汇总")
+    @Tool(name = "check_all_services", description = "检查所有微服务模块的健康状态，返回每个模块的运行状态汇总")
     public String checkAllServices() {
         StringBuilder sb = new StringBuilder("=== 微服务健康检查 ===\n\n");
         int up = 0, down = 0;
@@ -95,7 +95,7 @@ public class ProjectDemoTool {
      * @param name 测试用的用户名
      * @return 调用结果
      */
-    @Tool(description = "验证普通 Web 服务调用链路（consumer -> provider），发送请求并返回响应结果")
+    @Tool(name = "verify_web_call", description = "验证普通 Web 服务调用链路（consumer -> provider），发送请求并返回响应结果")
     public String verifyWebCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("Web 服务调用",
@@ -108,7 +108,7 @@ public class ProjectDemoTool {
      * @param name 测试用的用户名
      * @return 调用结果
      */
-    @Tool(description = "验证 Reactive Web 服务调用链路（consumer-reactive -> provider-reactive）")
+    @Tool(name = "verify_reactive_call", description = "验证 Reactive Web 服务调用链路（consumer-reactive -> provider-reactive）")
     public String verifyReactiveCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("Reactive 服务调用",
@@ -121,7 +121,7 @@ public class ProjectDemoTool {
      * @param name 测试用的用户名
      * @return 调用结果
      */
-    @Tool(description = "验证 Dubbo 服务调用链路（consumer -> provider-dubbo）")
+    @Tool(name = "verify_dubbo_call", description = "验证 Dubbo 服务调用链路（consumer -> provider-dubbo）")
     public String verifyDubboCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("Dubbo 服务调用",
@@ -134,7 +134,7 @@ public class ProjectDemoTool {
      * @param name 测试用的用户名
      * @return 调用结果
      */
-    @Tool(description = "验证 gRPC 服务调用链路（consumer -> grpc-server）")
+    @Tool(name = "verify_grpc_call", description = "验证 gRPC 服务调用链路（consumer -> grpc-server）")
     public String verifyGrpcCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("gRPC 服务调用",
@@ -147,7 +147,7 @@ public class ProjectDemoTool {
      * @param name 测试用的用户名
      * @return 调用结果
      */
-    @Tool(description = "验证通过网关（gateway）的服务调用链路（gateway -> consumer -> provider）")
+    @Tool(name = "verify_gateway_call", description = "验证通过网关（gateway）的服务调用链路（gateway -> consumer -> provider）")
     public String verifyGatewayCall(
             @ToolParam(description = "测试用的用户名，如 hongxi") String name) {
         return doVerifyApiCall("网关路由调用",
@@ -161,7 +161,7 @@ public class ProjectDemoTool {
      *
      * @return 已注册服务信息
      */
-    @Tool(description = "查看 Nacos 注册中心中已注册的服务列表和实例信息")
+    @Tool(name = "check_nacos_services", description = "查看 Nacos 注册中心中已注册的服务列表和实例信息")
     public String checkNacosServices() {
         try {
             String url = "http://nacos-discovery-sample/discovery/services";
@@ -179,7 +179,7 @@ public class ProjectDemoTool {
      *
      * @return 环境检查结果，包括中间件、端口、环境变量等
      */
-    @Tool(description = "检查项目运行环境状态，包括 Nacos、MySQL、RocketMQ、Seata Server 等中间件和端口状态")
+    @Tool(name = "check_environment", description = "检查项目运行环境状态，包括 Nacos、MySQL、RocketMQ、Seata Server 等中间件和端口状态")
     public String checkEnvironment() {
         StringBuilder sb = new StringBuilder("=== 环境检查 ===\n\n");
 
@@ -211,7 +211,7 @@ public class ProjectDemoTool {
      *
      * @return 项目架构描述
      */
-    @Tool(description = "获取本项目的架构信息、模块列表和技术栈说明")
+    @Tool(name = "get_project_info", description = "获取本项目的架构信息、模块列表和技术栈说明")
     public String getProjectInfo() {
         return """
                 === Spring Cloud Alibaba 示例项目 ===

@@ -37,7 +37,7 @@ public class TimeTool {
      *
      * @return 当前时间字符串，格式：yyyy-MM-dd HH:mm:ss 星期X
      */
-    @Tool(description = "获取当前的日期和时间，精确到秒，包含星期信息")
+    @Tool(name = "get_current_date_time", description = "获取当前的日期和时间，精确到秒，包含星期信息")
     public String getCurrentDateTime() {
         LocalDateTime now = LocalDateTime.now();
         String weekDay = WEEK_DAY_MAP.get(now.getDayOfWeek());
@@ -50,7 +50,7 @@ public class TimeTool {
      * @param targetDate 目标日期，格式为 yyyy-MM-dd
      * @return 相隔天数
      */
-    @Tool(description = "计算今天距离目标日期还有多少天")
+    @Tool(name = "days_until", description = "计算今天距离目标日期还有多少天")
     public String daysUntil(@ToolParam(description = "目标日期，格式为 yyyy-MM-dd，例如：2026-12-31") String targetDate) {
         try {
             LocalDate target = LocalDate.parse(targetDate);

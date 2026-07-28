@@ -41,7 +41,7 @@ public class HttpRequestTool {
      * @param body    请求体（可选）
      * @return 响应内容
      */
-    @Tool(description = "发送 HTTP 请求到指定 URL，支持 GET/POST/PUT/DELETE 等方法。"
+    @Tool(name = "http_request", description = "发送 HTTP 请求到指定 URL，支持 GET/POST/PUT/DELETE 等方法。"
             + "可自定义请求头和请求体，适用于调用 REST API、测试接口等场景。")
     public String httpRequest(
             @ToolParam(description = "HTTP 方法：GET, POST, PUT, DELETE, PATCH") String method,

@@ -46,7 +46,7 @@ public class WebSearchTool {
      * @param maxResults 最大结果数（1-10）
      * @return 搜索结果
      */
-    @Tool(description = "搜索网络获取实时信息，适用于查询最新新闻、事件、价格等需要时效性数据的场景。"
+    @Tool(name = "web_search", description = "搜索网络获取实时信息，适用于查询最新新闻、事件、价格等需要时效性数据的场景。"
             + "返回搜索结果的标题、摘要和链接。")
     public String webSearch(
             @ToolParam(description = "搜索关键词，尽量具体明确。如需时效性信息可加上年份，如 '2026年最新电影'") String query,
