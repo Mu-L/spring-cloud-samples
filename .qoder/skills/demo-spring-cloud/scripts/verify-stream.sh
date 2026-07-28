@@ -205,7 +205,12 @@ echo "  场景4: 延迟消息 (REST → delay-topic → delay Consumer)"
 echo "=========================================="
 
 echo "发送延迟消息 (delayLevel=2, 约5秒后投递)..."
-SEND_TIME=$(date +"%H:%M:%S.%N")
+# %N (纳秒) 仅 GNU date 支持，macOS BSD date 不支持
+if date +"%N" 2>/dev/null | grep -qv 'N'; then
+  SEND_TIME=$(date +"%H:%M:%S.%N")
+else
+  SEND_TIME=$(date +"%H:%M:%S")
+fi
 echo "发送时间: $SEND_TIME"
 curl -s -X POST "http://127.0.0.1:8767/stream/delay?message=hello+delay&delayLevel=2"
 echo ""

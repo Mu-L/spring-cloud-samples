@@ -16,6 +16,15 @@ PID_DIR="$BASE_DIR/.pids"
 
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
+# 跨平台 sed 原地编辑: macOS BSD sed 需要 -i ''，Linux GNU sed 需要 -i
+sed_i() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    sed -i '' "$@"
+  else
+    sed -i "$@"
+  fi
+}
+
 # 模块列表: 目录名 | 显示名称 | 端口（启动顺序与验证顺序一致）
 MODULES=(
   "cloud-nacos-discovery-sample|nacos-discovery|8760"
@@ -78,8 +87,26 @@ check_java() {
       echo "[Java] 建议将以下内容添加到 ~/.zshrc 以永久生效:"
       echo "  export JAVA_HOME=$JAVA_HOME"
       echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
+    elif command -v apt-get &>/dev/null; then
+      echo "[Java] 正在通过 apt 安装 JDK $min_version ..."
+      sudo apt-get update -qq && sudo apt-get install -y "openjdk-${min_version}-jdk"
+      export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      echo "[Java] ✓ JDK $min_version 已安装并激活（当前会话）"
+      echo "[Java] 建议将以下内容添加到 ~/.bashrc 以永久生效:"
+      echo "  export JAVA_HOME=$JAVA_HOME"
+      echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
+    elif command -v yum &>/dev/null; then
+      echo "[Java] 正在通过 yum 安装 JDK $min_version ..."
+      sudo yum install -y "java-${min_version}-openjdk-devel"
+      export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      echo "[Java] ✓ JDK $min_version 已安装并激活（当前会话）"
+      echo "[Java] 建议将以下内容添加到 ~/.bashrc 以永久生效:"
+      echo "  export JAVA_HOME=$JAVA_HOME"
+      echo "  export PATH=\$JAVA_HOME/bin:\$PATH"
     else
-      echo "[Java] ✗ 未安装 Homebrew，请手动安装 JDK $min_version"
+      echo "[Java] ✗ 未检测到包管理器 (Homebrew/apt-get/yum)，请手动安装 JDK $min_version"
       return 1
     fi
   else
@@ -131,9 +158,9 @@ configure_nacos_noauth() {
     return
   fi
   echo "[Nacos] 正在切换为免密模式..."
-  sed -i '' 's/^nacos.core.auth.enabled=true$/nacos.core.auth.enabled=false/' "$props_file"
-  sed -i '' 's/^nacos.core.auth.admin.enabled=true$/nacos.core.auth.admin.enabled=false/' "$props_file"
-  sed -i '' 's/^nacos.core.auth.console.enabled=true$/nacos.core.auth.console.enabled=false/' "$props_file"
+  sed_i 's/^nacos.core.auth.enabled=true$/nacos.core.auth.enabled=false/' "$props_file"
+  sed_i 's/^nacos.core.auth.admin.enabled=true$/nacos.core.auth.admin.enabled=false/' "$props_file"
+  sed_i 's/^nacos.core.auth.console.enabled=true$/nacos.core.auth.console.enabled=false/' "$props_file"
   local nacos_home
   nacos_home=$(dirname "$(dirname "$props_file")")
   "$nacos_home/bin/shutdown.sh" 2>/dev/null; sleep 2
@@ -238,7 +265,8 @@ check_rag() {
     START_RAG=true
   elif [ -n "$OPENAI_API_KEY" ]; then
     echo "[RAG] ✗ PostgreSQL 未运行，跳过 AI RAG 模块"
-    echo "[RAG]   如需启用，请安装: brew install postgresql@18 pgvector && brew services start postgresql@18"
+    echo "[RAG]   如需启用 (macOS): brew install postgresql@18 pgvector && brew services start postgresql@18"
+    echo "[RAG]   如需启用 (Linux): sudo apt-get install postgresql postgresql-contrib && sudo apt-get install postgresql-18-pgvector || pip install pgvector"
     echo "[RAG]   创建系统用户数据库: createdb $USER"
     echo "[RAG]   然后初始化: psql -f init_ai_demo.sql"
   else
@@ -666,12 +694,23 @@ install_all() {
     echo "✗ MySQL 已运行（端口 3306 可达）但 mysql 客户端不可用或密码不是 root1234"
     [ -z "$MYSQL_BIN" ] && echo "  提示: DMG 安装的 MySQL 需手动添加 PATH: export PATH=/usr/local/mysql/bin:\$PATH"
   elif [ -n "$MYSQL_BIN" ]; then
-    echo "✗ MySQL 已安装但未运行，请手动执行: mysql.server start 或 brew services start mysql"
+    echo "✗ MySQL 已安装但未运行，请手动执行: mysql.server start 或 brew services start mysql 或 sudo systemctl start mysql"
   else
     echo "正在安装 MySQL..."
-    brew install mysql
-    mysql.server start
-    mysqladmin -u root password 'root1234'
+    if command -v brew &>/dev/null; then
+      brew install mysql
+      mysql.server start
+    elif command -v apt-get &>/dev/null; then
+      sudo apt-get update -qq && sudo apt-get install -y mysql-server
+      sudo service mysql start || sudo systemctl start mysql
+    elif command -v yum &>/dev/null; then
+      sudo yum install -y mysql-server
+      sudo systemctl start mysqld
+    else
+      echo "✗ 未检测到包管理器，请手动安装 MySQL"
+      return
+    fi
+    mysqladmin -u root password 'root1234' 2>/dev/null || true
     echo "✓ MySQL 已安装并设置密码"
   fi
 
@@ -732,11 +771,24 @@ install_all() {
   if pg_isready -q 2>/dev/null; then
     echo "✓ PostgreSQL 已运行"
   elif command -v psql &>/dev/null; then
-    echo "✓ PostgreSQL 已安装（未运行），启动: brew services start postgresql@18"
+    echo "✓ PostgreSQL 已安装（未运行），启动: brew services start postgresql@18 或 sudo systemctl start postgresql"
   else
     echo "正在安装 PostgreSQL..."
-    brew install postgresql@18 pgvector
-    brew services start postgresql@18
+    if command -v brew &>/dev/null; then
+      brew install postgresql@18 pgvector
+      brew services start postgresql@18
+    elif command -v apt-get &>/dev/null; then
+      sudo apt-get update -qq && sudo apt-get install -y postgresql postgresql-contrib
+      sudo systemctl start postgresql
+      echo "  提示: pgvector 需额外安装，请参考 https://github.com/pgvector/pgvector"
+    elif command -v yum &>/dev/null; then
+      sudo yum install -y postgresql-server postgresql-contrib
+      sudo postgresql-setup initdb 2>/dev/null || true
+      sudo systemctl start postgresql
+      echo "  提示: pgvector 需额外安装，请参考 https://github.com/pgvector/pgvector"
+    else
+      echo "✗ 未检测到包管理器，请手动安装 PostgreSQL"
+    fi
     echo "✓ PostgreSQL 已安装"
   fi
 
@@ -1158,7 +1210,7 @@ cmd_seata() {
   echo "  curl http://localhost:18081/seata/dubbo"
 }
 
-# 查找 mysql 客户端命令（支持 DMG 安装路径）
+# 查找 mysql 客户端命令（支持 macOS DMG / Homebrew / Linux 路径）
 find_mysql() {
   if command -v mysql &>/dev/null; then
     command -v mysql
@@ -1166,6 +1218,10 @@ find_mysql() {
     echo /usr/local/mysql/bin/mysql
   elif [ -x /opt/homebrew/bin/mysql ]; then
     echo /opt/homebrew/bin/mysql
+  elif [ -x /usr/bin/mysql ]; then
+    echo /usr/bin/mysql
+  elif [ -x /usr/local/bin/mysql ]; then
+    echo /usr/local/bin/mysql
   else
     return 1
   fi

@@ -58,7 +58,7 @@ public class DemoController {
             log.info("traceparent: {}", traceparent);
             log.info("Consumer calling provider via RestTemplate, name: {}", name);
             return restTemplate.getForObject(
-                    "http://provider-sample/hello?name=" + name, String.class);
+                    "http://provider-sample/hello?name={name}", String.class, name);
         });
     }
 
