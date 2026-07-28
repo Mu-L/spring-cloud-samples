@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * gRPC 四种调用模式演示控制器。
@@ -87,12 +88,12 @@ public class GrpcController {
             @RequestParam(defaultValue = "10,20,30,40,50") String values) throws Exception {
         log.info("===== Client Streaming RPC, values={} =====", values);
         CountDownLatch latch = new CountDownLatch(1);
-        final AccumulateReply[] result = new AccumulateReply[1];
+        final AtomicReference<AccumulateReply> result = new AtomicReference<>();
 
         var requestObserver = streamingAsyncStub.accumulate(new StreamObserver<>() {
             @Override
             public void onNext(AccumulateReply reply) {
-                result[0] = reply;
+                result.set(reply);
             }
 
             @Override
@@ -118,13 +119,14 @@ public class GrpcController {
         requestObserver.onCompleted();
 
         latch.await(5, TimeUnit.SECONDS);
-        if (result[0] != null) {
+        AccumulateReply reply = result.get();
+        if (reply != null) {
             log.info("Accumulate result: count={}, sum={}, average={}",
-                    result[0].getCount(), result[0].getSum(), result[0].getAverage());
+                    reply.getCount(), reply.getSum(), reply.getAverage());
             return Map.of("mode", "ClientStreaming",
-                    "count", result[0].getCount(),
-                    "sum", result[0].getSum(),
-                    "average", result[0].getAverage());
+                    "count", reply.getCount(),
+                    "sum", reply.getSum(),
+                    "average", reply.getAverage());
         }
         return Map.of("mode", "ClientStreaming", "error", "No response received");
     }
