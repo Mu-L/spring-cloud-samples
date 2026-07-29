@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,7 +48,7 @@ public class HttpRequestTool {
             @ToolParam(description = "HTTP 方法：GET, POST, PUT, DELETE, PATCH") String method,
             @ToolParam(description = "完整的请求 URL") String url,
             @ToolParam(description = "请求头，JSON 格式，如 {\"Content-Type\":\"application/json\"}", required = false) Map<String, String> headers,
-            @ToolParam(description = "请求体内容（POST/PUT/PATCH 时使用）", required = false) String body) {
+            @ToolParam(description = "请求体内容（POST/PUT/DELETE/PATCH 时使用）", required = false) String body) {
 
         try {
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -95,7 +96,7 @@ public class HttpRequestTool {
         };
     }
 
-    private String formatHeaders(Map<String, java.util.List<String>> headers) {
+    private String formatHeaders(Map<String, List<String>> headers) {
         StringBuilder sb = new StringBuilder();
         headers.forEach((key, values) -> {
             if (!key.isEmpty()) {
