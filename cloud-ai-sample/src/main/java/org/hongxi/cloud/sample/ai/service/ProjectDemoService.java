@@ -5,20 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 /**
  * 项目演示 Agent 服务
  * <p>
  * 基于 ReAct Agent 模式，让 AI 具备演示本项目的能力。
  * Agent 会根据用户的指令，自主决定调用哪些工具来完成环境检查、服务验证等操作。
- * </p>
- * <p>
- * 支持的演示场景：
- * - 环境检查：检查 Nacos、MySQL、RocketMQ、Seata 等中间件状态
- * - 服务健康检查：检查各微服务模块的运行状态
- * - 接口验证：验证 Web/Reactive/Dubbo/gRPC 服务调用链路
- * - 网关路由：验证通过 Gateway 的服务调用
- * - 服务发现：查看 Nacos 中已注册的服务列表
  * </p>
  *
  * @author javahongxi
@@ -37,27 +30,13 @@ public class ProjectDemoService {
     }
 
     /**
-     * 项目演示 Agent
-     * <p>
-     * AI 会根据用户指令自动调用工具完成演示任务。
-     * </p>
-     * <p>
-     * 测试示例：
-     * - "检查项目环境"
-     * - "检查所有服务是否正常运行"
-     * - "验证 Web 服务调用链路"
-     * - "验证 Dubbo 和 gRPC 调用"
-     * - "查看 Nacos 中注册了哪些服务"
-     * - "全面验证本项目"
-     * </p>
-     *
      * @param instruction 用户的演示指令
      * @return Agent 的执行结果
      */
-    public String demo(String instruction) {
+    public Flux<String> demo(String instruction) {
         log.info("项目演示 Agent 收到指令: {}", instruction);
 
-        String response = chatClient.prompt()
+        return chatClient.prompt()
                 .system("""
                         你是 Spring Cloud Alibaba 示例项目的演示助手，负责帮助用户演示和验证本项目。
                         
@@ -90,10 +69,8 @@ public class ProjectDemoService {
                         """)
                 .user(instruction)
                 .tools(projectDemoTool)
-                .call()
-                .content();
-
-        log.info("项目演示 Agent 完成");
-        return response;
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("项目演示 Agent 完成"));
     }
 }

@@ -182,7 +182,7 @@
         });
 
         const tabConfig = {
-            demo: { type: 'call', endpoint: '/ai/demo', param: 'instruction' },
+            demo: { type: 'stream', endpoint: '/ai/demo', param: 'instruction' },
             chat: { type: 'stream', endpoint: '/ai/chat/stream', param: 'message' },
             tool: { type: 'call', endpoint: '/ai/tool/ask', param: 'message' },
             memory: { type: 'memory', endpoint: '/ai/memory/chat' }
