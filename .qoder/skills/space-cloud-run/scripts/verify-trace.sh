@@ -1,6 +1,6 @@
 #!/bin/bash
 # Trace 链路追踪验证脚本
-# 用法: bash .qoder/skills/demo-spring-cloud/verify-trace.sh
+# 用法: bash .qoder/skills/space-cloud-run/verify-trace.sh
 # 覆盖五条链路:
 #   1. Web         → Web        : consumer-sample        → provider-sample        (RestTemplate v1.0 / FeignClient v2.0, trace 均自动传播)
 #   2. Web         → gRPC       : consumer-sample        → grpc-server-sample     (gRPC)

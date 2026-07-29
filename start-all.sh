@@ -282,7 +282,7 @@ check_kafka() {
     create_kafka_topics
   elif find "$HOME" -maxdepth 1 -type d -name 'kafka_*' 2>/dev/null | grep -q .; then
     echo "[Kafka] Kafka 集群未运行，正在自动启动..."
-    local kafka_script="$BASE_DIR/.qoder/skills/demo-spring-cloud/scripts/kafka.sh"
+    local kafka_script="$BASE_DIR/.qoder/skills/space-cloud-run/scripts/kafka.sh"
     if [ -f "$kafka_script" ] && bash "$kafka_script" start > "$LOG_DIR/kafka-cluster.log" 2>&1; then
       echo "[Kafka] ✓ Kafka 集群已启动"
       START_KAFKA=true
@@ -292,7 +292,7 @@ check_kafka() {
     fi
   else
     echo "[Kafka] ✗ Kafka 集群未运行且未安装，跳过 Kafka 模块"
-    echo "[Kafka]   如需启用，请执行: bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start"
+    echo "[Kafka]   如需启用，请执行: bash .qoder/skills/space-cloud-run/scripts/kafka.sh start"
   fi
 }
 
@@ -679,7 +679,7 @@ stop_all() {
   # 停止 RocketMQ、Seata Server 和 Kafka
   pkill -f "rocketmq" 2>/dev/null || true
   pkill -f "seata.*spring-boot:run" 2>/dev/null || true
-  local kafka_script="$BASE_DIR/.qoder/skills/demo-spring-cloud/scripts/kafka.sh"
+  local kafka_script="$BASE_DIR/.qoder/skills/space-cloud-run/scripts/kafka.sh"
   if [ -f "$kafka_script" ] && nc -z 127.0.0.1 9092 2>/dev/null; then
     bash "$kafka_script" stop > /dev/null 2>&1 || true
   fi
@@ -1032,7 +1032,7 @@ demo_urls() {
   # Trace 链路追踪验证
   echo ""
   echo "========== Trace 链路追踪验证 =========="
-  echo "  提示: 执行 bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh 验证五条链路 trace 传播 (Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo)"
+  echo "  提示: 执行 bash .qoder/skills/space-cloud-run/scripts/verify-trace.sh 验证五条链路 trace 传播 (Web→Web / Web→gRPC / Web→Dubbo / Reactive→Reactive / Reactive→Dubbo)"
   echo "=================================="
 
   # Nacos Config 验证
@@ -1113,19 +1113,19 @@ demo_urls() {
     echo "  1️⃣  Trace 链路追踪:"
     echo "     • Web→Web / Web→gRPC / Web→Dubbo trace ID 自动传播"
     echo "     • Reactive→Reactive (WebClient 手动传递) / Reactive→Dubbo trace 传播"
-    echo "     → 使用 demo-spring-cloud skill 执行 scripts/verify-trace.sh"
+    echo "     → 使用 space-cloud-run skill 执行 scripts/verify-trace.sh"
     echo ""
     echo "  2️⃣  Nacos Config 动态配置 (端口 8761):"
     echo "     • 配置发布/读取/删除"
     echo "     • @NacosConfig 注解注入与动态刷新"
     echo "     • @ConfigurationProperties + @Value + @RefreshScope"
-    echo "     → 使用 demo-spring-cloud skill 验证 Nacos Config 动态配置"
+    echo "     → 使用 space-cloud-run skill 验证 Nacos Config 动态配置"
     echo ""
     echo "  3️⃣  Sentinel 限流与熔断降级:"
     echo "     • 网关限流: Nacos 配置限流规则，验证限流效果"
     echo "     • 应用级限流: consumer 接口 QPS 限流 (资源名 /hi)"
     echo "     • 应用级熔断: Feign/RestTemplate 出站调用 fallback"
-    echo "     → 使用 demo-spring-cloud skill 验证 Sentinel 限流与熔断"
+    echo "     → 使用 space-cloud-run skill 验证 Sentinel 限流与熔断"
     echo ""
     echo "  4️⃣  Stream 消息收发 (RocketMQ):"
     echo "     • 基础消费: StreamBridge → topic → Consumer"
@@ -1134,13 +1134,13 @@ demo_urls() {
     echo "     • 延迟消息: StreamBridge + DELAY header 延迟投递"
     echo "     • 顺序消息: StreamBridge + ORDER_KEY 顺序消费"
     echo "     • 事务消息: StreamBridge + TransactionListener 两阶段提交"
-    echo "     → 使用 demo-spring-cloud skill 执行 scripts/verify-stream.sh"
+    echo "     → 使用 space-cloud-run skill 执行 scripts/verify-stream.sh"
     echo ""
     echo "  5️⃣  Seata 分布式事务 (7 个子模块, 端口 18081-18084 + 3 Dubbo):"
     echo "     • 全局事务回滚/提交场景"
     echo "     • Feign / RestTemplate / Dubbo 三种调用链路"
     echo "     • Xid 传递与数据一致性验证"
-    echo "     → 使用 demo-spring-cloud skill 执行 scripts/verify-seata.sh"
+    echo "     → 使用 space-cloud-run skill 执行 scripts/verify-seata.sh"
     echo ""
     echo "  6️⃣  Spring AI 深度功能 (端口 8888):"
     echo "     • 聊天对话、流式输出、结构化提取"
@@ -1148,17 +1148,17 @@ demo_urls() {
     echo "     • ChatMemory 多轮对话记忆 (内存)"
     echo "     • PromptTemplate 提示词模板 (产品描述/代码解释/自定义模板)"
     echo "     • 多模态视觉识别 (6种场景)"
-    echo "     → 使用 demo-spring-cloud skill 进行验证"
+    echo "     → 使用 space-cloud-run skill 进行验证"
     echo ""
     echo "  7️⃣  Spring AI RAG 模块 (端口 8889):"
     echo "     • RAG 检索增强生成: 文档摄入 → 向量化存储 → 相似性检索 → 增强回答"
-    echo "     → 使用 demo-spring-cloud skill 进行验证"
+    echo "     → 使用 space-cloud-run skill 进行验证"
     echo ""
     echo "  8️⃣  Kafka 4.x 集群消息收发 (端口 8768):"
     echo "     • 启动后 ApplicationRunner 自动发送传统 Consumer Group 消息"
     echo "     • Share Group 隐式/显式确认消息 (REST 接口触发)"
     echo "     • 事务消息: 原子发送 + 提交/回滚 (read_committed 隔离)"
-    echo "     → 使用 demo-spring-cloud skill 进行验证"
+    echo "     → 使用 space-cloud-run skill 进行验证"
     echo ""
   else
     echo ""

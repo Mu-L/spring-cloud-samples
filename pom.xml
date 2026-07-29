@@ -11,10 +11,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.hongxi</groupId>
-    <artifactId>spring-cloud-samples</artifactId>
+    <artifactId>spacecloud</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
-    <url>https://github.com/javahongxi/spring-cloud-samples</url>
+    <url>https://github.com/javahongxi/spacecloud</url>
 
     <modules>
         <module>cloud-provider-reactive-sample</module>

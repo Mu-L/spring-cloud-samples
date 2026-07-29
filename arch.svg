@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 680 460" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
-    <title>Spring Cloud Samples 模块调用关系图</title>
-    <desc>展示 spring-cloud-samples 项目中各模块间的调用关系</desc>
+    <title>Space Cloud 模块调用关系图</title>
+    <desc>展示 spacecloud 项目中各模块间的调用关系</desc>
     <defs>
         <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

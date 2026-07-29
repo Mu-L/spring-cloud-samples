@@ -10,10 +10,10 @@
 
 > **AI 执行指引**：阶段一使用 `scripts/kafka.sh` 脚本一键完成，无需手动执行下方步骤。
 > ```shell
-> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start   # 自动检测/解压、创建配置、格式化、启动
-> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh status  # 查看集群状态
-> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh topics  # 列出所有 Topic
-> bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh stop    # 停止集群
+> bash .qoder/skills/space-cloud-run/scripts/kafka.sh start   # 自动检测/解压、创建配置、格式化、启动
+> bash .qoder/skills/space-cloud-run/scripts/kafka.sh status  # 查看集群状态
+> bash .qoder/skills/space-cloud-run/scripts/kafka.sh topics  # 列出所有 Topic
+> bash .qoder/skills/space-cloud-run/scripts/kafka.sh stop    # 停止集群
 > ```
 > 脚本会自动检测 `$HOME` 和 `$HOME/Downloads` 下的 Kafka 4.x 安装包（含 `.tgz` 自动解压），
 > 检查/创建 `server-{1,2,3}.properties` 配置，格式化 KRaft 存储，启动 3 节点集群。

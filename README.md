@@ -1,5 +1,5 @@
-# ☁️ Spring Cloud Alibaba Samples
-> 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务示例项目 <br>
+# ☁️ Space Cloud
+> 基于 **Spring Boot 4.1** + **Spring Cloud Alibaba 2025.1.x** 的生产级微服务实践项目 <br>
 > 涵盖 16 个模块，覆盖 HTTP/Dubbo/gRPC 多协议、Seata 分布式事务、Stream 消息驱动、Kafka 4.x 及 Spring AI 2.0，支持 AI 一键演示
 
 ![poster](poster.jpg)
@@ -31,12 +31,12 @@
 
 ### 🎮 演示方式
 
-| 方式                  | 说明                                | 适用场景       |
-|---------------------|-----------------------------------|------------|
-| 🤖 **AI Skill（推荐）** | 告诉 AI 助手 "演示项目"，自动完成环境检查、启动、验证全流程 | 快速体验、集成测试  |
-| 📜 **一键脚本**         | 通过 `start-all.sh` 脚本自动化启动和验证      | 批量验证、CI/CD |
-| 🐳 **Docker 部署**    | 中间件本地运行，微服务全部容器化                  | 容器化实践、贴近生产 |
-| 🔧 **手动启动**         | 逐个模块手动启动，灵活控制                     | 学习调试、单模块开发 |
+| 方式                    | 说明                                                        | 适用场景             |
+|-------------------------|-------------------------------------------------------------|----------------------|
+| 🤖 **AI Skill（推荐）** | 告诉 AI 助手 "演示项目"，自动完成环境检查、启动、验证全流程 | 快速体验、集成测试   |
+| 📜 **一键脚本**         | 通过 `start-all.sh` 脚本自动化启动和验证                    | 批量验证、CI/CD      |
+| 🐳 **Docker 部署**      | 中间件本地运行，微服务全部容器化                            | 容器化实践、贴近生产 |
+| 🔧 **手动启动**         | 逐个模块手动启动，灵活控制                                  | 学习调试、单模块开发 |
 
 #### 🤖 AI 一键演示（推荐）
 
@@ -46,7 +46,7 @@
 
 **QoderWork / 其他 AI**：告诉 AI 下面这句话即可
 ```text
-克隆项目 https://github.com/javahongxi/spring-cloud-samples 并按其内置的 SKILL 演示该项目
+克隆项目 https://github.com/javahongxi/spacecloud 并按其内置的 SKILL 演示该项目
 ```
 
 均可自动完成环境检查、服务启动、接口验证全流程，无需手动操作。
@@ -62,7 +62,7 @@
 告诉 AI: "演示一下视觉识别"
 ```
 
-详见 [SKILL.md](.qoder/skills/demo-spring-cloud/SKILL.md)
+详见 [SKILL.md](.qoder/skills/space-cloud-run/SKILL.md)
 
 #### 📜 一键脚本
 
@@ -119,18 +119,18 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 
 按下面的功能场景逐步操作，详细演示步骤参考对应文档：
 
-| 场景                       | 说明                                                            | 参考文档                                                                                  |
-|--------------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| 🔍 服务注册与发现               | Nacos Discovery、Web / Reactive / Dubbo / gRPC 多协议             | [discovery.md](.qoder/skills/demo-spring-cloud/references/discovery.md)               |
-| 🔍 Trace 链路追踪            | 五条跨服务链路，验证 trace context 传播                                   | [trace.md](.qoder/skills/demo-spring-cloud/references/trace.md)                       |
-| ⚙️ Nacos Config 动态配置     | `@NacosConfig` / `@ConfigurationProperties` / `@RefreshScope` | [nacos-config.md](.qoder/skills/demo-spring-cloud/references/nacos-config.md)         |
-| 🛡️ Sentinel 限流（Gateway） | Gateway 级限流，规则 Nacos 动态推送                                     | [sentinel-gateway.md](.qoder/skills/demo-spring-cloud/references/sentinel-gateway.md) |
-| 🛡️ Sentinel 熔断（App）     | 应用级熔断降级（Feign / RestTemplate）                                 | [sentinel-app.md](.qoder/skills/demo-spring-cloud/references/sentinel-app.md)         |
-| 📨 Stream 消息驱动           | 基础消费、定时消息源、消息管道、延迟/顺序/事务消息                                    | [stream.md](.qoder/skills/demo-spring-cloud/references/stream.md)                     |
-| 🔄 Seata 分布式事务           | RestTemplate / Feign / Dubbo 三种调用链路                           | [seata.md](.qoder/skills/demo-spring-cloud/references/seata.md)                       |
-| 🤖 Spring AI             | 对话、Tool Calling、ReAct Agent、视觉识别、ChatMemory、PromptTemplate                  | [spring-ai.md](.qoder/skills/demo-spring-cloud/references/spring-ai.md)               |
-| 🤖 Spring AI RAG         | PgVector 向量存储，检索增强生成                                  | [spring-ai-rag.md](.qoder/skills/demo-spring-cloud/references/spring-ai-rag.md)       |
-| 📨 Kafka 4.x             | 传统 Consumer Group、Share Groups、事务消息                           | [kafka.md](.qoder/skills/demo-spring-cloud/references/kafka.md)                       |
+| 场景                        | 说明                                                                  | 参考文档                                                                              |
+|-----------------------------|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| 🔍 服务注册与发现           | Nacos Discovery、Web / Reactive / Dubbo / gRPC 多协议                 | [discovery.md](.qoder/skills/space-cloud-run/references/discovery.md)               |
+| 🔍 Trace 链路追踪           | 五条跨服务链路，验证 trace context 传播                               | [trace.md](.qoder/skills/space-cloud-run/references/trace.md)                       |
+| ⚙️ Nacos Config 动态配置    | `@NacosConfig` / `@ConfigurationProperties` / `@RefreshScope`         | [nacos-config.md](.qoder/skills/space-cloud-run/references/nacos-config.md)         |
+| 🛡️ Sentinel 限流（Gateway） | Gateway 级限流，规则 Nacos 动态推送                                   | [sentinel-gateway.md](.qoder/skills/space-cloud-run/references/sentinel-gateway.md) |
+| 🛡️ Sentinel 熔断（App）     | 应用级熔断降级（Feign / RestTemplate）                                | [sentinel-app.md](.qoder/skills/space-cloud-run/references/sentinel-app.md)         |
+| 📨 Stream 消息驱动          | 基础消费、定时消息源、消息管道、延迟/顺序/事务消息                    | [stream.md](.qoder/skills/space-cloud-run/references/stream.md)                     |
+| 🔄 Seata 分布式事务         | RestTemplate / Feign / Dubbo 三种调用链路                             | [seata.md](.qoder/skills/space-cloud-run/references/seata.md)                       |
+| 🤖 Spring AI                | 对话、Tool Calling、ReAct Agent、视觉识别、ChatMemory、PromptTemplate | [spring-ai.md](.qoder/skills/space-cloud-run/references/spring-ai.md)               |
+| 🤖 Spring AI RAG            | PgVector 向量存储，检索增强生成                                       | [spring-ai-rag.md](.qoder/skills/space-cloud-run/references/spring-ai-rag.md)       |
+| 📨 Kafka 4.x                | 传统 Consumer Group、Share Groups、事务消息                           | [kafka.md](.qoder/skills/space-cloud-run/references/kafka.md)                       |
 
 ### 🌿 分支说明
 - 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例

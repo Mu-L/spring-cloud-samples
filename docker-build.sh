@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Spring Cloud Samples - 微服务 Docker 构建脚本
+# Space Cloud - 微服务 Docker 构建脚本
 # 架构: 中间件本地安装，微服务 Docker 容器化
 #
 # 用法:
@@ -21,7 +21,7 @@
 
 set -e
 
-PROJECT="spring-cloud-samples"
+PROJECT="spacecloud"
 IMAGE_PREFIX="${PROJECT}"
 
 # 核心微服务模块
@@ -271,7 +271,7 @@ case "${1:-help}" in
     logs "$2"
     ;;
   help|*)
-    echo "Spring Cloud Samples - 微服务 Docker 部署"
+    echo "Space Cloud - 微服务 Docker 部署"
     echo ""
     echo "架构: 中间件本地安装 + 微服务 Docker 容器化"
     echo ""

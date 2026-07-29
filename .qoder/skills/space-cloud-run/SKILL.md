@@ -1,5 +1,5 @@
 ---
-name: demo-spring-cloud
+name: space-cloud-run
 description: >
   启动和演示 Spring Cloud Alibaba 示例项目的各微服务模块。当用户要求演示项目、启动服务、
   验证微服务调用、测试网关路由、查看服务注册、执行集成测试、一键部署、环境检查、
@@ -303,7 +303,7 @@ sh start-all.sh stop     # 停止所有服务（含 RocketMQ、Seata Server）
 
 1. 执行 trace 验证脚本（覆盖五条跨服务链路）：
 ```bash
-bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
+bash .qoder/skills/space-cloud-run/scripts/verify-trace.sh
 ```
 2. 向用户展示脚本完整输出，然后用表格汇总五条链路验证结果：
 
@@ -366,7 +366,7 @@ bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
 **唯一必做步骤：**
 
 ```bash
-bash .qoder/skills/demo-spring-cloud/scripts/verify-stream.sh
+bash .qoder/skills/space-cloud-run/scripts/verify-stream.sh
 ```
 
 > ⚠️ **禁止事项**：不可跳过脚本改为手动 curl、不可自行检查/启动 RocketMQ、不可手动创建 Topic、不可手动启动 Stream 模块。脚本内部已处理所有前置准备。
@@ -386,7 +386,7 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 
 1. **执行一键验证脚本**：
    ```bash
-   bash .qoder/skills/demo-spring-cloud/scripts/verify-seata.sh
+   bash .qoder/skills/space-cloud-run/scripts/verify-seata.sh
    ```
    > 脚本自动完成：检查 MySQL/Seata Server → 初始化数据库 → 配置 Nacos → 启动 Seata Server → 启动 7 个微服务 → 验证分布式事务
 
@@ -459,7 +459,7 @@ psql -c "SELECT 1 FROM pg_available_extensions WHERE name='vector'" &>/dev/null 
 ```bash
 nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
 ```
-若未运行：`bash .qoder/skills/demo-spring-cloud/scripts/kafka.sh start`
+若未运行：`bash .qoder/skills/space-cloud-run/scripts/kafka.sh start`
 
 > 前提：Kafka 4.x 集群已部署，Topic 已创建，cloud-kafka-sample（8768）已启动。
 

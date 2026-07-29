@@ -11,7 +11,7 @@
 ## Step 1：执行 Trace 验证脚本
 
 ```shell
-bash .qoder/skills/demo-spring-cloud/scripts/verify-trace.sh
+bash .qoder/skills/space-cloud-run/scripts/verify-trace.sh
 ```
 
 **预期结果**：脚本输出五条链路的验证结果，全部显示 ✅ 通过：

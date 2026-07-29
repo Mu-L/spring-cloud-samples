@@ -1,5 +1,5 @@
 # ============================================================
-# Spring Cloud Samples - Multi-module Dockerfile
+# Space Cloud - Multi-module Dockerfile
 # Usage: docker build --build-arg MODULE=<module-name> -t <tag> .
 # Example: docker build --build-arg MODULE=cloud-provider-sample -t provider .
 # ============================================================
