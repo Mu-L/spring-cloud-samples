@@ -234,6 +234,11 @@
             if (msgArea) msgArea.innerHTML = '';
         }
 
+        function scrollToBottom(msgArea) {
+            const container = msgArea.closest('.tab-content');
+            if (container) container.scrollTop = container.scrollHeight;
+        }
+
         function addMessage(tab, role, text) {
             const msgArea = document.getElementById('msgs-' + tab);
             const div = document.createElement('div');
@@ -246,7 +251,7 @@
                 renderMarkdown(div, text);
             }
             msgArea.appendChild(div);
-            msgArea.scrollTop = msgArea.scrollHeight;
+            scrollToBottom(msgArea);
             return div;
         }
 
@@ -297,6 +302,7 @@
                 .then(text => {
                     indicator.remove();
                     renderMarkdown(msgDiv, text);
+                    scrollToBottom(msgArea);
                     sendBtn.disabled = false;
                     userInput.focus();
                 })
@@ -304,6 +310,7 @@
                     indicator.remove();
                     msgDiv.className = 'msg error';
                     msgDiv.textContent = '⚠️ 请求失败: ' + err.message;
+                    scrollToBottom(msgArea);
                     sendBtn.disabled = false;
                     userInput.focus();
                 });
@@ -327,6 +334,7 @@
                 .then(data => {
                     indicator.remove();
                     renderMarkdown(msgDiv, data.reply || JSON.stringify(data));
+                    scrollToBottom(msgArea);
                     sendBtn.disabled = false;
                     userInput.focus();
                 })
@@ -334,6 +342,7 @@
                     indicator.remove();
                     msgDiv.className = 'msg error';
                     msgDiv.textContent = '⚠️ 请求失败: ' + err.message;
+                    scrollToBottom(msgArea);
                     sendBtn.disabled = false;
                     userInput.focus();
                 });
@@ -355,7 +364,7 @@
                 if (indicator.parentNode) indicator.remove();
                 rawText += e.data;
                 renderMarkdown(msgDiv, rawText);
-                msgArea.scrollTop = msgArea.scrollHeight;
+                scrollToBottom(msgArea);
             };
 
             es.onerror = function() {
