@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
  * 这是 Spring AI MCP 的核心配置方式（自 1.0.0 起支持）：
  * 1. 使用 @Tool 注解标注工具方法（统一放在 tool 包下）
  * 2. 使用 MethodToolCallbackProvider 将工具注册到 MCP Server
- * 3. MCP Client 通过 /sse 端点自动发现并调用这些工具
+ * 3. MCP Client 通过 /mcp 端点（Streamable HTTP）自动发现并调用这些工具
  * </p>
  *
  * @author javahongxi
@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 public class McpServerConfig {
 
     /**
-     * 将所有工具统一注册到 MCP Server
+     * 将实用工具统一注册到 MCP Server
      * <p>
      * 复用 tool 包下的工具类，同时用于内部 Tool Calling 和 MCP 对外暴露。
      * </p>
@@ -37,10 +37,9 @@ public class McpServerConfig {
     public ToolCallbackProvider mcpToolProvider(
             TimeTool timeTool,
             HttpRequestTool httpRequestTool,
-            WebSearchTool webSearchTool,
-            ProjectDemoTool projectDemoTool) {
+            WebSearchTool webSearchTool) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(timeTool, httpRequestTool, webSearchTool, projectDemoTool)
+                .toolObjects(timeTool, httpRequestTool, webSearchTool)
                 .build();
     }
 }

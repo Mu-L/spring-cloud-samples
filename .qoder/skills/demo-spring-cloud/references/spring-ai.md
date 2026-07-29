@@ -1,6 +1,6 @@
 # 🤖 Spring AI 演示
 
-> 🔴 **以下 6 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
+> 🔴 **以下 7 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
 > 🔴 **禁止用“同理”、“省略”、“以此类推”等理由跳过任何 curl 命令。**
 
 基于 **Spring AI 2.0**，集成阿里云百炼（DashScope）兼容 OpenAI 协议。
@@ -65,14 +65,14 @@ curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件
 
 | 接口                            | 说明                      |
 |-------------------------------|-------------------------|
-| `/ai/advanced/system-message` | System Message 设定 AI 角色 |
+| `/ai/advanced/system-message` | System Message（系统提示词）设定 AI 角色 |
 | `/ai/advanced/few-shot`       | Few-shot Prompting 示例引导 |
 | `/ai/advanced/creative`       | 带温度参数的创意性对话             |
 
 以下 3 个 curl 必须全部执行：
 
 ```shell
-# 2.1 System Message 设定 AI 角色
+# 2.1 System Message（系统提示词）设定 AI 角色
 curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message" | head -c 500
 # 2.2 Few-shot 示例引导
 curl --max-time 60 --get --data-urlencode "message=创建一个列表，包含 1, 2, 3" "http://localhost:8888/ai/advanced/few-shot"
@@ -83,13 +83,13 @@ curl --max-time 60 --get --data-urlencode "message=帮我写一篇春天的故�
 **预期结果**：
 - 各接口返回 AI 回复文本
 
-## Step 3：Tool Calling & MCP Server
+## Step 3：Tool Calling（工具调用）
 
 | 接口                         | 说明                                                      |
 |----------------------------|-----------------------------------------------------------|
 | `/ai/tool/time`            | 时间查询（AI 自动调用 TimeTool）                                   |
 | `/ai/tool/ask`             | 智能助手（自动选择合适工具：时间/Web搜索/HTTP请求）                         |
-| `/ai/agent/chat`           | ReAct Agent（多步推理 + 工具组合）                                |
+| `/ai/agent/chat`           | ReAct Agent（智能体，多步推理 + 工具组合）                                |
 | `/ai/demo`                 | 项目演示 Agent（自主调用工具验证本项目）                                  |
 
 > 可选：配置 `TAVILY_API_KEY` 环境变量启用 Web 搜索功能（免费额度 1000 次/月，申请地址：https://tavily.com）
@@ -107,9 +107,7 @@ curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜�
 - 3.1 AI 自动调用时间工具，返回当前时间和日期差
 - 3.2 Agent 多步推理，组合时间工具和 Web 搜索工具
 
-通过 SSE 端点 `http://localhost:8888/sse` 暴露工具，支持跨进程 Agent 通信。
-
-## Step 4：ChatMemory 多轮对话记忆
+## Step 4：ChatMemory（多轮对话记忆）
 
 使用内存存储（`InMemoryChatMemoryRepository`），支持会话隔离。无需数据库，重启后记忆清空。
 
@@ -146,7 +144,7 @@ curl --max-time 60 -X DELETE http://localhost:8888/ai/memory/session-001
 - 5.2 AI 回答“小明”
 - 5.3 AI 不知道“小明”
 
-## Step 5：PromptTemplate 提示词模板
+## Step 5：PromptTemplate（提示词模板）
 
 使用 Spring AI 的 `PromptTemplate` 进行 `{variable}` 占位符替换，演示三种模板场景。
 
@@ -239,3 +237,67 @@ curl --max-time 60 -X POST "http://localhost:8888/ai/vision/compare" \
 > curl -s -X POST "http://localhost:8888/ai/vision/analyze-url" \
 >   -d "imageUrl=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
 > ```
+
+## Step 7：MCP Server 验证（Streamable HTTP）
+
+> 🔴 **Streamable HTTP 协议要求会话管理：先 `initialize` 获取 Session ID，后续所有请求必须携带 `Mcp-Session-Id` 头。**
+
+MCP Server 注册了 3 个工具：`get_current_date_time`（时间查询）、`days_until`（日期差计算）、`http_request`（HTTP 请求）、`web_search`（网络搜索）。
+
+**三步骤完整流程：**
+
+```shell
+# 第 1 步：初始化会话，获取 Mcp-Session-Id
+SESSION_ID=$(curl -s -D - -X POST http://localhost:8888/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream, application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' \
+  | grep -i 'Mcp-Session-Id' | awk '{print $2}' | tr -d '\r')
+echo "Session ID: $SESSION_ID"
+
+# 第 2 步：发送 initialized 通知（必须，否则后续请求报错）
+curl -s -X POST http://localhost:8888/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream, application/json" \
+  -H "Mcp-Session-Id: $SESSION_ID" \
+  -d '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}'
+
+# 第 3 步：列出可用工具
+curl -s -X POST http://localhost:8888/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream, application/json" \
+  -H "Mcp-Session-Id: $SESSION_ID" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+```
+
+**预期结果**：`tools/list` 返回 4 个工具定义（get_current_date_time、days_until、http_request、web_search）。
+
+**以下 3 个工具调用必须全部执行：**
+
+```shell
+# 工具 1：获取当前时间（无参数）
+curl -s -X POST http://localhost:8888/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream, application/json" \
+  -H "Mcp-Session-Id: $SESSION_ID" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_current_date_time","arguments":{}}}'
+
+# 工具 2：发送 HTTP GET 请求
+curl -s -X POST http://localhost:8888/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream, application/json" \
+  -H "Mcp-Session-Id: $SESSION_ID" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"http_request","arguments":{"method":"GET","url":"https://jsonplaceholder.typicode.com/posts/1"}}}'
+
+# 工具 3：Web 搜索（需配置 TAVILY_API_KEY）
+curl -s -X POST http://localhost:8888/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream, application/json" \
+  -H "Mcp-Session-Id: $SESSION_ID" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"web_search","arguments":{"query":"Spring AI 2.0 MCP协议","maxResults":3}}}'
+```
+
+**预期结果**：
+- 工具 1 返回当前时间字符串，如 `"2026-07-29 10:45:42 星期三"`
+- 工具 2 返回 HTTP 响应状态和响应体
+- 工具 3 返回搜索结果摘要和链接（未配置 TAVILY_API_KEY 时返回提示信息）

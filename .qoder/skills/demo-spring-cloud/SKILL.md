@@ -4,12 +4,13 @@ description: >
   启动和演示 Spring Cloud Alibaba 示例项目的各微服务模块。当用户要求演示项目、启动服务、
   验证微服务调用、测试网关路由、查看服务注册、执行集成测试、一键部署、环境检查、
   排查微服务问题、了解 Spring Cloud 组件用法、学习 Nacos/Sentinel/Seata/Dubbo/gRPC/Stream/Kafka 时
-  使用此技能。也支持演示特定功能：ChatMemory 多轮对话记忆、PromptTemplate 提示词模板、
-  RAG 检索增强生成、Spring AI 视觉识别、Tool Calling、ReAct Agent、
+  使用此技能。也支持演示特定功能：ChatMemory（多轮对话记忆）、PromptTemplate（提示词模板）、
+  RAG 检索增强生成、Spring AI 视觉识别、Tool Calling（工具调用）、ReAct Agent（智能体）、
+  System Message（系统提示词）、MCP Server 验证、
   Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、
   Kafka 4.x 集群消息收发。
   涵盖 16 个模块的完整演示流程。
-tags: [spring-cloud, spring-cloud-alibaba, nacos, sentinel, seata, dubbo, grpc, rocketmq, stream, kafka, microservices, demo, spring-ai, rag, chatmemory, prompttemplate, vision, tool-calling, agent, trace]
+tags: [spring-cloud, spring-cloud-alibaba, microservices, demo, nacos, sentinel, seata, dubbo, grpc, rocketmq, stream, kafka, trace, spring-ai, rag, chat-memory, prompt-template, vision, tool-calling, agent, mcp]
 ---
 
 # Spring Cloud Alibaba 示例项目演示
@@ -412,16 +413,18 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 1. **基础聊天**：`curl --max-time 60 --get --data-urlencode "message=你好" "http://localhost:8888/ai/chat"`
 2. **流式输出**：`curl --max-time 60 --get --data-urlencode "message=讲一个故事" "http://localhost:8888/ai/chat/stream"`
 3. **结构化输出**：`curl --max-time 60 --get --data-urlencode "message=张三今年25岁，是软件工程师" "http://localhost:8888/ai/extract"`
-4. **System Message**：`curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"`
-5. **Tool Calling**：`curl --max-time 60 --get --data-urlencode "message=现在几点了？距离国庆节还有多少天？" "http://localhost:8888/ai/tool/time"`
-6. **ReAct Agent**：`curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜索一下最近有什么新上映的电影" "http://localhost:8888/ai/agent/chat"`
-7. **ChatMemory 多轮对话记忆**（内存存储）：
+4. **System Message（系统提示词）**：`curl --max-time 60 --get --data-urlencode "message=Dubbo 3.3 有哪些特性" "http://localhost:8888/ai/advanced/system-message"`
+5. **Tool Calling（工具调用）**：`curl --max-time 60 --get --data-urlencode "message=现在几点了？距离国庆节还有多少天？" "http://localhost:8888/ai/tool/time"`
+6. **ReAct Agent（智能体）**：`curl --max-time 60 --get --data-urlencode "message=现在几点了？帮我搜索一下最近有什么新上映的电影" "http://localhost:8888/ai/agent/chat"`
+7. **ChatMemory（多轮对话记忆）**（内存存储）：
    - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
-8. **PromptTemplate 提示词模板**（3 个接口）：
+8. **PromptTemplate（提示词模板）**（3 个接口）：
    - 产品描述生成、代码解释、自定义模板
 9. **视觉识别**（6 个接口全部演示，不可跳过）：
    - 先预检查 6 个图片 URL 可用性
    - URL 图片分析、图片上传分析、OCR 文字识别、图表分析、代码截图转代码、多图片对比
+10. **MCP Server 验证**（Streamable HTTP 协议）：
+   - 初始化会话获取 Session ID → 列出可用工具 → 调用 3 个工具（时间/HTTP请求/Web搜索）
 
 > 完整 curl 命令参考 [spring-ai.md](references/spring-ai.md)
 
