@@ -62,28 +62,20 @@ public class ReactAgentController {
     @RequestMapping("/chat")
     public String agentChat(@RequestParam String message) {
         log.info("Agent 收到问题: {}", message);
-        String response = chatClient.prompt()
-                .system("""
-                        你是一个智能助手，必须通过调用工具来获取信息，禁止凭记忆直接回答。
-                        
-                        你可以使用的工具包括：
-                        - 时间查询：获取当前日期、时间，计算日期差
-                        - Web 搜索：搜索实时信息、最新新闻
-                        - HTTP 请求：调用 REST API、测试接口
-                        
-                        回答要求：
-                        1. 对于时间问题，必须调用时间工具获取实时数据
-                        2. 对于需要最新信息的问题，使用 Web 搜索工具
-                        3. 对于需要调用 API 的场景，使用 HTTP 请求工具
-                        4. 基于工具返回的结果给出完整、有用的回答
-                        5. 如果一个问题需要多个工具配合，依次调用
-                        """)
-                .user(message)
-                .tools(timeTool, httpRequestTool, webSearchTool)
-                .call()
-                .content();
-        log.info("Agent 回复: {}", response);
-        return response;
+        try {
+            String response = chatClient.prompt()
+                    .system(SYSTEM_PROMPT)
+                    .user(message)
+                    .tools(timeTool, httpRequestTool, webSearchTool)
+                    .call()
+                    .content();
+            log.info("Agent 回复: {}", response);
+            return response;
+        } catch (Exception e) {
+            // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
+            log.error("Agent 调用失败: {}", e.getMessage(), e);
+            return "抱歉，处理您的问题时出错：" + e.getMessage();
+        }
     }
 
     /**
@@ -115,31 +107,39 @@ public class ReactAgentController {
     @RequestMapping("/chat-with-advisor")
     public String chatWithAdvisorChain(@RequestParam String message) {
         log.info("Advisor 链演示 - 收到问题: {}", message);
-        String response = chatClient.prompt()
-                .system("""
-                        你是一个智能助手，必须通过调用工具来获取信息，禁止凭记忆直接回答。
-                        
-                        你可以使用的工具包括：
-                        - 时间查询：获取当前日期、时间，计算日期差
-                        - Web 搜索：搜索实时信息、最新新闻
-                        - HTTP 请求：调用 REST API、测试接口
-                        
-                        回答要求：
-                        1. 对于时间问题，必须调用时间工具获取实时数据
-                        2. 对于需要最新信息的问题，使用 Web 搜索工具
-                        3. 基于工具返回的结果给出完整、有用的回答
-                        """)
-                .user(message)
-                .tools(timeTool, httpRequestTool, webSearchTool)
-                // 显式添加自定义 Advisor（order=400，位于 ToolCallingAdvisor 之后）
-                // Advisor 链执行顺序（按 order 升序）：
-                //   ToolCallingAdvisor(+300) → ToolCallObservationAdvisor(+400) → ChatModel
-                // TCA 递归时 chain.copy(this) 只包含 order>300 的 Advisor，
-                // 因此 observer 会在每次工具调用迭代中被触发
-                .advisors(new ToolCallObservationAdvisor())
-                .call()
-                .content();
-        log.info("Advisor 链演示 - 完成");
-        return response;
+        try {
+            String response = chatClient.prompt()
+                    .system(SYSTEM_PROMPT)
+                    .user(message)
+                    .tools(timeTool, httpRequestTool, webSearchTool)
+                    // 显式添加自定义 Advisor（order=400，位于 ToolCallingAdvisor 之后）
+                    // Advisor 链执行顺序（按 order 升序）：
+                    //   ToolCallingAdvisor(+300) → ToolCallObservationAdvisor(+400) → ChatModel
+                    // TCA 递归时 chain.copy(this) 只包含 order>300 的 Advisor，
+                    // 因此 observer 会在每次工具调用迭代中被触发
+                    .advisors(new ToolCallObservationAdvisor())
+                    .call()
+                    .content();
+            log.info("Advisor 链演示 - 完成");
+            return response;
+        } catch (Exception e) {
+            // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
+            log.error("Advisor 链调用失败: {}", e.getMessage(), e);
+            return "抱歉，处理您的问题时出错：" + e.getMessage();
+        }
     }
+
+    private static final String SYSTEM_PROMPT = """
+                            你是一个智能助手，必须通过调用工具来获取信息，禁止凭记忆直接回答。
+                            
+                            你可以使用的工具包括：
+                            - 时间查询：获取当前日期、时间，计算日期差
+                            - Web 搜索：搜索实时信息、最新新闻
+                            - HTTP 请求：调用 REST API、测试接口
+                            
+                            回答要求：
+                            1. 对于时间问题，必须调用时间工具获取实时数据
+                            2. 对于需要最新信息的问题，使用 Web 搜索工具
+                            3. 基于工具返回的结果给出完整、有用的回答
+                            """;
 }

@@ -8,6 +8,7 @@ import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -130,6 +131,8 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
                 log.info("║   [{}] {} (toolCalls={})", i, type, assistantMsg.getToolCalls().size());
                 assistantMsg.getToolCalls().forEach(tc ->
                         log.info("║       → call: {}({})", tc.name(), truncate(tc.arguments(), 60)));
+            } else if (msg instanceof SystemMessage) {
+                log.info("║   [{}] {}: {}", i, type, truncate(content, 25));
             } else {
                 log.info("║   [{}] {}: {}", i, type, content);
             }
@@ -149,17 +152,16 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
 
         boolean hasToolCalls = chatResponse.getResults().stream()
                 .map(Generation::getOutput)
-                .anyMatch(msg -> msg.hasToolCalls());
+                .anyMatch(AssistantMessage::hasToolCalls);
 
         if (hasToolCalls) {
-            log.info("║ [第 {} 轮] 模型请求工具调用（耗时 {}ms）→ ToolCallingAdvisor 将执行工具并重新进入 Advisor 链",
+            log.info("║ [第 {} 轮] 大模型响应（耗时 {}ms）→ hasToolCalls=true，模型决定调用工具",
                     iteration, elapsed);
         } else {
             String content = chatResponse.getResults().stream()
                     .map(g -> g.getOutput().getText())
                     .reduce("", (a, b) -> a + b);
             log.info("║ [第 {} 轮] 模型返回最终响应（耗时 {}ms）→ 工具调用循环终止", iteration, elapsed);
-            log.info("║ 最终回复: {}", truncate(content, 120));
         }
         log.info("╚═══════════════════════════════════════════════════════");
     }

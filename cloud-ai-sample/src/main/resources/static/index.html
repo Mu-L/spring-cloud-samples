@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spring AI Demo - Spring Cloud Alibaba</title>
+    <title>Spring AI Demo</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/highlight.min.js"></script>
@@ -69,13 +69,14 @@
 <body>
     <header><div class="header-inner">
         <h1>Spring AI Demo</h1>
-        <span class="badge">Spring Cloud Alibaba</span>
+        <span class="badge">spacecloud</span>
     </div></header>
 
     <div class="tab-bar"><div class="tab-inner">
         <button class="tab-btn active" onclick="switchTab('chat')">AI 对话</button>
         <button class="tab-btn" onclick="switchTab('memory')">对话记忆</button>
         <button class="tab-btn" onclick="switchTab('tool')">工具调用</button>
+        <button class="tab-btn" onclick="switchTab('react')">ReAct</button>
         <button class="tab-btn" onclick="switchTab('demo')">项目演示</button>
     </div></div>
 
@@ -142,6 +143,30 @@
         </div>
     </div>
 
+    <!-- ReAct Agent -->
+    <div id="tab-react" class="tab-content">
+        <div class="content-inner">
+            <div class="desc">
+                ReAct (Reasoning + Acting) Agent 自主推理并调用工具，调用 <code>GET /ai/agent/chat?message=...</code>。<br>
+                与普通工具调用的区别：Agent 具备多步推理能力，可串联多个工具完成复杂任务。<br>
+                另有 <code>GET /ai/agent/chat-with-advisor?message=...</code> 展示 Advisor 链可观测架构。
+            </div>
+            <div class="examples">
+                <button onclick="quickSend('react','现在几点了？')">现在几点</button>
+                <button onclick="quickSend('react','搜索一下最近有什么新上映的电影')">搜索电影</button>
+                <button onclick="quickSend('react','帮我请求 https://jsonplaceholder.typicode.com/posts/1 看看返回什么')">HTTP 请求</button>
+                <button onclick="quickSend('react','现在几点了？然后搜索一下今天的新闻')">多步推理</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:#555;">
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+                    <input type="checkbox" id="react-advisor" style="cursor:pointer;"> 使用 Advisor 链模式
+                </label>
+                <span style="font-size:12px;color:#999;">勾选后调用 <code>/ai/agent/chat-with-advisor</code></span>
+            </div>
+            <div class="msg-area" id="msgs-react"></div>
+        </div>
+    </div>
+
     <!-- AI 对话 -->
     <div id="tab-chat" class="tab-content active">
         <div class="content-inner">
@@ -185,6 +210,7 @@
             demo: { type: 'stream', endpoint: '/ai/demo', param: 'instruction' },
             chat: { type: 'stream', endpoint: '/ai/chat/stream', param: 'message' },
             tool: { type: 'call', endpoint: '/ai/tool/ask', param: 'message' },
+            react: { type: 'react', endpoint: '/ai/agent/chat', advisorEndpoint: '/ai/agent/chat-with-advisor', param: 'message' },
             memory: { type: 'memory', endpoint: '/ai/memory/chat' }
         };
 
@@ -283,6 +309,10 @@
                 sendGetStream(tab, url);
             } else if (config.type === 'memory') {
                 sendMemoryRequest(tab, message);
+            } else if (config.type === 'react') {
+                const useAdvisor = document.getElementById('react-advisor').checked;
+                const reactUrl = (useAdvisor ? config.advisorEndpoint : config.endpoint) + '?' + config.param + '=' + encodeURIComponent(message);
+                sendCallRequest(tab, reactUrl);
             } else {
                 sendCallRequest(tab, url);
             }
