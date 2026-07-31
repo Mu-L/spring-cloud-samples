@@ -3,6 +3,8 @@ package org.hongxi.cloud.sample.ai.tool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +28,7 @@ import java.time.Duration;
  */
 @Component
 public class WebSearchTool {
+    private static final Logger log = LoggerFactory.getLogger(WebSearchTool.class);
 
     private final HttpClient httpClient;
     private final String apiKey;
@@ -46,11 +49,15 @@ public class WebSearchTool {
      * @param maxResults 最大结果数（1-10）
      * @return 搜索结果
      */
-    @Tool(name = "web_search", description = "搜索网络获取实时信息，适用于查询最新新闻、事件、价格等需要时效性数据的场景。"
-            + "返回搜索结果的标题、摘要和链接。")
+    @Tool(name = "web_search", description = """
+            搜索网络获取实时信息。当用户询问「最近」「最新」「当前」「现在」等时效性问题时必须调用此工具，
+            包括但不限于：最新电影/新闻/事件/价格/版本发布/体育赛事等。你的训练数据有截止日期，无法回答训练之后发生的事情。
+            返回搜索结果的标题、摘要和链接。
+            """)
     public String webSearch(
             @ToolParam(description = "搜索关键词，尽量具体明确。如需时效性信息可加上年份，如 '2026年最新电影'") String query,
             @ToolParam(description = "最大结果数量（1-10，默认 5）", required = false) Integer maxResults) {
+        log.info("webSearch: {}", query);
 
         if (apiKey == null || apiKey.isEmpty()) {
             return "Web 搜索功能未配置。请设置 TAVILY_API_KEY 环境变量。\n"

@@ -1,5 +1,7 @@
 package org.hongxi.cloud.sample.ai.tool;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ import java.util.Map;
  */
 @Component
 public class TimeTool {
+    private static final Logger log = LoggerFactory.getLogger(TimeTool.class);
 
     private static final Map<DayOfWeek, String> WEEK_DAY_MAP = Map.of(
             DayOfWeek.MONDAY, "星期一",
@@ -39,6 +42,7 @@ public class TimeTool {
      */
     @Tool(name = "get_current_date_time", description = "获取当前的日期和时间，精确到秒，包含星期信息")
     public String getCurrentDateTime() {
+        log.info("getCurrentDateTime");
         LocalDateTime now = LocalDateTime.now();
         String weekDay = WEEK_DAY_MAP.get(now.getDayOfWeek());
         return now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " " + weekDay;
@@ -52,6 +56,7 @@ public class TimeTool {
      */
     @Tool(name = "days_until", description = "计算今天距离目标日期还有多少天")
     public String daysUntil(@ToolParam(description = "目标日期，格式为 yyyy-MM-dd，例如：2026-12-31") String targetDate) {
+        log.info("daysUntil: {}", targetDate);
         try {
             LocalDate target = LocalDate.parse(targetDate);
             long days = ChronoUnit.DAYS.between(LocalDate.now(), target);

@@ -1,5 +1,7 @@
 package org.hongxi.cloud.sample.ai.tool;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,7 @@ import java.util.Map;
  */
 @Component
 public class HttpRequestTool {
+    private static final Logger log = LoggerFactory.getLogger(HttpRequestTool.class);
 
     private final HttpClient httpClient;
 
@@ -49,6 +52,7 @@ public class HttpRequestTool {
             @ToolParam(description = "完整的请求 URL") String url,
             @ToolParam(description = "请求头，JSON 格式，如 {\"Content-Type\":\"application/json\"}", required = false) Map<String, String> headers,
             @ToolParam(description = "请求体内容（POST/PUT/DELETE/PATCH 时使用）", required = false) String body) {
+        log.info("httpRequest: {}", url);
 
         try {
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()

@@ -1,6 +1,6 @@
 # 🤖 Spring AI 演示
 
-> 🔴 **以下 7 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
+> 🔴 **以下 8 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
 > 🔴 **禁止用“同理”、“省略”、“以此类推”等理由跳过任何 curl 命令。**
 
 基于 **Spring AI 2.0**，集成阿里云百炼（DashScope）兼容 OpenAI 协议。
@@ -238,7 +238,42 @@ curl --max-time 60 -X POST "http://localhost:8888/ai/vision/compare" \
 >   -d "imageUrl=..." | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))"
 > ```
 
-## Step 7：MCP Server 验证（Streamable HTTP）
+## Step 7：图片生成（文生图）
+
+> 使用自定义 `DashScopeImageModel` 实现 Spring AI `ImageModel` 接口，底层调用 DashScope 原生异步 API（`wan2.7-image-pro` 模型）。
+> 流程为：**提交任务立即返回 taskId** → **前端轮询状态接口** → 获取图片 URL。
+
+| 接口                          | 说明                        |
+|-----------------------------|-----------------------------|
+| `POST /ai/image/generate`   | 提交文生图任务，立即返回 taskId     |
+| `GET /ai/image/status/{taskId}` | 查询任务状态（PENDING/RUNNING/SUCCEEDED） |
+
+```shell
+# 7.1 提交文生图任务（立即返回 taskId）
+TASK_ID=$(curl -s -X POST "http://localhost:8888/ai/image/generate" \
+  -d "prompt=一只可爱的橘猫坐在窗台上看日落，水彩画风格" \
+  -d "n=1" \
+  -d "size=1024x1024" | python3 -c "import sys,json; print(json.load(sys.stdin)['taskId'])")
+echo "Task ID: $TASK_ID"
+
+# 7.2 轮询任务状态（每 5 秒一次，直到 SUCCEEDED）
+for i in $(seq 1 12); do
+  result=$(curl -s "http://localhost:8888/ai/image/status/$TASK_ID")
+  status=$(echo "$result" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+  echo "[$i] Status: $status"
+  if [ "$status" = "SUCCEEDED" ] || [ "$status" = "FAILED" ]; then
+    echo "$result" | python3 -c "import sys,json; d=json.load(sys.stdin); print('URL:', d['urls'][0] if d.get('urls') else 'N/A')"
+    break
+  fi
+  sleep 5
+done
+```
+
+**预期结果**：
+- 7.1 立即返回 `{"taskId":"xxx"}`
+- 7.2 轮询显示 `RUNNING` → `SUCCEEDED`，最终输出图片 URL
+
+## Step 8：MCP Server 验证（Streamable HTTP）
 
 > 🔴 **Streamable HTTP 协议要求会话管理：先 `initialize` 获取 Session ID，后续所有请求必须携带 `Mcp-Session-Id` 头。**
 

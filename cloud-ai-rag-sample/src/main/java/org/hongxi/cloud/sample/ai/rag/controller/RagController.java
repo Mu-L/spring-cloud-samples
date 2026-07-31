@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * RAG（检索增强生成）控制器
@@ -57,6 +58,46 @@ public class RagController {
     }
 
     /**
+     * 上传文件并摄入到向量数据库
+     * <p>
+     * 支持的文件格式：
+     * <ul>
+     *   <li>Markdown (.md, .markdown)</li>
+     *   <li>PDF (.pdf)</li>
+     *   <li>HTML (.html, .htm)</li>
+     *   <li>Office 文档 (.docx, .pptx, .doc, .ppt) 及纯文本 (.txt, .rtf)</li>
+     * </ul>
+     *
+     * @param file 上传的文件
+     * @param source 来源标识（可选）
+     * @return 分块后存储的文档数量
+     */
+    @PostMapping("/ingest-file")
+    public ResponseEntity<?> ingestFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "source", required = false) String source) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("文件不能为空");
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || filename.isBlank()) {
+            return ResponseEntity.badRequest().body("文件名不能为空");
+        }
+        String effectiveSource = source != null ? source : filename;
+        log.info("RAG 文件摄入请求，filename={}, source={}, fileSize={}",
+                filename, effectiveSource, file.getSize());
+        try {
+            int chunks = ragService.ingestFile(file.getBytes(), filename, effectiveSource);
+            return ResponseEntity.ok(new IngestResponse(effectiveSource, chunks,
+                    "文件「" + filename + "」摄入成功"));
+        } catch (Exception e) {
+            log.error("文件摄入失败，filename={}", filename, e);
+            return ResponseEntity.internalServerError()
+                    .body("文件摄入失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * RAG 查询：基于知识库检索并增强 LLM 回答
      *
      * @param question 用户问题
@@ -68,6 +109,19 @@ public class RagController {
                                                @RequestParam(required = false, defaultValue = "3") int topK) {
         log.info("RAG 查询请求，question={}, topK={}", question, topK);
         String answer = ragService.query(question, topK);
+        return ResponseEntity.ok(answer);
+    }
+
+    /**
+     * RAG 查询（Advisor 简化版）：使用 QuestionAnswerAdvisor 自动检索并增强回答
+     *
+     * @param question 用户问题
+     * @return LLM 基于检索上下文生成的回答
+     */
+    @GetMapping("/query-advisor")
+    public ResponseEntity<String> queryWithAdvisor(@RequestParam String question) {
+        log.info("RAG Advisor 查询请求，question={}", question);
+        String answer = ragService.queryWithAdvisor(question);
         return ResponseEntity.ok(answer);
     }
 

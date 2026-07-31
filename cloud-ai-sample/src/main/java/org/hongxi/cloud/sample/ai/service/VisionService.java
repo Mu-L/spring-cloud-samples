@@ -17,7 +17,7 @@ import java.nio.file.Path;
  * 多模态图像处理服务
  * <p>
  * 演示如何使用 AI 模型理解和描述图片内容。
- * 注入预配置多模态模型的 visionChatClient，无需每次调用时覆盖模型。
+ * 注入预配置多模态模型的 multimodalChatClient，无需每次调用时覆盖模型。
  * </p>
  *
  * @author javahongxi
@@ -27,10 +27,10 @@ public class VisionService {
 
     private static final Logger log = LoggerFactory.getLogger(VisionService.class);
 
-    private final ChatClient visionChatClient;
+    private final ChatClient multimodalChatClient;
 
-    public VisionService(ChatClient visionChatClient) {
-        this.visionChatClient = visionChatClient;
+    public VisionService(ChatClient multimodalChatClient) {
+        this.multimodalChatClient = multimodalChatClient;
     }
 
     /**
@@ -46,7 +46,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String description = visionChatClient.prompt()
+            String description = multimodalChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text(prompt)
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -79,7 +79,7 @@ public class VisionService {
 
             Resource imageResource = new UrlResource(tempFile.toUri());
 
-            String description = visionChatClient.prompt()
+            String description = multimodalChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text(prompt)
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -115,7 +115,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String text = visionChatClient.prompt()
+            String text = multimodalChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请提取图片中的所有文字，保持原有格式")
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -143,7 +143,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String analysis = visionChatClient.prompt()
+            String analysis = multimodalChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请分析这个图表，包括：\n" +
                                   "1. 图表类型\n" +
@@ -175,7 +175,7 @@ public class VisionService {
         try {
             Resource imageResource = new UrlResource(imageUrl);
 
-            String code = visionChatClient.prompt()
+            String code = multimodalChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请将这张图片中的代码完整提取出来，保持格式和缩进")
                             .media(MediaType.IMAGE_JPEG, imageResource))
@@ -205,7 +205,7 @@ public class VisionService {
             Resource image1 = new UrlResource(imageUrl1);
             Resource image2 = new UrlResource(imageUrl2);
 
-            String comparison = visionChatClient.prompt()
+            String comparison = multimodalChatClient.prompt()
                     .user(userSpec -> userSpec
                             .text("请对比这两张图片，分析它们的相似点和不同点")
                             .media(MediaType.IMAGE_JPEG, image1)

@@ -16,8 +16,10 @@ spring:
       chat:
         model: qwen-plus
         temperature: 0.7
-      vision:
-        model: qwen3.7-plus # 多模态视觉模型（需支持图像输入）
+      multimodal:
+        model: qwen3.7-plus # 多模态模型（视觉理解 + 图片生成）
+      image:
+        model: wan2.7-image-pro # 图片生成模型（DashScope文生图）
     mcp:
       server:
         name: spacecloud-mcp-server

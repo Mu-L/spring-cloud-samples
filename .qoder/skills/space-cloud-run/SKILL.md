@@ -5,12 +5,12 @@ description: >
   验证微服务调用、测试网关路由、查看服务注册、执行集成测试、一键部署、环境检查、
   排查微服务问题、了解 Spring Cloud 组件用法、学习 Nacos/Sentinel/Seata/Dubbo/gRPC/Stream/Kafka 时
   使用此技能。也支持演示特定功能：ChatMemory（多轮对话记忆）、PromptTemplate（提示词模板）、
-  RAG 检索增强生成、Spring AI 视觉识别、Tool Calling（工具调用）、ReAct Agent（智能体）、
+  RAG 检索增强生成、文件上传摄入、长期记忆对话、Spring AI 视觉识别、图片生成（文生图）、Tool Calling（工具调用）、ReAct Agent（智能体）、
   System Message（系统提示词）、MCP Server 验证、
   Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、
   Kafka 4.x 集群消息收发。
   涵盖 16 个模块的完整演示流程。
-tags: [spring-cloud, spring-cloud-alibaba, microservices, demo, nacos, sentinel, seata, dubbo, grpc, rocketmq, stream, kafka, trace, spring-ai, rag, chat-memory, prompt-template, vision, tool-calling, agent, mcp]
+tags: [spring-cloud, spring-cloud-alibaba, microservices, demo, nacos, sentinel, seata, dubbo, grpc, rocketmq, stream, kafka, trace, spring-ai, rag, chat-memory, long-term-memory, prompt-template, vision, image-generation, tool-calling, agent, mcp]
 ---
 
 # Spring Cloud Alibaba 示例项目演示
@@ -423,8 +423,10 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
 9. **视觉识别**（6 个接口全部演示，不可跳过）：
    - 先预检查 6 个图片 URL 可用性
    - URL 图片分析、图片上传分析、OCR 文字识别、图表分析、代码截图转代码、多图片对比
-10. **MCP Server 验证**（Streamable HTTP 协议）：
-   - 初始化会话获取 Session ID → 列出可用工具 → 调用 3 个工具（时间/HTTP请求/Web搜索）
+10. **图片生成（文生图）**：
+    - 使用 DashScope 原生异步 API（`wan2.7-image-pro` 模型），根据文本提示词生成图片
+11. **MCP Server 验证**（Streamable HTTP 协议）：
+    - 初始化会话获取 Session ID → 列出可用工具 → 调用 3 个工具（时间/HTTP请求/Web搜索）
 
 > 完整 curl 命令参考 [spring-ai.md](references/spring-ai.md)
 
@@ -450,6 +452,9 @@ psql -c "SELECT 1 FROM pg_available_extensions WHERE name='vector'" &>/dev/null 
 4. **topK 对比**（topK=1）→ 对比不同检索数量下的回答差异
 5. **不同主题文档检索验证**（topK=2）→ 换一篇文档相关问题，AI 应精确回答索引类型和距离度量（验证不是固定返回同一篇）
 6. **删除文档后降级验证** → 回答中不应出现"参考资料"字样
+7. **文件上传摄入**（ingest-file）→ 上传 md 文件，确认返回 chunks > 0
+8. **QuestionAnswerAdvisor 查询** → 验证 Advisor 自动检索增强效果
+9. **长期记忆对话**（3 步）→ 告诉 AI 名字 → 追问验证记忆 → 不同 conversationId 验证会话隔离
 
 > 完整 curl 命令参考 [spring-ai-rag.md](references/spring-ai-rag.md)
 
@@ -486,10 +491,14 @@ nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
 | AI 模块 401              | 检查 OPENAI_API_KEY 是否正确配置                                                                         |
 | AI 视觉识别 500            | 图片 URL 不可访问（百度图片会拒绝 Java UrlResource 请求），使用稳定可访问的 URL                                            |
 | AI 接口 400              | 中文参数需 URL 编码，使用 `--get --data-urlencode`                                                         |
+| AI 图片生成超时或失败         | 检查 `wanx2.1-t2i-turbo` 模型是否可用，DashScope 异步任务需 10~30 秒，curl 加 `--max-time 120`                                  |
 | RAG 模块连接 PostgreSQL 失败 | 确认 PostgreSQL 已运行（`pg_isready`），已执行 `init_ai_demo.sql` 初始化数据库                                    |
 | RAG 摄入返回 0 chunks      | 检查 content 是否为空，确认 PgVector 扩展已启用（`\connect ai_demo` 后 `CREATE EXTENSION vector`）                |
+| RAG 文件摄入报 batch size 错误 | 自定义 `BatchingStrategy` Bean 已配置（每批≤10 条），确认 `EmbeddingConfig` 未被删除                                   |
 | RAG 查询回答未引用参考资料        | 确认文档已成功摄入（ingest 返回 chunks > 0），检查 topK 参数是否合理                                                   |
+| RAG 查询检索到记忆数据          | 检查 `RagService` 中 `filterExpression` 是否正确过滤 `type: "knowledge"`                                         |
 | ChatMemory 无记忆效果       | 确认 conversationId 是否一致，AI 模块使用内存存储，重启后记忆会清空                                                     |
+| 长期记忆无法回忆历史信息           | 确认 conversationId 一致，检查 `VectorStoreChatMemoryAdvisor` 是否正确配置，向量库中是否有记忆数据                         |
 | Kafka 模块连接失败           | 确认 Kafka 集群已启动（端口 9092/9094/9096），已创建 share-demo-topic、share-demo-topic-explicit 和 tx-demo-topic |
 | Stream 发送消息报超时异常       | 重启 Broker                                                                                        |
 | Nacos Console 需要登录       | Nacos 应已切换为免密模式，检查 `application.properties` 中 `nacos.core.auth.console.enabled` 是否为 `false`，修改后重启 Nacos            |

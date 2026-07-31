@@ -1,6 +1,6 @@
 # 🤖 Spring AI RAG 演示
 
-> 🔴 **共 6 个步骤，必须逐一执行，不可跳过。每步执行后确认返回结果是否符合预期。**
+> 🔴 **共 9 个步骤，必须逐一执行，不可跳过。每步执行后确认返回结果是否符合预期。**
 
 基于 **Spring AI 2.0** 的检索增强生成模块，使用 **PgVector** 作为向量存储。
 
@@ -40,13 +40,29 @@ done
 
 > 实现原理：使用 PgVector 作为向量存储，通过 `spring-ai-starter-vector-store-pgvector` 自动配置。
 
-## RAG 接口
+## 接口一览
 
-| 接口                         | 说明            |
-|----------------------------|---------------|
-| `POST /ai/rag/ingest`      | 摄入文档到向量数据库    |
-| `GET /ai/rag/query`        | 基于知识库的 RAG 问答 |
-| `DELETE /ai/rag/documents` | 删除指定来源的文档     |
+### RAG 知识库接口
+
+| 接口                           | 说明                       |
+|------------------------------|--------------------------|
+| `POST /ai/rag/ingest`        | 摄入文本内容到向量数据库             |
+| `POST /ai/rag/ingest-file`   | 上传文件（md/pdf/docx 等）并摄入向量数据库 |
+| `GET /ai/rag/query`          | 基于知识库的 RAG 问答（手动检索增强）      |
+| `GET /ai/rag/query-advisor`  | 基于 QuestionAnswerAdvisor 的 RAG 问答 |
+| `DELETE /ai/rag/documents`   | 删除指定来源的文档               |
+
+### 长期记忆接口
+
+| 接口                                     | 说明                         |
+|----------------------------------------|----------------------------|
+| `POST /ai/long-term-memory/chat`       | 带短期+长期记忆的多轮对话               |
+| `DELETE /ai/long-term-memory/{conversationId}` | 清除指定会话的短期记忆（长期向量记忆保留）      |
+
+> 实现原理：短期记忆通过 JDBC 持久化的 `MessageWindowChatMemory`（滑动窗口 20 条）保持当前会话连贯；
+> 长期记忆通过 `VectorStoreChatMemoryAdvisor` 在 `before()` 阶段按语义相似度检索历史对话注入 system prompt，
+> 在 `after()` 阶段将对话写入向量库。RAG 文档添加 `type: "knowledge"` 元数据，与记忆文档（含 `conversationId` 元数据）隔离，
+> 查询时通过 `filterExpression` 确保只检索知识库文档。
 
 ---
 
@@ -118,6 +134,63 @@ curl --max-time 60 --get --data-urlencode "question=What is PgVector?" "http://l
 ```
 
 **预期结果**：回答中**不应**出现"参考资料"字样，确认走了纯 LLM 路径（无知识库可检索）。
+
+---
+
+---
+
+## Step 7：文件上传摄入（ingest-file）
+
+> 演示通过上传本地文件（Markdown、PDF、DOCX 等）摄入知识库，使用 Tika 解析文件内容。
+
+```shell
+curl --max-time 60 -X POST "http://localhost:8889/ai/rag/ingest-file?source=ai-three-frameworks" \
+  -F "file=@ai-three-frameworks.md"
+```
+
+**预期结果**：返回 JSON，`chunks` 字段 > 0（文件被解析并分块存储）。自定义 `BatchingStrategy` 每批最多 10 条文档发给 embedding API，适配 DashScope 的批量限制。
+
+---
+
+## Step 8：QuestionAnswerAdvisor 查询
+
+> 使用 `QuestionAnswerAdvisor` 简化版查询，Advisor 自动完成文档检索并注入上下文到 prompt。
+
+```shell
+curl --max-time 60 --get --data-urlencode "question=Spring AI的Advisor机制是什么" "http://localhost:8889/ai/rag/query-advisor"
+```
+
+**预期结果**：AI 基于检索到的知识库文档回答，与 Step 3 的 `query` 接口效果类似，但底层由 Advisor 自动完成检索增强。
+
+---
+
+## Step 9：长期记忆对话
+
+> 演示短期滑动窗口 + 长期向量检索的组合记忆能力。
+
+**9.1 第一轮对话（告诉 AI 个人信息）：**
+```shell
+curl --max-time 60 -X POST http://localhost:8889/ai/long-term-memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"demo-001","message":"我叫小明，我喜欢Java编程"}'
+```
+**预期结果**：AI 回复中体现记住了你的名字和爱好。
+
+**9.2 第二轮对话（验证记忆检索）：**
+```shell
+curl --max-time 60 -X POST http://localhost:8889/ai/long-term-memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"demo-001","message":"我叫什么名字？我喜欢什么？"}'
+```
+**预期结果**：AI 能准确回忆出你叫小明、喜欢 Java 编程。
+
+**9.3 验证会话隔离（不同 conversationId）：**
+```shell
+curl --max-time 60 -X POST http://localhost:8889/ai/long-term-memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"demo-002","message":"我叫什么名字？"}'
+```
+**预期结果**：AI 无法回忆 demo-001 的信息，证明会话隔离正常。
 
 ---
 
