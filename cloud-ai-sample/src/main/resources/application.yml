@@ -10,6 +10,9 @@ spring:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
   ai:
+    model:
+      audio:
+        speech: none # 禁用 OpenAI Audio Speech 自动配置，使用自定义 DashScopeTtsModel
     openai:
       api-key: ${OPENAI_API_KEY:}
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -20,6 +23,10 @@ spring:
         model: qwen3.7-plus # 多模态模型（视觉理解 + 图片生成）
       image:
         model: wan2.7-image-pro # 图片生成模型（DashScope文生图）
+      audio:
+        speech:
+          model: cosyvoice-v3-plus # TTS 文字转语音模型（DashScope CosyVoice V3）
+          voice: longanyang # 语音角色（龙安洋，cosyvoice-v3-plus 标杆音色）
     mcp:
       server:
         name: spacecloud-mcp-server

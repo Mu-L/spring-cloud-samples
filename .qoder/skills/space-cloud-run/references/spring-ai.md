@@ -1,6 +1,6 @@
 # 🤖 Spring AI 演示
 
-> 🔴 **以下 8 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
+> 🔴 **以下 9 个子场景必须逐一演示，每个场景的所有 curl 命令必须执行，不可跳过任何一项。**
 > 🔴 **禁止用“同理”、“省略”、“以此类推”等理由跳过任何 curl 命令。**
 
 基于 **Spring AI 2.0**，集成阿里云百炼（DashScope）兼容 OpenAI 协议。
@@ -273,7 +273,37 @@ done
 - 7.1 立即返回 `{"taskId":"xxx"}`
 - 7.2 轮询显示 `RUNNING` → `SUCCEEDED`，最终输出图片 URL
 
-## Step 8：MCP Server 验证（Streamable HTTP）
+## Step 8：音频能力（TTS）
+
+> 使用自定义 `DashScopeTtsModel` 实现 Spring AI `TextToSpeechModel` 接口，
+> 底层调用 DashScope 原生 HTTP API（`cosyvoice-v3-plus` 模型）。
+> DashScope 不支持 OpenAI 标准的 `/v1/audio/speech` 端点，因此通过 `/api/v1/services/audio/tts/SpeechSynthesizer` 端点实现。
+> 默认语音角色为 `longanyang`（龙安洋，标杆音色）。
+
+| 接口                | 说明                           |
+|-------------------|------------------------------|
+| `GET /ai/audio/tts`  | 文字转语音（TTS），返回 MP3 音频流       |
+
+```shell
+# 8.1 文字转语音（TTS）- 使用默认语音角色（龙安洋）
+curl --max-time 60 --get --data-urlencode "text=你好，我是Spring AI，很高兴为你服务" \
+  -o /tmp/speech.mp3 "http://localhost:8888/ai/audio/tts"
+file /tmp/speech.mp3
+ls -lh /tmp/speech.mp3
+
+# 8.2 文字转语音（TTS）- 指定语音角色（龙安欢，欢脱元气女）
+curl --max-time 60 --get \
+  --data-urlencode "text=Spring AI让Java开发者也能轻松构建智能应用" \
+  --data-urlencode "voice=longanhuan" \
+  -o /tmp/speech2.mp3 "http://localhost:8888/ai/audio/tts"
+ls -lh /tmp/speech2.mp3
+```
+
+**预期结果**：
+- 8.1 返回 MP3 音频文件（约几十 KB）
+- 8.2 返回不同语音角色（龙安欢）的 MP3 音频
+
+## Step 9：MCP Server 验证（Streamable HTTP）
 
 > 🔴 **Streamable HTTP 协议要求会话管理：先 `initialize` 获取 Session ID，后续所有请求必须携带 `Mcp-Session-Id` 头。**
 
