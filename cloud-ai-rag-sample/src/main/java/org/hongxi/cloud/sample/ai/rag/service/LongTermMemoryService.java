@@ -7,8 +7,10 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.VectorStoreChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,8 +18,8 @@ import org.springframework.stereotype.Service;
  * <p>
  * 组合两种记忆机制：
  * <ul>
- *   <li><b>短期记忆</b>（MessageWindowChatMemory + JDBC）：滑动窗口保留最近 20 条消息，
- *       保证当前会话上下文的连贯性</li>
+ *   <li><b>短期记忆</b>（MessageWindowChatMemory）：滑动窗口保留最近 20 条消息，
+ *       保证当前会话上下文的连贯性。优先使用 JDBC 持久化，若无 JDBC 环境则自动降级为内存实现</li>
  *   <li><b>长期记忆</b>（VectorStoreChatMemoryAdvisor + PGVector）：将历史对话向量化存入向量库，
  *       每次请求时按语义相似度检索相关历史，注入 system prompt，实现跨会话的长期记忆</li>
  * </ul>
@@ -35,11 +37,13 @@ public class LongTermMemoryService {
     private final ChatMemory chatMemory;
 
     public LongTermMemoryService(ChatClient.Builder chatClientBuilder,
-                                 ChatMemoryRepository chatMemoryRepository,
+                                 ObjectProvider<ChatMemoryRepository> chatMemoryRepositoryProvider,
                                  VectorStore vectorStore) {
-        // 短期记忆：JDBC 持久化，滑动窗口保留最近 20 条消息
+        // 短期记忆：优先使用 JDBC 持久化，若无 JDBC 环境则降级为内存实现
+        ChatMemoryRepository repository = chatMemoryRepositoryProvider
+                .getIfAvailable(InMemoryChatMemoryRepository::new);
         this.chatMemory = MessageWindowChatMemory.builder()
-                .chatMemoryRepository(chatMemoryRepository)
+                .chatMemoryRepository(repository)
                 .maxMessages(20)
                 .build();
 
@@ -79,7 +83,7 @@ public class LongTermMemoryService {
     /**
      * 清除指定会话的短期记忆
      * <p>
-     * 注意：此方法只清除 JDBC 中的短期记忆，向量库中的长期记忆不会被清除。
+     * 注意：此方法只清除短期记忆（JDBC 或内存），向量库中的长期记忆不会被清除。
      * 长期记忆会随时间自然被新记忆覆盖（语义检索只返回最相关的 topK 条）。
      * </p>
      *

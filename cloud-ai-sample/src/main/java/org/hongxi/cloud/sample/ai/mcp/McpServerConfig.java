@@ -6,8 +6,12 @@ import org.hongxi.cloud.sample.ai.tool.TimeTool;
 import org.hongxi.cloud.sample.ai.tool.WebSearchTool;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MCP Server 配置类
@@ -31,15 +35,21 @@ public class McpServerConfig {
      * 将实用工具统一注册到 MCP Server
      * <p>
      * 复用 tool 包下的工具类，同时用于内部 Tool Calling 和 MCP 对外暴露。
+     * 通过 {@link ObjectProvider} 实现工具可选注入：当某个工具 Bean 不存在时自动跳过，
+     * 无需修改此配置即可实现工具的插拔式管理。
      * </p>
      */
     @Bean
     public ToolCallbackProvider mcpToolProvider(
             TimeTool timeTool,
-            HttpRequestTool httpRequestTool,
-            WebSearchTool webSearchTool) {
+            ObjectProvider<HttpRequestTool> httpRequestTool,
+            ObjectProvider<WebSearchTool> webSearchTool) {
+        List<Object> tools = new ArrayList<>();
+        tools.add(timeTool);
+        httpRequestTool.ifAvailable(tools::add);
+        webSearchTool.ifAvailable(tools::add);
         return MethodToolCallbackProvider.builder()
-                .toolObjects(timeTool, httpRequestTool, webSearchTool)
+                .toolObjects(tools.toArray())
                 .build();
     }
 }
