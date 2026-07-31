@@ -79,27 +79,7 @@ public class ReactAgentController {
     }
 
     /**
-     * 展示 Advisor 链架构的工具调用
-     * <p>
-     * 本接口显式演示 Spring AI 2.0 的 Advisor 链机制：
-     * <pre>
-     * ChatClient → [ToolCallingAdvisor(+300)] → [ToolCallObservationAdvisor(+400)] → ChatModel
-     *                ↑ 递归驱动工具调用循环       ↑ 位于 TCA 之后，每次迭代都被观测
-     * </pre>
-     * </p>
-     * <p>
-     * 与 {@link #agentChat(String)} 的区别：
-     * <ul>
-     *   <li>agentChat 使用 .tools() 隐式添加 ToolCallingAdvisor，工具调用过程不可见</li>
-     *   <li>本接口通过 .advisors() 显式添加自定义 Advisor，可观测工具调用循环的每次迭代</li>
-     * </ul>
-     * </p>
-     * <p>
-     * 测试示例：
-     * - "现在几点了？"
-     * - "搜索一下最近有什么新上映的电影"
-     * - "帮我请求 https://jsonplaceholder.typicode.com/posts/1 看看返回什么"
-     * </p>
+     * Advisor 链演示
      *
      * @param message 用户消息
      * @return Agent 的回答
@@ -112,11 +92,6 @@ public class ReactAgentController {
                     .system(SYSTEM_PROMPT)
                     .user(message)
                     .tools(timeTool, httpRequestTool, webSearchTool)
-                    // 显式添加自定义 Advisor（order=400，位于 ToolCallingAdvisor 之后）
-                    // Advisor 链执行顺序（按 order 升序）：
-                    //   ToolCallingAdvisor(+300) → ToolCallObservationAdvisor(+400) → ChatModel
-                    // TCA 递归时 chain.copy(this) 只包含 order>300 的 Advisor，
-                    // 因此 observer 会在每次工具调用迭代中被触发
                     .advisors(new ToolCallObservationAdvisor())
                     .call()
                     .content();

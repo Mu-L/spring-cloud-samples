@@ -38,13 +38,11 @@ import java.util.List;
  * <p>
  * Advisor 链执行流程（按 order 升序执行）：
  * <pre>
- * ChatClient → [ToolCallingAdvisor(+300)] → [ToolCallObservationAdvisor(+400)] → ChatModel
- *                ↑ 递归驱动工具调用循环       ↑ 位于 TCA 之后，每次迭代都被观测
+ * ChatClient → [ToolCallingAdvisor(+300)] → [ToolCallObservationAdvisor(+400)] → ChatModelCallAdvisor
+ *                ↑ do-while 驱动工具调用循环     ↑ 位于 TCA 之后，每次迭代都被观测
  * </pre>
  * <p>
- * 关键设计：本 Advisor 的 order 必须大于 ToolCallingAdvisor（+300），
- * 才能被包含在 TCA 的递归 chain.copy(this) 中，从而观测到每次迭代。
- * 如果 order 小于 TCA，则只在首次请求时触发一次，无法观测后续迭代。
+ * 关键设计：本 Advisor 的 order 必须大于 ToolCallingAdvisor（+300）
  * </p>
  *
  * @author javahongxi
@@ -57,8 +55,8 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
     /**
      * 设置 order 为 HIGHEST_PRECEDENCE + 400，确保在 ToolCallingAdvisor（+300）之后执行。
      * <p>
-     * ToolCallingAdvisor 递归时通过 chain.copy(this) 获取"排在自己之后的 Advisor 链"，
-     * 只有 order 大于 300 的 Advisor 才会被包含在递归调用中。
+     * ToolCallingAdvisor 循环迭代时通过 chain.copy(this) 获取"排在自己之后的 Advisor 链"，
+     * 只有 order 大于 300 的 Advisor 才会在循环迭代中被执行。
      * </p>
      */
     @Override
@@ -78,7 +76,7 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
         // 初始状态: SYSTEM + USER = 2 条 → 第 1 轮
         // 第 1 轮工具调用后: +2 条 → 第 2 轮
         List<Message> messages = request.prompt().getInstructions();
-        int iteration = computeIteration(messages);
+        long iteration = computeIteration(messages);
 
         log.info("╔═══════════════════════════════════════════════════════");
         log.info("║ [Advisor 链] 第 {} 轮调用（消息数: {}）", iteration, messages.size());
@@ -87,7 +85,7 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
         // 打印当前消息历史（展示累积的对话上下文）
         logMessageHistory(messages);
 
-        // 调用下游链（到 ChatModelCallAdvisor）
+        // Next Call
         long startTime = System.currentTimeMillis();
         ChatClientResponse response = chain.nextCall(request);
         long elapsed = System.currentTimeMillis() - startTime;
@@ -102,12 +100,12 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
      * 根据消息历史推断当前是第几轮迭代。
      * 初始 2 条（SYSTEM + USER），每轮工具调用增加 2 条（AssistantMessage + ToolResponseMessage）。
      */
-    private int computeIteration(List<Message> messages) {
+    private long computeIteration(List<Message> messages) {
         // 统计 ToolResponseMessage 的数量即为已完成的工具调用轮次
         long toolResponseCount = messages.stream()
                 .filter(m -> m instanceof ToolResponseMessage)
                 .count();
-        return (int) toolResponseCount + 1;
+        return toolResponseCount + 1;
     }
 
     /**
@@ -143,9 +141,9 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
     /**
      * 分析 ChatModel 的响应，判断是否包含工具调用请求
      */
-    private void analyzeResponse(ChatClientResponse response, int iteration, long elapsed) {
+    private void analyzeResponse(ChatClientResponse response, long iteration, long elapsed) {
         ChatResponse chatResponse = response.chatResponse();
-        if (chatResponse == null || chatResponse.getResults() == null) {
+        if (chatResponse == null) {
             log.info("║ [第 {} 轮] 响应为空，耗时 {}ms", iteration, elapsed);
             return;
         }
@@ -155,12 +153,8 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
                 .anyMatch(AssistantMessage::hasToolCalls);
 
         if (hasToolCalls) {
-            log.info("║ [第 {} 轮] 大模型响应（耗时 {}ms）→ hasToolCalls=true，模型决定调用工具",
-                    iteration, elapsed);
+            log.info("║ [第 {} 轮] 大模型响应（耗时 {}ms）→ hasToolCalls=true，模型决定调用工具", iteration, elapsed);
         } else {
-            String content = chatResponse.getResults().stream()
-                    .map(g -> g.getOutput().getText())
-                    .reduce("", (a, b) -> a + b);
             log.info("║ [第 {} 轮] 模型返回最终响应（耗时 {}ms）→ 工具调用循环终止", iteration, elapsed);
         }
         log.info("╚═══════════════════════════════════════════════════════");
