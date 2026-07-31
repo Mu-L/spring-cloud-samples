@@ -215,10 +215,7 @@ public class DashScopeImageModel implements ImageModel {
         // wan2.7 响应格式：output.choices[].message.content[].image
         List<Map<String, Object>> choices = (List<Map<String, Object>>) output.get("choices");
         if (choices == null) {
-            // 兼容旧版 wanx2.1 格式：output.results[].url
-            List<Map<String, String>> results = (List<Map<String, String>>) output.get("results");
-            if (results == null) return Collections.emptyList();
-            return results.stream().map(r -> r.get("url")).filter(Objects::nonNull).toList();
+            return Collections.emptyList();
         }
         return choices.stream()
                 .map(choice -> {
