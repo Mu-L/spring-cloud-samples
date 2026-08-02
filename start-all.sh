@@ -1147,7 +1147,7 @@ demo_urls() {
     echo "     • Tool Calling、ReAct Agent"
     echo "     • ChatMemory 多轮对话记忆 (内存)"
     echo "     • PromptTemplate 提示词模板 (产品描述/代码解释/自定义模板)"
-    echo "     • 多模态视觉识别 (6种场景)"
+    echo "     • 多模态视觉理解 (6种场景)"
     echo "     → 使用 space-cloud-run skill 进行验证"
     echo ""
     echo "  7️⃣  Spring AI RAG 模块 (端口 8889):"

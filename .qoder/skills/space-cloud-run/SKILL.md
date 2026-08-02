@@ -5,7 +5,7 @@ description: >
   验证微服务调用、测试网关路由、查看服务注册、执行集成测试、一键部署、环境检查、
   排查微服务问题、了解 Spring Cloud 组件用法、学习 Nacos/Sentinel/Seata/Dubbo/gRPC/Stream/Kafka 时
   使用此技能。也支持演示特定功能：ChatMemory（多轮对话记忆）、PromptTemplate（提示词模板）、
-  RAG 检索增强生成、文件上传摄入、长期记忆对话、Spring AI 视觉识别、图片生成（文生图）、音频能力（TTS）、Tool Calling（工具调用）、ReAct Agent（智能体）、
+  RAG 检索增强生成、文件上传摄入、长期记忆对话、Spring AI 视觉理解、图片生成（文生图）、音频能力（TTS）、Tool Calling（工具调用）、ReAct Agent（智能体）、
   System Message（系统提示词）、MCP Server 验证、
   Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、
   Kafka 4.x 集群消息收发。
@@ -420,7 +420,7 @@ nc -z 127.0.0.1 8091 && echo "✓ Seata Server 已运行" || echo "✗ Seata Ser
    - 第 1 轮告诉 AI 名字，第 2 轮追问验证记忆，第 3 轮验证会话隔离
 8. **PromptTemplate（提示词模板）**（3 个接口）：
    - 产品描述生成、代码解释、自定义模板
-9. **视觉识别**（6 个接口全部演示，不可跳过）：
+9. **视觉理解**（6 个接口全部演示，不可跳过）：
    - 先预检查 6 个图片 URL 可用性
    - URL 图片分析、图片上传分析、OCR 文字识别、图表分析、代码截图转代码、多图片对比
 10. **图片生成（文生图）**：
@@ -491,7 +491,7 @@ nc -z 127.0.0.1 9092 && echo "✓ Kafka 已运行" || echo "✗ Kafka 未运行"
 | gRPC 调用失败              | 确认 grpc-server 的 gRPC 端口 9090 可访问                                                                |
 | Sentinel 未限流           | 检查 Nacos 中是否配置了对应的 Sentinel 规则                                                                   |
 | AI 模块 401              | 检查 OPENAI_API_KEY 是否正确配置                                                                         |
-| AI 视觉识别 500            | 图片 URL 不可访问（百度图片会拒绝 Java UrlResource 请求），使用稳定可访问的 URL                                            |
+| AI 视觉理解 500            | 图片 URL 不可访问（百度图片会拒绝 Java UrlResource 请求），使用稳定可访问的 URL                                            |
 | AI 接口 400              | 中文参数需 URL 编码，使用 `--get --data-urlencode`                                                         |
 | AI 图片生成超时或失败         | 检查 `wanx2.1-t2i-turbo` 模型是否可用，DashScope 异步任务需 10~30 秒，curl 加 `--max-time 120`                                  |
 | AI TTS 返回 500 或 404       | 确认 `spring.ai.model.audio.speech: none` 已配置以禁用 OpenAI 自动配置，使用自定义 `DashScopeTtsModel`                              |

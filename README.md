@@ -59,7 +59,7 @@
 告诉 AI: "验证 Seata 分布式事务"
 告诉 AI: "验证 Stream 消息收发"
 告诉 AI: "演示 Spring AI"
-告诉 AI: "演示一下视觉识别"
+告诉 AI: "演示一下视觉理解"
 ```
 
 详见 [SKILL.md](.qoder/skills/space-cloud-run/SKILL.md)
@@ -128,7 +128,7 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 | 🛡️ Sentinel 熔断（App）     | 应用级熔断降级（Feign / RestTemplate）                                | [sentinel-app.md](.qoder/skills/space-cloud-run/references/sentinel-app.md)         |
 | 📨 Stream 消息驱动          | 基础消费、定时消息源、消息管道、延迟/顺序/事务消息                    | [stream.md](.qoder/skills/space-cloud-run/references/stream.md)                     |
 | 🔄 Seata 分布式事务         | RestTemplate / Feign / Dubbo 三种调用链路                             | [seata.md](.qoder/skills/space-cloud-run/references/seata.md)                       |
-| 🤖 Spring AI                | 对话、Tool Calling、ReAct Agent、视觉识别、ChatMemory、PromptTemplate | [spring-ai.md](.qoder/skills/space-cloud-run/references/spring-ai.md)               |
+| 🤖 Spring AI                | 对话、Tool Calling、ReAct Agent、视觉理解、ChatMemory、PromptTemplate | [spring-ai.md](.qoder/skills/space-cloud-run/references/spring-ai.md)               |
 | 🤖 Spring AI RAG            | PgVector 向量存储，检索增强生成                                       | [spring-ai-rag.md](.qoder/skills/space-cloud-run/references/spring-ai-rag.md)       |
 | 📨 Kafka 4.x                | 传统 Consumer Group、Share Groups、事务消息                           | [kafka.md](.qoder/skills/space-cloud-run/references/kafka.md)                       |
 
