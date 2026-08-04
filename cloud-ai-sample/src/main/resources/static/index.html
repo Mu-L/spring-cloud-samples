@@ -84,7 +84,7 @@
     <div id="tab-demo" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>，流式输出。<br>
+                AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>。<br>
                 Agent 会根据指令自主决定调用哪些工具：健康检查、服务验证、Nacos 查看等。
             </div>
             <div class="examples">
@@ -207,7 +207,7 @@
         });
 
         const tabConfig = {
-            demo: { type: 'stream', endpoint: '/ai/demo', param: 'instruction' },
+            demo: { type: 'call', endpoint: '/ai/demo', param: 'instruction' },
             chat: { type: 'stream', endpoint: '/ai/chat/stream', param: 'message' },
             tool: { type: 'call', endpoint: '/ai/tool/ask', param: 'message' },
             react: { type: 'react', endpoint: '/ai/agent/chat', advisorEndpoint: '/ai/agent/chat-with-advisor', param: 'message' },

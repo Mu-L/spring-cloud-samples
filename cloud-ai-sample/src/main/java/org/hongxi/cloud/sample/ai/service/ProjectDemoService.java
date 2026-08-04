@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 
 /**
  * 项目演示 Agent 服务
@@ -33,10 +32,10 @@ public class ProjectDemoService {
      * @param instruction 用户的演示指令
      * @return Agent 的执行结果
      */
-    public Flux<String> demo(String instruction) {
+    public String demo(String instruction) {
         log.info("项目演示 Agent 收到指令: {}", instruction);
 
-        return chatClient.prompt()
+        String result = chatClient.prompt()
                 .system("""
                         你是 Spring Cloud Alibaba 示例项目的演示助手，负责帮助用户演示和验证本项目。
                         
@@ -69,8 +68,9 @@ public class ProjectDemoService {
                         """)
                 .user(instruction)
                 .tools(projectDemoTool)
-                .stream()
-                .content()
-                .doOnComplete(() -> log.info("项目演示 Agent 完成"));
+                .call()
+                .content();
+        log.info("项目演示 Agent 完成");
+        return result;
     }
 }
