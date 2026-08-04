@@ -5,7 +5,7 @@ description: >
   验证微服务调用、测试网关路由、查看服务注册、执行集成测试、一键部署、环境检查、
   排查微服务问题、了解 Spring Cloud 组件用法、学习 Nacos/Sentinel/Seata/Dubbo/gRPC/Stream/Kafka 时
   使用此技能。也支持演示特定功能：ChatMemory（多轮对话记忆）、PromptTemplate（提示词模板）、
-  RAG 检索增强生成、文件上传摄入、长期记忆对话、Spring AI 视觉理解、图片生成（文生图）、音频能力（TTS）、Tool Calling（工具调用）、ReAct Agent（智能体）、
+  RAG 检索增强生成、文件上传摄入、长期记忆对话、视觉理解、图片生成（文生图）、音频能力（TTS）、Tool Calling（工具调用）、ReAct Agent（智能体）、
   System Message（系统提示词）、MCP Server 验证、
   Trace 链路追踪、Nacos Config 动态配置、Sentinel 限流熔断、Stream 消息收发、Seata 分布式事务、
   Kafka 4.x 集群消息收发。

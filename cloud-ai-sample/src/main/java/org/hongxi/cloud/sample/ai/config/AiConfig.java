@@ -14,16 +14,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * AI 配置类
- * <p>
- * 定义不同场景的 ChatClient：
- * - 默认的 chatClient 使用 OpenAI（DashScope）模型
- * - multimodalChatClient 使用多模态模型（qwen3.7-plus），用于视觉理解和图像生成
- * </p>
- *
- * @author javahongxi
- */
 @Configuration
 public class AiConfig {
 
@@ -73,16 +63,5 @@ public class AiConfig {
                                                @Value("${spring.ai.openai.audio.speech.model:cosyvoice-v3-plus}") String ttsModel,
                                                @Value("${spring.ai.openai.audio.speech.voice:longanyang}") String ttsVoice) {
         return new DashScopeTtsModel(restTemplate, apiKey, ttsModel, ttsVoice);
-    }
-
-    /**
-     * 多模态 ChatClient（视觉理解 + 图片生成）
-     */
-    @Bean
-    public ChatClient multimodalChatClient(ChatClient.Builder builder,
-                                       @Value("${spring.ai.multimodal.model:qwen3.7-plus}") String multimodalModel) {
-        return builder
-                .defaultOptions(OpenAiChatOptions.builder().model(multimodalModel))
-                .build();
     }
 }

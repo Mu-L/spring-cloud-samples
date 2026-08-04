@@ -17,10 +17,8 @@ spring:
       api-key: ${OPENAI_API_KEY:}
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
-        model: qwen-plus
+        model: qwen3.8-max
         temperature: 0.7
-      multimodal:
-        model: qwen3.7-plus # 多模态模型（视觉理解）
       image:
         model: wan2.7-image-pro # 图片生成模型（DashScope文生图）
       audio:

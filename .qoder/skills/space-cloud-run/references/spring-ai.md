@@ -17,12 +17,9 @@
 export OPENAI_API_KEY=your-api-key-here
 ```
 
-启动 AI 模块（端口 8888），默认使用 `qwen-plus` 纯文本模型，视觉理解接口自动切换为 `qwen3.7-plus` 多模态模型。
+启动 AI 模块（端口 8888）
 ```shell
 ./mvnw -pl cloud-ai-sample spring-boot:run
-
-# 如需切换其他模型，可通过命令行参数覆盖
-./mvnw -pl cloud-ai-sample spring-boot:run -Dspring-boot.run.arguments=--spring.ai.openai.chat.options.model=<模型名>
 ```
 
 等待 AI 模块就绪（通过 actuator 健康检查）：
