@@ -25,6 +25,7 @@ import java.util.List;
  * 2. 使用 MethodToolCallbackProvider 将工具注册到 MCP Server
  * 3. MCP Client 通过 /mcp 端点（Streamable HTTP）自动发现并调用这些工具
  * </p>
+ * <p> mcp-client-sample 参考 SKILL 下的 mcp-client.md
  *
  * @author javahongxi
  */

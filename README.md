@@ -119,8 +119,8 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 
 按下面的功能场景逐步操作，详细演示步骤参考对应文档：
 
-| 场景                        | 说明                                                                  | 参考文档                                                                              |
-|-----------------------------|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| 场景                        | 说明                                                                  | 参考文档                                                                            |
+|-----------------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------|
 | 🔍 服务注册与发现           | Nacos Discovery、Web / Reactive / Dubbo / gRPC 多协议                 | [discovery.md](.qoder/skills/space-cloud-run/references/discovery.md)               |
 | 🔍 Trace 链路追踪           | 五条跨服务链路，验证 trace context 传播                               | [trace.md](.qoder/skills/space-cloud-run/references/trace.md)                       |
 | ⚙️ Nacos Config 动态配置    | `@NacosConfig` / `@ConfigurationProperties` / `@RefreshScope`         | [nacos-config.md](.qoder/skills/space-cloud-run/references/nacos-config.md)         |
@@ -131,9 +131,5 @@ curl 'http://localhost:8764/consumer-sample/hi?name=docker'
 | 🤖 Spring AI                | 对话、Tool Calling、ReAct Agent、视觉理解、ChatMemory、PromptTemplate | [spring-ai.md](.qoder/skills/space-cloud-run/references/spring-ai.md)               |
 | 🤖 Spring AI RAG            | PgVector 向量存储，检索增强生成                                       | [spring-ai-rag.md](.qoder/skills/space-cloud-run/references/spring-ai-rag.md)       |
 | 📨 Kafka 4.x                | 传统 Consumer Group、Share Groups、事务消息                           | [kafka.md](.qoder/skills/space-cloud-run/references/kafka.md)                       |
-
-### 🌿 分支说明
-- 🌱 `springboot3`: 基于 Spring Boot 3.5.0+ 的示例
-- 🌿 `eureka`: 初始版本，使用 Eureka 作为注册中心
 
 &copy; [hongxi.org](http://hongxi.org)
