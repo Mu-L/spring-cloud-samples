@@ -33,7 +33,6 @@
         <module>cloud-nacos-discovery-sample</module>
         <module>cloud-commons</module>
         <module>cloud-kafka-sample</module>
-        <module>cloud-mcp-client-sample</module>
     </modules>
 
     <properties>
