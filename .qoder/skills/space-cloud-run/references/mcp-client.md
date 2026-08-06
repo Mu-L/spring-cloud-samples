@@ -59,7 +59,7 @@ spring:
       api-key: ${OPENAI_API_KEY:}
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
-        model: qwen3.8-max
+        model: qwen3.7-plus
         temperature: 0.7
     mcp:
       client:
