@@ -64,6 +64,10 @@
         .examples { display: flex; flex-wrap: wrap; gap: 8px; }
         .examples button { background: #f0f4ff; border: 1px solid #d2e3fc; border-radius: 16px; padding: 6px 14px; font-size: 12px; color: #1a73e8; cursor: pointer; transition: all 0.2s; }
         .examples button:hover { background: #d2e3fc; }
+
+        .reasoning-box { margin-bottom: 10px; border-left: 3px solid #d2e3fc; background: #f8fafd; border-radius: 6px; padding: 8px 12px; }
+        .reasoning-box summary { cursor: pointer; color: #1a73e8; font-size: 12px; user-select: none; outline: none; }
+        .reasoning-text { margin-top: 6px; font-size: 13px; color: #888; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
     </style>
 </head>
 <body>
@@ -84,7 +88,7 @@
     <div id="tab-demo" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>，流式输出。<br>
+                AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>，SSE 流式输出。<br>
                 Agent 会根据指令自主决定调用哪些工具：健康检查、服务验证、Nacos 查看等。
             </div>
             <div class="examples">
@@ -105,7 +109,7 @@
     <div id="tab-memory" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                多轮对话记忆，调用 <code>GET /ai/memory/chat?conversationId=...&message=...</code>，流式输出，相同会话 ID 共享上下文，AI 能"记住"之前的对话。<br>
+                多轮对话记忆，调用 <code>GET /ai/memory/chat?conversationId=...&message=...</code>，SSE 流式输出，相同会话 ID 共享上下文，AI 能"记住"之前的对话。<br>
                 点击"清除记忆"可重置当前会话，开始全新对话。
             </div>
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#555;">
@@ -128,7 +132,7 @@
     <div id="tab-tool" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                AI 自动选择并调用工具来获取信息，调用 <code>GET /ai/tool/ask?message=...</code>，流式输出。<br>
+                AI 自动选择并调用工具来获取信息，调用 <code>GET /ai/tool/ask?message=...</code>，SSE 流式输出。<br>
                 可用工具：时间查询（<code>TimeTool</code>）、Web 搜索（<code>WebSearchTool</code>）、HTTP 请求（<code>HttpRequestTool</code>）。<br>
                 AI 会根据问题自主决定调用哪些工具，基于工具返回的实时数据生成回答。
             </div>
@@ -147,7 +151,7 @@
     <div id="tab-react" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                ReAct (Reasoning + Acting) Agent 自主推理并调用工具，调用 <code>GET /ai/agent/chat?message=...</code>，流式输出。<br>
+                ReAct (Reasoning + Acting) Agent 自主推理并调用工具，调用 <code>GET /ai/agent/chat?message=...</code>，SSE 流式输出。<br>
                 与普通工具调用的区别：Agent 具备多步推理能力，可串联多个工具完成复杂任务。<br>
                 另有 <code>GET /ai/agent/chat-with-advisor?message=...</code> 展示 Advisor 链可观测架构。
             </div>
@@ -170,7 +174,10 @@
     <!-- AI 对话 -->
     <div id="tab-chat" class="tab-content active">
         <div class="content-inner">
-            <div class="desc">基础 AI 对话，调用 <code>GET /ai/chat/stream?message=...</code>，流式输出。</div>
+            <div class="desc">
+                基础 AI 对话，调用 <code>GET /ai/chat/stream?message=...</code>，SSE 流式输出。<br>
+                若使用思考模型（如 qwq / qwen3），会先展示 <code>reasoning</code> 思考过程，再流式输出 <code>token</code> 回答内容。
+            </div>
             <div class="examples">
                 <button onclick="quickSend('chat','你好，请介绍一下你自己')">你好</button>
                 <button onclick="quickSend('chat','Java 17 有哪些新特性？')">Java 17</button>
@@ -207,11 +214,11 @@
         });
 
         const tabConfig = {
-            demo: { endpoint: '/ai/demo', param: 'instruction' },
-            chat: { endpoint: '/ai/chat/stream', param: 'message' },
-            tool: { endpoint: '/ai/tool/ask', param: 'message' },
-            react: { endpoint: '/ai/agent/chat', advisorEndpoint: '/ai/agent/chat-with-advisor', param: 'message' },
-            memory: { endpoint: '/ai/memory/chat', param: 'message' }
+            demo: { endpoint: '/ai/demo', param: 'instruction', reasoning: true },
+            chat: { endpoint: '/ai/chat/stream', param: 'message', reasoning: true },
+            tool: { endpoint: '/ai/tool/ask', param: 'message', reasoning: true },
+            react: { endpoint: '/ai/agent/chat', advisorEndpoint: '/ai/agent/chat-with-advisor', param: 'message', reasoning: true },
+            memory: { endpoint: '/ai/memory/chat', param: 'message', reasoning: true }
         };
 
         // ChatMemory session
@@ -317,7 +324,7 @@
             }
         }
 
-        // === GET SSE via EventSource ===
+        // === GET SSE via EventSource（统一 reasoning/token/done 事件协议）===
         function sendGetStream(tab, url) {
             const msgArea = document.getElementById('msgs-' + tab);
             const msgDiv = document.createElement('div');
@@ -325,21 +332,63 @@
             msgArea.appendChild(msgDiv);
             const indicator = createIndicator();
             msgDiv.appendChild(indicator);
+            sendReasoningStream(msgArea, msgDiv, indicator, url);
+        }
 
+        // === SSE with named events: reasoning / token / done ===
+        function sendReasoningStream(msgArea, msgDiv, indicator, url) {
+            let detailsEl = null, reasoningEl = null;
+            const answerDiv = document.createElement('div');
             let rawText = '';
             const es = new EventSource(url);
 
-            es.onmessage = function(e) {
+            es.addEventListener('reasoning', function(e) {
                 if (indicator.parentNode) indicator.remove();
-                rawText += e.data;
-                renderMarkdown(msgDiv, rawText);
+                if (!detailsEl) {
+                    detailsEl = document.createElement('details');
+                    detailsEl.open = true;
+                    detailsEl.className = 'reasoning-box';
+                    const summary = document.createElement('summary');
+                    summary.textContent = '💭 思考中...';
+                    detailsEl.appendChild(summary);
+                    reasoningEl = document.createElement('div');
+                    reasoningEl.className = 'reasoning-text';
+                    detailsEl.appendChild(reasoningEl);
+                    msgDiv.appendChild(detailsEl);
+                }
+                reasoningEl.textContent += e.data;
                 scrollToBottom(msgArea);
-            };
+            });
+
+            es.addEventListener('token', function(e) {
+                if (indicator.parentNode) indicator.remove();
+                if (detailsEl && detailsEl.open) {
+                    detailsEl.open = false;
+                    detailsEl.querySelector('summary').textContent = '💭 已深度思考';
+                }
+                if (answerDiv.parentNode !== msgDiv) msgDiv.appendChild(answerDiv);
+                rawText += e.data;
+                renderMarkdown(answerDiv, rawText);
+                scrollToBottom(msgArea);
+            });
+
+            es.addEventListener('done', function() {
+                if (detailsEl) {
+                    detailsEl.open = false;
+                    detailsEl.querySelector('summary').textContent = '💭 已深度思考';
+                }
+                es.close();
+                sendBtn.disabled = false;
+                userInput.focus();
+            });
 
             es.onerror = function() {
                 if (indicator.parentNode) indicator.remove();
-                if (rawText) { renderMarkdown(msgDiv, rawText); }
-                else { msgDiv.className = 'msg error'; msgDiv.textContent = '⚠️ 连接失败，请确认服务已启动'; }
+                if (detailsEl) { detailsEl.open = false; detailsEl.querySelector('summary').textContent = '💭 已深度思考'; }
+                if (!rawText && !detailsEl) {
+                    msgDiv.className = 'msg error';
+                    msgDiv.textContent = '⚠️ 连接失败，请确认服务已启动';
+                }
                 es.close();
                 sendBtn.disabled = false;
                 userInput.focus();

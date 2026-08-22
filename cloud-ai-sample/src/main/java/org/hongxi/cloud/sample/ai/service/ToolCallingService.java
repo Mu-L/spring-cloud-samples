@@ -1,11 +1,13 @@
 package org.hongxi.cloud.sample.ai.service;
 
+import org.hongxi.cloud.sample.ai.support.ReasoningSse;
 import org.hongxi.cloud.sample.ai.tool.HttpRequestTool;
 import org.hongxi.cloud.sample.ai.tool.TimeTool;
 import org.hongxi.cloud.sample.ai.tool.WebSearchTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -51,17 +53,17 @@ public class ToolCallingService {
      * </p>
      *
      * @param message 用户问题
-     * @return AI 回复（流式输出）
+     * @return AI 回复（SSE 事件流，含思考内容）
      */
-    public Flux<String> getTime(String message) {
+    public Flux<ServerSentEvent<String>> getTime(String message) {
         log.info("时间查询: {}", message);
 
-        return chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .user(message)
                 .tools(timeTool)
                 .stream()
-                .content()
-                .doOnComplete(() -> log.info("AI 回复完成"));
+                .chatResponse()
+                .doOnComplete(() -> log.info("AI 回复完成")));
     }
 
     /**
@@ -74,17 +76,17 @@ public class ToolCallingService {
      * </p>
      *
      * @param message 用户问题
-     * @return AI 回复（流式输出）
+     * @return AI 回复（SSE 事件流，含思考内容）
      */
-    public Flux<String> smartAssistant(String message) {
+    public Flux<ServerSentEvent<String>> smartAssistant(String message) {
         log.info("智能助手收到问题: {}", message);
 
-        return chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .system("你是一个智能助手，可以根据用户的问题自动调用合适的工具来获取信息。请用中文回答。")
                 .user(message)
                 .tools(timeTool, httpRequestTool, webSearchTool)
                 .stream()
-                .content()
-                .doOnComplete(() -> log.info("AI 回复完成"));
+                .chatResponse()
+                .doOnComplete(() -> log.info("AI 回复完成")));
     }
 }

@@ -1,11 +1,12 @@
 package org.hongxi.cloud.sample.ai.controller;
 
+import org.hongxi.cloud.sample.ai.support.ReasoningSse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -38,30 +39,19 @@ public class AiChatController {
                 .content();
     }
 
-    @RequestMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> chatStream(@RequestParam String message) {
-        return chatClient.prompt()
-                .user(message)
-                .stream()
-                .content();
-    }
-
     /**
-     * 流式聊天接口（SSE）
+     * 流式聊天接口（SSE 事件流）
+     * <p>
+     * 事件类型：{@code reasoning}（思考内容增量）、{@code token}（回答文本增量）、{@code done}（结束标记），
+     * 转换逻辑见 {@link ReasoningSse}。
      */
-    @RequestMapping("/chat/stream2")
-    public ResponseEntity<Flux<String>> chatStream2(@RequestParam String message) {
+    @RequestMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatStream(@RequestParam String message) {
         log.info("开始流式对话: {}", message);
-        Flux<String> flux = chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .user(message)
                 .stream()
-                .content()
-                .doOnNext(chunk -> log.debug("收到 chunk: {}", chunk))
-                .doOnComplete(() -> log.info("流式对话完成"));
-        return ResponseEntity.ok()
-                .contentType(MediaType.valueOf("text/event-stream;charset=UTF-8"))
-                .header("Cache-Control", "no-cache")
-                .body(flux);
+                .chatResponse());
     }
 
     /**

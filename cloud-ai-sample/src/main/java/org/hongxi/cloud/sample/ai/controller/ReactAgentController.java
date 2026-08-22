@@ -1,6 +1,7 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.advisor.ToolCallObservationAdvisor;
+import org.hongxi.cloud.sample.ai.support.ReasoningSse;
 import org.hongxi.cloud.sample.ai.tool.HttpRequestTool;
 import org.hongxi.cloud.sample.ai.tool.TimeTool;
 import org.hongxi.cloud.sample.ai.tool.WebSearchTool;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -62,20 +64,23 @@ public class ReactAgentController {
      * @return Agent 的回答（SSE 流式输出）
      */
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> agentChat(@RequestParam String message) {
+    public Flux<ServerSentEvent<String>> agentChat(@RequestParam String message) {
         log.info("Agent 收到问题: {}", message);
-        return chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .system(SYSTEM_PROMPT)
                 .user(message)
                 .tools(timeTool, httpRequestTool, webSearchTool)
                 .stream()
-                .content()
+                .chatResponse()
                 .doOnComplete(() -> log.info("Agent 回复完成"))
                 .onErrorResume(e -> {
                     // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
                     log.error("Agent 调用失败: {}", e.getMessage(), e);
-                    return Flux.just("抱歉，处理您的问题时出错：" + e.getMessage());
-                });
+                    return Flux.error(e);
+                }))
+                .onErrorResume(e -> Flux.just(
+                        ReasoningSse.errorEvent("抱歉，处理您的问题时出错：" + e.getMessage()),
+                        ReasoningSse.doneEvent()));
     }
 
     /**
@@ -85,21 +90,24 @@ public class ReactAgentController {
      * @return Agent 的回答（SSE 流式输出）
      */
     @GetMapping(value = "/chat-with-advisor", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> chatWithAdvisorChain(@RequestParam String message) {
+    public Flux<ServerSentEvent<String>> chatWithAdvisorChain(@RequestParam String message) {
         log.info("Advisor 链演示 - 收到问题: {}", message);
-        return chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .system(SYSTEM_PROMPT)
                 .user(message)
                 .tools(timeTool, httpRequestTool, webSearchTool)
                 .advisors(new ToolCallObservationAdvisor())
                 .stream()
-                .content()
+                .chatResponse()
                 .doOnComplete(() -> log.info("Advisor 链演示 - 完成"))
                 .onErrorResume(e -> {
                     // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
                     log.error("Advisor 链调用失败: {}", e.getMessage(), e);
-                    return Flux.just("抱歉，处理您的问题时出错：" + e.getMessage());
-                });
+                    return Flux.error(e);
+                }))
+                .onErrorResume(e -> Flux.just(
+                        ReasoningSse.errorEvent("抱歉，处理您的问题时出错：" + e.getMessage()),
+                        ReasoningSse.doneEvent()));
     }
 
     private static final String SYSTEM_PROMPT = """

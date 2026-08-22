@@ -2,6 +2,7 @@ package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ToolCallingService;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -39,7 +40,7 @@ public class ToolCallingController {
      * @return AI 回复（SSE 流式输出）
      */
     @GetMapping(value = "/time", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> getTime(@RequestParam String message) {
+    public Flux<ServerSentEvent<String>> getTime(@RequestParam String message) {
         return toolCallingService.getTime(message);
     }
 
@@ -56,7 +57,7 @@ public class ToolCallingController {
      * @return AI 回复（SSE 流式输出）
      */
     @GetMapping(value = "/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> smartAssistant(@RequestParam String message) {
+    public Flux<ServerSentEvent<String>> smartAssistant(@RequestParam String message) {
         return toolCallingService.smartAssistant(message);
     }
 }

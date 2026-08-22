@@ -2,6 +2,7 @@ package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ProjectDemoService;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -37,7 +38,7 @@ public class ProjectDemoController {
      * @return Agent 的执行结果（SSE 流式输出）
      */
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> demo(@RequestParam String instruction) {
+    public Flux<ServerSentEvent<String>> demo(@RequestParam String instruction) {
         return projectDemoService.demo(instruction);
     }
 }

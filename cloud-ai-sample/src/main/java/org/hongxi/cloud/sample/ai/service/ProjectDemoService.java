@@ -1,9 +1,11 @@
 package org.hongxi.cloud.sample.ai.service;
 
+import org.hongxi.cloud.sample.ai.support.ReasoningSse;
 import org.hongxi.cloud.sample.ai.tool.ProjectDemoTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -31,12 +33,12 @@ public class ProjectDemoService {
 
     /**
      * @param instruction 用户的演示指令
-     * @return Agent 的执行结果（流式输出）
+     * @return Agent 的执行结果（SSE 事件流，含思考内容）
      */
-    public Flux<String> demo(String instruction) {
+    public Flux<ServerSentEvent<String>> demo(String instruction) {
         log.info("项目演示 Agent 收到指令: {}", instruction);
 
-        return chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .system("""
                         你是 Spring Cloud Alibaba 示例项目的演示助手，负责帮助用户演示和验证本项目。
                         
@@ -70,7 +72,7 @@ public class ProjectDemoService {
                 .user(instruction)
                 .tools(projectDemoTool)
                 .stream()
-                .content()
-                .doOnComplete(() -> log.info("项目演示 Agent 完成"));
+                .chatResponse()
+                .doOnComplete(() -> log.info("项目演示 Agent 完成")));
     }
 }

@@ -1,5 +1,6 @@
 package org.hongxi.cloud.sample.ai.service;
 
+import org.hongxi.cloud.sample.ai.support.ReasoningSse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -7,6 +8,7 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -53,16 +55,16 @@ public class ChatMemoryService {
      *
      * @param conversationId 会话 ID（相同 ID 共享对话上下文）
      * @param userMessage    用户输入
-     * @return AI 回复内容（流式输出）
+     * @return AI 回复内容（SSE 事件流，含思考内容）
      */
-    public Flux<String> chat(String conversationId, String userMessage) {
+    public Flux<ServerSentEvent<String>> chat(String conversationId, String userMessage) {
         log.info("ChatMemory 对话，conversationId={}, message={}", conversationId, userMessage);
-        return chatClient.prompt()
+        return ReasoningSse.toSse(chatClient.prompt()
                 .user(userMessage)
                 // 通过 advisors() 传入 conversationId，供 MessageChatMemoryAdvisor 识别会话
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .stream()
-                .content();
+                .chatResponse());
     }
 
     /**
