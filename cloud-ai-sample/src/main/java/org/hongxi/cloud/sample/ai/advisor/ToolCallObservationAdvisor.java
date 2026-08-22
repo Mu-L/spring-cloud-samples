@@ -6,6 +6,8 @@ import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
+import org.springframework.ai.chat.client.advisor.api.StreamAdvisor;
+import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -13,8 +15,10 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.core.Ordered;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 工具调用可观测 Advisor
@@ -44,11 +48,15 @@ import java.util.List;
  * <p>
  * 关键设计：本 Advisor 的 order 必须大于 ToolCallingAdvisor（+300）
  * </p>
+ * <p>
+ * 同时实现 {@link CallAdvisor} 和 {@link StreamAdvisor}：流式调用时，
+ * DefaultChatClient 只会把 StreamAdvisor 加入流式链，只实现 CallAdvisor 会被静默跳过。
+ * </p>
  *
  * @author javahongxi
  * @see org.springframework.ai.chat.client.advisor.ToolCallingAdvisor
  */
-public class ToolCallObservationAdvisor implements CallAdvisor {
+public class ToolCallObservationAdvisor implements CallAdvisor, StreamAdvisor {
 
     private static final Logger log = LoggerFactory.getLogger(ToolCallObservationAdvisor.class);
 
@@ -71,29 +79,43 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
 
     @Override
     public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
-        // 根据消息历史推断当前迭代轮次
-        // 每轮工具调用会增加 AssistantMessage(toolCalls) + ToolResponseMessage，共 2 条
-        // 初始状态: SYSTEM + USER = 2 条 → 第 1 轮
-        // 第 1 轮工具调用后: +2 条 → 第 2 轮
         List<Message> messages = request.prompt().getInstructions();
         long iteration = computeIteration(messages);
-
-        log.info("╔═══════════════════════════════════════════════════════");
-        log.info("║ [Advisor 链] 第 {} 轮调用（消息数: {}）", iteration, messages.size());
-        log.info("╠═══════════════════════════════════════════════════════");
-
-        // 打印当前消息历史（展示累积的对话上下文）
-        logMessageHistory(messages);
+        logIterationStart(iteration, messages);
 
         // Next Call
         long startTime = System.currentTimeMillis();
         ChatClientResponse response = chain.nextCall(request);
         long elapsed = System.currentTimeMillis() - startTime;
 
-        // 分析响应内容
-        analyzeResponse(response, iteration, elapsed);
+        // 分析响应内容（单个完整响应，直接判断是否包含工具调用）
+        boolean hasToolCalls = hasToolCalls(response);
+        logIterationEnd(iteration, elapsed, hasToolCalls);
 
         return response;
+    }
+
+    @Override
+    public Flux<ChatClientResponse> adviseStream(ChatClientRequest request, StreamAdvisorChain chain) {
+        // 使用 Flux.defer 保证日志在订阅（即 ToolCallingAdvisor 每轮迭代）时才打印，
+        // 且此时 request 中的消息历史已包含前几轮工具调用的累积上下文。
+        return Flux.defer(() -> {
+            List<Message> messages = request.prompt().getInstructions();
+            long iteration = computeIteration(messages);
+            logIterationStart(iteration, messages);
+
+            long startTime = System.currentTimeMillis();
+            // 流式下工具调用信息分散在多个 chunk 中，逐块扫描并累积判断
+            AtomicBoolean hasToolCalls = new AtomicBoolean(false);
+            return chain.nextStream(request)
+                    .doOnNext(response -> {
+                        if (hasToolCalls(response)) {
+                            hasToolCalls.set(true);
+                        }
+                    })
+                    .doOnComplete(() -> logIterationEnd(iteration,
+                            System.currentTimeMillis() - startTime, hasToolCalls.get()));
+        });
     }
 
     /**
@@ -106,6 +128,17 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
                 .filter(m -> m instanceof ToolResponseMessage)
                 .count();
         return toolResponseCount + 1;
+    }
+
+    /**
+     * 打印当前轮次的起始日志和消息历史，展示 ToolCallingAdvisor 如何在每次迭代中累积对话上下文。
+     * call 和 stream 两种模式共用。
+     */
+    private void logIterationStart(long iteration, List<Message> messages) {
+        log.info("╔═══════════════════════════════════════════════════════");
+        log.info("║ [Advisor 链] 第 {} 轮调用（消息数: {}）", iteration, messages.size());
+        log.info("╠═══════════════════════════════════════════════════════");
+        logMessageHistory(messages);
     }
 
     /**
@@ -139,19 +172,23 @@ public class ToolCallObservationAdvisor implements CallAdvisor {
     }
 
     /**
-     * 分析 ChatModel 的响应，判断是否包含工具调用请求
+     * 判断响应中是否包含工具调用请求（call 和 stream 两种模式共用）
      */
-    private void analyzeResponse(ChatClientResponse response, long iteration, long elapsed) {
+    private boolean hasToolCalls(ChatClientResponse response) {
         ChatResponse chatResponse = response.chatResponse();
         if (chatResponse == null) {
-            log.info("║ [第 {} 轮] 响应为空，耗时 {}ms", iteration, elapsed);
-            return;
+            return false;
         }
-
-        boolean hasToolCalls = chatResponse.getResults().stream()
+        return chatResponse.getResults().stream()
                 .map(Generation::getOutput)
                 .anyMatch(AssistantMessage::hasToolCalls);
+    }
 
+    /**
+     * 打印当前轮次的结束日志，判断模型是否决定调用工具。
+     * call 和 stream 两种模式共用。
+     */
+    private void logIterationEnd(long iteration, long elapsed, boolean hasToolCalls) {
         if (hasToolCalls) {
             log.info("║ [第 {} 轮] 大模型响应（耗时 {}ms）→ hasToolCalls=true，模型决定调用工具", iteration, elapsed);
         } else {

@@ -1,7 +1,9 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ToolCallingService;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 /**
  * Tool Calling（工具调用）示例控制器
@@ -34,10 +36,10 @@ public class ToolCallingController {
      * </p>
      *
      * @param message 用户问题
-     * @return AI 回复
+     * @return AI 回复（SSE 流式输出）
      */
-    @GetMapping("/time")
-    public String getTime(@RequestParam String message) {
+    @GetMapping(value = "/time", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> getTime(@RequestParam String message) {
         return toolCallingService.getTime(message);
     }
 
@@ -51,10 +53,10 @@ public class ToolCallingController {
      * </p>
      *
      * @param message 用户问题
-     * @return AI 回复
+     * @return AI 回复（SSE 流式输出）
      */
-    @GetMapping("/ask")
-    public String smartAssistant(@RequestParam String message) {
+    @GetMapping(value = "/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> smartAssistant(@RequestParam String message) {
         return toolCallingService.smartAssistant(message);
     }
 }

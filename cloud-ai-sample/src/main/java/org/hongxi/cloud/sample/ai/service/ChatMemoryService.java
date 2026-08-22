@@ -8,6 +8,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 /**
  * ChatMemory 多轮对话服务
@@ -52,15 +53,15 @@ public class ChatMemoryService {
      *
      * @param conversationId 会话 ID（相同 ID 共享对话上下文）
      * @param userMessage    用户输入
-     * @return AI 回复内容
+     * @return AI 回复内容（流式输出）
      */
-    public String chat(String conversationId, String userMessage) {
+    public Flux<String> chat(String conversationId, String userMessage) {
         log.info("ChatMemory 对话，conversationId={}, message={}", conversationId, userMessage);
         return chatClient.prompt()
                 .user(userMessage)
                 // 通过 advisors() 传入 conversationId，供 MessageChatMemoryAdvisor 识别会话
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
-                .call()
+                .stream()
                 .content();
     }
 

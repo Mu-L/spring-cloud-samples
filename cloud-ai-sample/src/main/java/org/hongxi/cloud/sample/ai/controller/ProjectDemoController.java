@@ -1,7 +1,9 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ProjectDemoService;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 /**
  * 项目演示控制器
@@ -23,7 +25,7 @@ public class ProjectDemoController {
     }
 
     /**
-     * 项目演示 Agent 入口（非流式）
+     * 项目演示 Agent 入口（流式）
      * <p>
      * 接收用户的自然语言指令，AI Agent 会自动决定调用哪些工具来完成演示任务。
      * </p>
@@ -32,10 +34,10 @@ public class ProjectDemoController {
      * </p>
      *
      * @param instruction 用户的演示指令（自然语言）
-     * @return Agent 的执行结果
+     * @return Agent 的执行结果（SSE 流式输出）
      */
-    @GetMapping
-    public String demo(@RequestParam String instruction) {
+    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> demo(@RequestParam String instruction) {
         return projectDemoService.demo(instruction);
     }
 }

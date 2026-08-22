@@ -84,7 +84,7 @@
     <div id="tab-demo" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>。<br>
+                AI Agent 自动调用工具完成项目演示，调用 <code>GET /ai/demo?instruction=...</code>，流式输出。<br>
                 Agent 会根据指令自主决定调用哪些工具：健康检查、服务验证、Nacos 查看等。
             </div>
             <div class="examples">
@@ -105,7 +105,7 @@
     <div id="tab-memory" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                多轮对话记忆，调用 <code>POST /ai/memory/chat</code>，相同会话 ID 共享上下文，AI 能"记住"之前的对话。<br>
+                多轮对话记忆，调用 <code>GET /ai/memory/chat?conversationId=...&message=...</code>，流式输出，相同会话 ID 共享上下文，AI 能"记住"之前的对话。<br>
                 点击"清除记忆"可重置当前会话，开始全新对话。
             </div>
             <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#555;">
@@ -128,7 +128,7 @@
     <div id="tab-tool" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                AI 自动选择并调用工具来获取信息，调用 <code>GET /ai/tool/ask?message=...</code>。<br>
+                AI 自动选择并调用工具来获取信息，调用 <code>GET /ai/tool/ask?message=...</code>，流式输出。<br>
                 可用工具：时间查询（<code>TimeTool</code>）、Web 搜索（<code>WebSearchTool</code>）、HTTP 请求（<code>HttpRequestTool</code>）。<br>
                 AI 会根据问题自主决定调用哪些工具，基于工具返回的实时数据生成回答。
             </div>
@@ -147,7 +147,7 @@
     <div id="tab-react" class="tab-content">
         <div class="content-inner">
             <div class="desc">
-                ReAct (Reasoning + Acting) Agent 自主推理并调用工具，调用 <code>GET /ai/agent/chat?message=...</code>。<br>
+                ReAct (Reasoning + Acting) Agent 自主推理并调用工具，调用 <code>GET /ai/agent/chat?message=...</code>，流式输出。<br>
                 与普通工具调用的区别：Agent 具备多步推理能力，可串联多个工具完成复杂任务。<br>
                 另有 <code>GET /ai/agent/chat-with-advisor?message=...</code> 展示 Advisor 链可观测架构。
             </div>
@@ -207,11 +207,11 @@
         });
 
         const tabConfig = {
-            demo: { type: 'call', endpoint: '/ai/demo', param: 'instruction' },
-            chat: { type: 'stream', endpoint: '/ai/chat/stream', param: 'message' },
-            tool: { type: 'call', endpoint: '/ai/tool/ask', param: 'message' },
-            react: { type: 'react', endpoint: '/ai/agent/chat', advisorEndpoint: '/ai/agent/chat-with-advisor', param: 'message' },
-            memory: { type: 'memory', endpoint: '/ai/memory/chat' }
+            demo: { endpoint: '/ai/demo', param: 'instruction' },
+            chat: { endpoint: '/ai/chat/stream', param: 'message' },
+            tool: { endpoint: '/ai/tool/ask', param: 'message' },
+            react: { endpoint: '/ai/agent/chat', advisorEndpoint: '/ai/agent/chat-with-advisor', param: 'message' },
+            memory: { endpoint: '/ai/memory/chat', param: 'message' }
         };
 
         // ChatMemory session
@@ -305,77 +305,16 @@
 
             const url = config.endpoint + '?' + config.param + '=' + encodeURIComponent(message);
 
-            if (config.type === 'stream') {
-                sendGetStream(tab, url);
-            } else if (config.type === 'memory') {
-                sendMemoryRequest(tab, message);
-            } else if (config.type === 'react') {
+            if (tab === 'react') {
                 const useAdvisor = document.getElementById('react-advisor').checked;
                 const reactUrl = (useAdvisor ? config.advisorEndpoint : config.endpoint) + '?' + config.param + '=' + encodeURIComponent(message);
-                sendCallRequest(tab, reactUrl);
+                sendGetStream(tab, reactUrl);
+            } else if (tab === 'memory') {
+                const memoryUrl = config.endpoint + '?conversationId=' + encodeURIComponent(memorySessionId) + '&' + config.param + '=' + encodeURIComponent(message);
+                sendGetStream(tab, memoryUrl);
             } else {
-                sendCallRequest(tab, url);
+                sendGetStream(tab, url);
             }
-        }
-
-        // === Non-streaming request (call with tools) ===
-        function sendCallRequest(tab, url) {
-            const msgArea = document.getElementById('msgs-' + tab);
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'msg assistant';
-            msgArea.appendChild(msgDiv);
-            const indicator = createIndicator();
-            msgDiv.appendChild(indicator);
-
-            fetch(url)
-                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-                .then(text => {
-                    indicator.remove();
-                    renderMarkdown(msgDiv, text);
-                    scrollToBottom(msgArea);
-                    sendBtn.disabled = false;
-                    userInput.focus();
-                })
-                .catch(err => {
-                    indicator.remove();
-                    msgDiv.className = 'msg error';
-                    msgDiv.textContent = '⚠️ 请求失败: ' + err.message;
-                    scrollToBottom(msgArea);
-                    sendBtn.disabled = false;
-                    userInput.focus();
-                });
-        }
-
-        // === ChatMemory POST request ===
-        function sendMemoryRequest(tab, message) {
-            const msgArea = document.getElementById('msgs-' + tab);
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'msg assistant';
-            msgArea.appendChild(msgDiv);
-            const indicator = createIndicator();
-            msgDiv.appendChild(indicator);
-
-            fetch(tabConfig.memory.endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conversationId: memorySessionId, message: message })
-            })
-                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-                .then(data => {
-                    indicator.remove();
-                    renderMarkdown(msgDiv, data.reply || JSON.stringify(data));
-                    scrollToBottom(msgArea);
-                    sendBtn.disabled = false;
-                    userInput.focus();
-                })
-                .catch(err => {
-                    indicator.remove();
-                    msgDiv.className = 'msg error';
-                    msgDiv.textContent = '⚠️ 请求失败: ' + err.message;
-                    scrollToBottom(msgArea);
-                    sendBtn.disabled = false;
-                    userInput.focus();
-                });
         }
 
         // === GET SSE via EventSource ===

@@ -7,7 +7,9 @@ import org.hongxi.cloud.sample.ai.tool.WebSearchTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 /**
  * ReAct Agent 控制器
@@ -57,51 +59,47 @@ public class ReactAgentController {
      * </p>
      *
      * @param message 用户消息
-     * @return Agent 的回答
+     * @return Agent 的回答（SSE 流式输出）
      */
-    @RequestMapping("/chat")
-    public String agentChat(@RequestParam String message) {
+    @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> agentChat(@RequestParam String message) {
         log.info("Agent 收到问题: {}", message);
-        try {
-            String response = chatClient.prompt()
-                    .system(SYSTEM_PROMPT)
-                    .user(message)
-                    .tools(timeTool, httpRequestTool, webSearchTool)
-                    .call()
-                    .content();
-            log.info("Agent 回复: {}", response);
-            return response;
-        } catch (Exception e) {
-            // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
-            log.error("Agent 调用失败: {}", e.getMessage(), e);
-            return "抱歉，处理您的问题时出错：" + e.getMessage();
-        }
+        return chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(message)
+                .tools(timeTool, httpRequestTool, webSearchTool)
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("Agent 回复完成"))
+                .onErrorResume(e -> {
+                    // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
+                    log.error("Agent 调用失败: {}", e.getMessage(), e);
+                    return Flux.just("抱歉，处理您的问题时出错：" + e.getMessage());
+                });
     }
 
     /**
      * Advisor 链演示
      *
      * @param message 用户消息
-     * @return Agent 的回答
+     * @return Agent 的回答（SSE 流式输出）
      */
-    @RequestMapping("/chat-with-advisor")
-    public String chatWithAdvisorChain(@RequestParam String message) {
+    @GetMapping(value = "/chat-with-advisor", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatWithAdvisorChain(@RequestParam String message) {
         log.info("Advisor 链演示 - 收到问题: {}", message);
-        try {
-            String response = chatClient.prompt()
-                    .system(SYSTEM_PROMPT)
-                    .user(message)
-                    .tools(timeTool, httpRequestTool, webSearchTool)
-                    .advisors(new ToolCallObservationAdvisor())
-                    .call()
-                    .content();
-            log.info("Advisor 链演示 - 完成");
-            return response;
-        } catch (Exception e) {
-            // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
-            log.error("Advisor 链调用失败: {}", e.getMessage(), e);
-            return "抱歉，处理您的问题时出错：" + e.getMessage();
-        }
+        return chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(message)
+                .tools(timeTool, httpRequestTool, webSearchTool)
+                .advisors(new ToolCallObservationAdvisor())
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("Advisor 链演示 - 完成"))
+                .onErrorResume(e -> {
+                    // web_search 返回的新闻内容触发了过滤规则，这是模型提供商（阿里云）的内容安全过滤导致的 400 错误
+                    log.error("Advisor 链调用失败: {}", e.getMessage(), e);
+                    return Flux.just("抱歉，处理您的问题时出错：" + e.getMessage());
+                });
     }
 
     private static final String SYSTEM_PROMPT = """

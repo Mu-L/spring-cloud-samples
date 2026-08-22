@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 /**
  * Tool Calling（工具调用）服务
@@ -50,20 +51,17 @@ public class ToolCallingService {
      * </p>
      *
      * @param message 用户问题
-     * @return AI 回复
+     * @return AI 回复（流式输出）
      */
-    public String getTime(String message) {
+    public Flux<String> getTime(String message) {
         log.info("时间查询: {}", message);
 
-        String response = chatClient.prompt()
+        return chatClient.prompt()
                 .user(message)
                 .tools(timeTool)
-                .call()
-                .content();
-
-        log.info("AI 回复: {}", response);
-
-        return response;
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("AI 回复完成"));
     }
 
     /**
@@ -76,20 +74,17 @@ public class ToolCallingService {
      * </p>
      *
      * @param message 用户问题
-     * @return AI 回复
+     * @return AI 回复（流式输出）
      */
-    public String smartAssistant(String message) {
+    public Flux<String> smartAssistant(String message) {
         log.info("智能助手收到问题: {}", message);
 
-        String response = chatClient.prompt()
+        return chatClient.prompt()
                 .system("你是一个智能助手，可以根据用户的问题自动调用合适的工具来获取信息。请用中文回答。")
                 .user(message)
                 .tools(timeTool, httpRequestTool, webSearchTool)
-                .call()
-                .content();
-
-        log.info("AI 回复: {}", response);
-
-        return response;
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("AI 回复完成"));
     }
 }

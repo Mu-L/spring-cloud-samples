@@ -1,19 +1,19 @@
 package org.hongxi.cloud.sample.ai.controller;
 
 import org.hongxi.cloud.sample.ai.service.ChatMemoryService;
-import org.hongxi.cloud.sample.ai.vo.ChatRequest;
-import org.hongxi.cloud.sample.ai.vo.ChatResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 /**
  * ChatMemory 多轮对话控制器
  * <p>
  * 提供基于内存对话记忆的 REST 接口：
  * <ul>
- *   <li>POST /ai/memory/chat  — 带记忆的多轮对话（相同 conversationId 共享上下文）</li>
+ *   <li>GET /ai/memory/chat  — 带记忆的多轮对话（相同 conversationId 共享上下文）</li>
  *   <li>DELETE /ai/memory/{conversationId} — 清除指定会话的历史记忆</li>
  * </ul>
  * </p>
@@ -33,26 +33,21 @@ public class ChatMemoryController {
     }
 
     /**
-     * 带记忆的多轮对话
+     * 带记忆的多轮对话（SSE 流式输出）
      * <p>
-     * 示例请求体：
-     * <pre>
-     * {
-     *   "conversationId": "session-001",
-     *   "message": "我想学习 Spring AI"
-     * }
-     * </pre>
+     * 示例：GET /ai/memory/chat?conversationId=session-001&message=我想学习 Spring AI
+     * </p>
      * 相同 conversationId 的请求会共享对话上下文，AI 能"记住"之前的对话内容。
      *
-     * @param request 包含 conversationId 和 message
-     * @return AI 回复（包含 conversationId 和回复内容）
+     * @param conversationId 会话 ID（可选，默认 default）
+     * @param message        用户消息
+     * @return AI 回复（SSE 流式输出）
      */
-    @PostMapping("/chat")
-    public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
-        String conversationId = request.conversationId() != null ? request.conversationId() : "default";
+    @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chat(@RequestParam(defaultValue = "default") String conversationId,
+                             @RequestParam String message) {
         log.info("ChatMemory 对话请求，conversationId={}", conversationId);
-        String reply = chatMemoryService.chat(conversationId, request.message());
-        return ResponseEntity.ok(new ChatResponse(conversationId, reply));
+        return chatMemoryService.chat(conversationId, message);
     }
 
     /**
