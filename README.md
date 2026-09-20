@@ -24,10 +24,7 @@
 | 🤖 cloud-ai-rag-sample            | rag               | 8889  | Spring AI · RAG       |
 | 📨 cloud-kafka-sample             | kafka             | 8768  | Kafka 4.x             |
 
-<picture>
-  <source srcset="arch.svg" type="image/svg+xml">
-  <img src="arch.png" alt="架构图">
-</picture>
+![arch](arch.png)
 
 ### 🎮 演示方式
 
